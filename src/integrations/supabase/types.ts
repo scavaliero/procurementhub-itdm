@@ -14,6 +14,131 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_types: {
+        Row: {
+          allowed_formats: string[] | null
+          applies_to_categories: string[] | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_blocking: boolean | null
+          is_mandatory: boolean | null
+          max_size_mb: number | null
+          name: string
+          needs_manual_review: boolean | null
+          requires_expiry: boolean | null
+          security_level: string | null
+          sort_order: number | null
+          tenant_id: string
+          valid_from: string | null
+          valid_until: string | null
+          validity_days: number | null
+        }
+        Insert: {
+          allowed_formats?: string[] | null
+          applies_to_categories?: string[] | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_blocking?: boolean | null
+          is_mandatory?: boolean | null
+          max_size_mb?: number | null
+          name: string
+          needs_manual_review?: boolean | null
+          requires_expiry?: boolean | null
+          security_level?: string | null
+          sort_order?: number | null
+          tenant_id: string
+          valid_from?: string | null
+          valid_until?: string | null
+          validity_days?: number | null
+        }
+        Update: {
+          allowed_formats?: string[] | null
+          applies_to_categories?: string[] | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_blocking?: boolean | null
+          is_mandatory?: boolean | null
+          max_size_mb?: number | null
+          name?: string
+          needs_manual_review?: boolean | null
+          requires_expiry?: boolean | null
+          security_level?: string | null
+          sort_order?: number | null
+          tenant_id?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          validity_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grants: {
         Row: {
           created_at: string | null
@@ -79,6 +204,13 @@ export type Database = {
           user_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_profiles_supplier"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -156,6 +288,170 @@ export type Database = {
           },
         ]
       }
+      supplier_categories: {
+        Row: {
+          category_id: string
+          id: string
+          qualified_at: string | null
+          status: string | null
+          supplier_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          qualified_at?: string | null
+          status?: string | null
+          supplier_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          qualified_at?: string | null
+          status?: string | null
+          supplier_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_categories_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          from_status: string | null
+          id: string
+          notes: string | null
+          reason: string | null
+          supplier_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          supplier_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          supplier_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_status_history_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          accredited_at: string | null
+          company_name: string
+          company_type: string | null
+          created_at: string | null
+          deleted_at: string | null
+          iban_masked: string | null
+          id: string
+          legal_address: Json | null
+          notes: string | null
+          pec: string | null
+          rating_count: number | null
+          rating_score: number | null
+          status: string
+          suspended_at: string | null
+          suspension_reason: string | null
+          tenant_id: string
+          updated_at: string | null
+          vat_number_hash: string | null
+          website: string | null
+        }
+        Insert: {
+          accredited_at?: string | null
+          company_name: string
+          company_type?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          iban_masked?: string | null
+          id?: string
+          legal_address?: Json | null
+          notes?: string | null
+          pec?: string | null
+          rating_count?: number | null
+          rating_score?: number | null
+          status?: string
+          suspended_at?: string | null
+          suspension_reason?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          vat_number_hash?: string | null
+          website?: string | null
+        }
+        Update: {
+          accredited_at?: string | null
+          company_name?: string
+          company_type?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          iban_masked?: string | null
+          id?: string
+          legal_address?: Json | null
+          notes?: string | null
+          pec?: string | null
+          rating_count?: number | null
+          rating_score?: number | null
+          status?: string
+          suspended_at?: string | null
+          suspension_reason?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          vat_number_hash?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string | null
@@ -185,6 +481,98 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      uploaded_documents: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          document_type_id: string
+          expiry_date: string | null
+          file_size_bytes: number | null
+          id: string
+          mime_type: string | null
+          original_filename: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          storage_path: string | null
+          supplier_id: string
+          tenant_id: string
+          updated_at: string | null
+          version: number
+          virus_scan_status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          document_type_id: string
+          expiry_date?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path?: string | null
+          supplier_id: string
+          tenant_id: string
+          updated_at?: string | null
+          version?: number
+          virus_scan_status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          document_type_id?: string
+          expiry_date?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path?: string | null
+          supplier_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+          version?: number
+          virus_scan_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploaded_documents_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uploaded_documents_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uploaded_documents_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uploaded_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_grants: {
         Row: {
@@ -293,6 +681,14 @@ export type Database = {
       }
     }
     Functions: {
+      check_mandatory_docs: {
+        Args: { p_category_id?: string; p_supplier_id: string }
+        Returns: {
+          document_name: string
+          document_type_id: string
+          reason: string
+        }[]
+      }
       current_tenant_id: { Args: never; Returns: string }
       user_has_grant: { Args: { grant_name: string }; Returns: boolean }
     }
