@@ -244,7 +244,6 @@ export default function InternalVendors() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Ragione Sociale</TableHead>
-                  <TableHead>P.IVA (hash)</TableHead>
                   <TableHead>Stato</TableHead>
                   <TableHead>Registrato il</TableHead>
                 </TableRow>
