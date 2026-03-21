@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Upload, FileText, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import type { DocumentType, UploadedDocument } from "@/types";
 
