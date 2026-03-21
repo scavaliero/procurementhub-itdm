@@ -95,7 +95,7 @@ export const opportunityService = {
       .from("opportunities")
       .insert({
         ...opp,
-        evaluation_criteria: opp.evaluation_criteria ? (opp.evaluation_criteria as any) : [],
+        evaluation_criteria: opp.evaluation_criteria ? (opp.evaluation_criteria as unknown as Json) : [],
       })
       .select()
       .single();
