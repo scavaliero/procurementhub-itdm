@@ -25,6 +25,30 @@ export interface ValidateBidResult {
   missing_documents?: { document_type_id: string; document_name: string; reason: string }[];
 }
 
+export interface EvaluationInvitation {
+  id: string;
+  supplier_id: string;
+  status: string;
+  suppliers: { company_name: string } | null;
+  bids: Array<{
+    id: string;
+    status: string;
+    total_amount: number | null;
+    execution_days: number | null;
+    technical_description: string | null;
+    submitted_at: string | null;
+    economic_detail: Json | null;
+    bid_validity_date: string | null;
+    bid_evaluations: Array<{
+      id: string;
+      criteria_scores: Json;
+      total_score: number | null;
+      evaluator_id: string;
+      evaluated_at: string | null;
+    }>;
+  }>;
+}
+
 export const bidService = {
   /** Get existing bid for a supplier on an opportunity */
   async getByOpportunityAndSupplier(opportunityId: string, supplierId: string): Promise<Bid | null> {
