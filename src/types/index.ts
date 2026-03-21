@@ -10,6 +10,7 @@ export type SupplierStatus =
   | "in_accreditation"
   | "in_approval"
   | "pending_review"
+  | "pending"
   | "accredited"
   | "suspended"
   | "rejected"
