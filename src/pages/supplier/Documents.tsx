@@ -40,12 +40,16 @@ function DocumentCard({
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      const expiryDate = expiryRef.current?.value;
+      if (!expiryDate) {
+        throw new Error("La data di scadenza è obbligatoria");
+      }
       await documentService.uploadDocument({
         supplierId,
         documentTypeId: docType.id,
         tenantId,
         file,
-        expiryDate: expiryRef.current?.value || undefined,
+        expiryDate,
         needsManualReview: docType.needs_manual_review ?? true,
       });
     },
