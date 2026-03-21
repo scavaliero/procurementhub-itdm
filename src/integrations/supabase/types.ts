@@ -14,6 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
+      awards: {
+        Row: {
+          awarded_at: string | null
+          awarded_by: string | null
+          id: string
+          justification: string | null
+          notes: string | null
+          opportunity_id: string
+          supplier_id: string | null
+          winning_bid_id: string | null
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          id?: string
+          justification?: string | null
+          notes?: string | null
+          opportunity_id: string
+          supplier_id?: string | null
+          winning_bid_id?: string | null
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          id?: string
+          justification?: string | null
+          notes?: string | null
+          opportunity_id?: string
+          supplier_id?: string | null
+          winning_bid_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "awards_awarded_by_fkey"
+            columns: ["awarded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "awards_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "awards_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "awards_winning_bid_id_fkey"
+            columns: ["winning_bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_evaluations: {
+        Row: {
+          admin_approved: boolean | null
+          bid_id: string
+          criteria_scores: Json
+          evaluated_at: string | null
+          evaluator_id: string
+          id: string
+          internal_notes: string | null
+          tech_approved: boolean | null
+          total_score: number | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          bid_id: string
+          criteria_scores: Json
+          evaluated_at?: string | null
+          evaluator_id: string
+          id?: string
+          internal_notes?: string | null
+          tech_approved?: boolean | null
+          total_score?: number | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          bid_id?: string
+          criteria_scores?: Json
+          evaluated_at?: string | null
+          evaluator_id?: string
+          id?: string
+          internal_notes?: string | null
+          tech_approved?: boolean | null
+          total_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_evaluations_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_evaluations_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bids: {
+        Row: {
+          bid_validity_date: string | null
+          created_at: string | null
+          deleted_at: string | null
+          economic_detail: Json | null
+          execution_days: number | null
+          id: string
+          invitation_id: string | null
+          notes: string | null
+          opportunity_id: string
+          proposed_conditions: string | null
+          status: string
+          submitted_at: string | null
+          supplier_id: string
+          technical_description: string | null
+          tenant_id: string
+          total_amount: number | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          bid_validity_date?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          economic_detail?: Json | null
+          execution_days?: number | null
+          id?: string
+          invitation_id?: string | null
+          notes?: string | null
+          opportunity_id: string
+          proposed_conditions?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_id: string
+          technical_description?: string | null
+          tenant_id: string
+          total_amount?: number | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          bid_validity_date?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          economic_detail?: Json | null
+          execution_days?: number | null
+          id?: string
+          invitation_id?: string | null
+          notes?: string | null
+          opportunity_id?: string
+          proposed_conditions?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_id?: string
+          technical_description?: string | null
+          tenant_id?: string
+          total_amount?: number | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           code: string
@@ -162,6 +367,181 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          bids_deadline: string | null
+          budget_estimated: number | null
+          budget_max: number | null
+          category_id: string | null
+          code: string | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          end_date: string | null
+          estimated_duration_days: number | null
+          evaluation_criteria: Json | null
+          geographic_area: string | null
+          id: string
+          internal_ref_id: string | null
+          opens_at: string | null
+          operational_notes: string | null
+          participation_conditions: string | null
+          requesting_unit: string | null
+          start_date: string | null
+          status: string
+          subcategory_id: string | null
+          tenant_id: string
+          title: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          bids_deadline?: string | null
+          budget_estimated?: number | null
+          budget_max?: number | null
+          category_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_duration_days?: number | null
+          evaluation_criteria?: Json | null
+          geographic_area?: string | null
+          id?: string
+          internal_ref_id?: string | null
+          opens_at?: string | null
+          operational_notes?: string | null
+          participation_conditions?: string | null
+          requesting_unit?: string | null
+          start_date?: string | null
+          status?: string
+          subcategory_id?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          bids_deadline?: string | null
+          budget_estimated?: number | null
+          budget_max?: number | null
+          category_id?: string | null
+          code?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_duration_days?: number | null
+          evaluation_criteria?: Json | null
+          geographic_area?: string | null
+          id?: string
+          internal_ref_id?: string | null
+          opens_at?: string | null
+          operational_notes?: string | null
+          participation_conditions?: string | null
+          requesting_unit?: string | null
+          start_date?: string | null
+          status?: string
+          subcategory_id?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_internal_ref_id_fkey"
+            columns: ["internal_ref_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_invitations: {
+        Row: {
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          opportunity_id: string
+          status: string
+          supplier_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          opportunity_id: string
+          status?: string
+          supplier_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          opportunity_id?: string
+          status?: string
+          supplier_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_invitations_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_invitations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
