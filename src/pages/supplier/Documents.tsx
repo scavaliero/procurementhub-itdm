@@ -104,12 +104,37 @@ function DocumentCard({
             <p className="text-xs text-destructive/80 mt-0.5">{uploaded.review_notes}</p>
           </div>
         )}
-        {uploaded?.expiry_date && uploaded.status !== "rejected" && (
+
+        {/* Expiring soon warning */}
+        {isExpiringSoon && (
+          <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2">
+            <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+              ⚠ Documento in scadenza il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
+            </p>
+            <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-0.5">
+              Sostituisci il documento prima della scadenza per evitare la sospensione dell'accesso.
+            </p>
+          </div>
+        )}
+
+        {/* Expired warning */}
+        {isExpired && (
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
+            <p className="text-xs font-medium text-destructive">
+              Documento scaduto il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
+            </p>
+            <p className="text-xs text-destructive/80 mt-0.5">
+              Carica un nuovo documento aggiornato per ripristinare l'accesso.
+            </p>
+          </div>
+        )}
+
+        {uploaded?.expiry_date && uploaded.status !== "rejected" && !isExpiringSoon && !isExpired && (
           <p className="text-xs text-muted-foreground">
             Scadenza: {new Date(uploaded.expiry_date).toLocaleDateString("it-IT")}
           </p>
         )}
-        {uploaded?.original_filename && uploaded.status !== "rejected" && (
+        {uploaded?.original_filename && uploaded.status !== "rejected" && !isExpired && (
           <p className="text-xs truncate">{uploaded.original_filename}</p>
         )}
 
@@ -127,7 +152,7 @@ function DocumentCard({
           </Button>
         )}
 
-        {/* Upload form: show when no doc, or doc is not rejected */}
+        {/* Upload form: show when no doc, rejected not shown, or expiring/expired */}
         {(!uploaded || uploaded.status !== "rejected") && (
           <>
             <div className="space-y-1">
@@ -156,13 +181,21 @@ function DocumentCard({
               />
               <Button
                 size="sm"
-                variant="outline"
+                variant={isExpired || isExpiringSoon ? "default" : "outline"}
                 className="w-full"
                 disabled={uploadMutation.isPending}
                 onClick={() => fileRef.current?.click()}
               >
                 <Upload className="h-3.5 w-3.5 mr-1" />
-                {uploadMutation.isPending ? "Caricamento…" : uploaded ? "Ricarica" : "Carica"}
+                {uploadMutation.isPending
+                  ? "Caricamento…"
+                  : isExpired
+                  ? "Sostituisci documento scaduto"
+                  : isExpiringSoon
+                  ? "Sostituisci documento"
+                  : uploaded
+                  ? "Ricarica"
+                  : "Carica"}
               </Button>
             </div>
           </>
