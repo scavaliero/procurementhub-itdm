@@ -209,14 +209,27 @@ export default function InternalOpportunityEvaluation() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/internal/opportunities/${opportunityId}`)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
-          <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/internal/opportunities/${opportunityId}`)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
+            <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
+          </div>
         </div>
+        {canAward && !isAwarded && admittedBids.length > 0 && (
+          <Button onClick={() => setAwardDialog(true)} className="gap-2">
+            <Trophy className="h-4 w-4" />
+            Seleziona vincitore
+          </Button>
+        )}
+        {isAwarded && (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
+            Aggiudicata
+          </Badge>
+        )}
       </div>
 
       {invitations.length === 0 ? (
