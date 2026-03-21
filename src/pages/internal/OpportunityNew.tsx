@@ -48,6 +48,7 @@ export default function InternalOpportunityNew() {
   const { hasGrant } = useGrants();
   const [step, setStep] = useState(0);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [conditions, setConditions] = useState("");
@@ -74,33 +75,57 @@ export default function InternalOpportunityNew() {
     defaultValues: step1Data ?? {},
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (status: string) => {
+  /** Create or update draft in DB — ensures category_id is persisted from step 1 */
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data: Step1Data) => {
       if (!profile) throw new Error("Profilo non trovato");
-      const s1 = step1Data!;
-      const opp = await opportunityService.create({
-        tenant_id: profile.tenant_id,
-        title: s1.title,
-        description: s1.description,
-        category_id: s1.category_id || undefined,
-        internal_ref_id: s1.internal_ref_id || undefined,
-        requesting_unit: s1.requesting_unit || undefined,
-        opens_at: s1.opens_at || undefined,
-        bids_deadline: s1.bids_deadline || undefined,
-        start_date: s1.start_date || undefined,
-        end_date: s1.end_date || undefined,
-        budget_estimated: s1.budget_estimated,
-        budget_max: s1.budget_max,
-        evaluation_criteria: criteria.length > 0 ? criteria : undefined,
+      const payload = {
+        title: data.title,
+        description: data.description || undefined,
+        category_id: data.category_id || undefined,
+        internal_ref_id: data.internal_ref_id || undefined,
+        requesting_unit: data.requesting_unit || undefined,
+        opens_at: data.opens_at || undefined,
+        bids_deadline: data.bids_deadline || undefined,
+        start_date: data.start_date || undefined,
+        end_date: data.end_date || undefined,
+        budget_estimated: data.budget_estimated,
+        budget_max: data.budget_max,
+      };
+
+      if (draftId) {
+        return opportunityService.update(draftId, payload as any);
+      } else {
+        const opp = await opportunityService.create({
+          ...payload,
+          tenant_id: profile.tenant_id,
+          status: "draft",
+          created_by: profile.id,
+        });
+        return opp;
+      }
+    },
+    onSuccess: (opp) => {
+      if (!draftId) setDraftId(opp.id);
+    },
+    onError: (err: any) => toast.error(err.message || "Errore nel salvataggio bozza"),
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (status: string) => {
+      if (!draftId) throw new Error("Bozza non salvata");
+
+      // Update with criteria, conditions, notes, and final status
+      const opp = await opportunityService.update(draftId, {
+        evaluation_criteria: criteria.length > 0 ? (criteria as any) : [],
         participation_conditions: conditions || undefined,
         operational_notes: notes || undefined,
         status,
-        created_by: profile.id,
-      });
+      } as any);
 
       // Upload attachments
       for (const file of attachments) {
-        await opportunityService.uploadAttachment(opp.id, file);
+        await opportunityService.uploadAttachment(draftId, file);
       }
 
       return opp;
@@ -118,8 +143,10 @@ export default function InternalOpportunityNew() {
   const totalWeight = criteria.reduce((s, c) => s + (c.weight_pct || 0), 0);
   const criteriaValid = criteria.length === 0 || totalWeight === 100;
 
-  const handleStep1Submit = (data: Step1Data) => {
+  const handleStep1Submit = async (data: Step1Data) => {
     setStep1Data(data);
+    // Auto-save draft to DB so category_id is persisted
+    await saveDraftMutation.mutateAsync(data);
     setStep(1);
   };
 
@@ -143,11 +170,16 @@ export default function InternalOpportunityNew() {
   };
 
   const handlePublish = () => {
-    createMutation.mutate(determineStatus());
+    publishMutation.mutate(determineStatus());
   };
 
   const handleSaveDraft = () => {
-    createMutation.mutate("draft");
+    if (draftId) {
+      // Already saved as draft, just update criteria/conditions
+      publishMutation.mutate("draft");
+    } else {
+      toast.error("Completa prima lo step 1");
+    }
   };
 
   return (
@@ -376,10 +408,10 @@ export default function InternalOpportunityNew() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Indietro
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft} disabled={createMutation.isPending}>
+                <Button variant="outline" onClick={handleSaveDraft} disabled={publishMutation.isPending}>
                   <Save className="mr-2 h-4 w-4" /> Salva bozza
                 </Button>
-                <Button onClick={handlePublish} disabled={createMutation.isPending}>
+                <Button onClick={handlePublish} disabled={publishMutation.isPending}>
                   <Send className="mr-2 h-4 w-4" /> Pubblica
                 </Button>
               </div>
