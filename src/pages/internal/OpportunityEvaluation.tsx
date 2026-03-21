@@ -144,6 +144,59 @@ export default function InternalOpportunityEvaluation() {
     onError: (err: any) => toast.error(err.message || "Errore"),
   });
 
+  // Admitted bids for award selection
+  const admittedBids = useMemo(() => {
+    const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number }[] = [];
+    invitations.forEach((inv: any) => {
+      const bid = inv.bids?.[0];
+      if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
+        result.push({
+          bidId: bid.id,
+          supplierId: inv.supplier_id,
+          supplierName: inv.suppliers?.company_name ?? "—",
+          totalAmount: Number(bid.total_amount ?? 0),
+          score: computeTotal(bid.id),
+        });
+      }
+    });
+    return result;
+  }, [invitations, computeTotal]);
+
+  const allSubmittedBidIds = useMemo(() => {
+    return invitations
+      .map((inv: any) => inv.bids?.[0]?.id)
+      .filter(Boolean) as string[];
+  }, [invitations]);
+
+  const canAward = hasGrant("approve_award");
+  const isAwarded = opp?.status === "awarded";
+
+  const awardMutation = useMutation({
+    mutationFn: async () => {
+      if (!profile || !selectedWinner) throw new Error("Dati mancanti");
+      const winner = admittedBids.find((b) => b.bidId === selectedWinner);
+      if (!winner) throw new Error("Offerta non trovata");
+      await bidService.awardOpportunity({
+        opportunityId: opportunityId!,
+        winningBidId: winner.bidId,
+        supplierId: winner.supplierId,
+        awardedBy: profile.id,
+        justification: awardJustification,
+        tenantId: profile.tenant_id,
+        allBidIds: allSubmittedBidIds,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Aggiudicazione completata");
+      qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
+      setAwardDialog(false);
+      setSelectedWinner("");
+      setAwardJustification("");
+    },
+    onError: (err: any) => toast.error(err.message || "Errore"),
+  });
+
   if (oppLoading || invLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   }
