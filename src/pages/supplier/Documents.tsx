@@ -69,8 +69,15 @@ function DocumentCard({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const status = uploaded?.status || "not_uploaded";
-  const cfg = statusConfig[status] || statusConfig.not_uploaded;
+  // Determine effective status (check expiry for approved docs)
+  const isExpiringSoon = uploaded?.status === "approved" && uploaded?.expiry_date &&
+    new Date(uploaded.expiry_date) > new Date() &&
+    new Date(uploaded.expiry_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const isExpired = uploaded?.status === "approved" && uploaded?.expiry_date &&
+    new Date(uploaded.expiry_date) < new Date();
+
+  const effectiveStatus = isExpired ? "expired" : uploaded?.status || "not_uploaded";
+  const cfg = statusConfig[effectiveStatus] || statusConfig.not_uploaded;
   const StatusIcon = cfg.icon;
 
   return (
