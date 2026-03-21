@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
-import type { Supplier } from "@/types";
+import { notificationService } from "@/services/notificationService";
+import type { Supplier, SupplierStatusHistory, SupplierCategory } from "@/types";
 
 export const vendorService = {
   async registerSupplier(params: {
@@ -12,7 +13,6 @@ export const vendorService = {
     password: string;
     category_id?: string;
   }) {
-    // 1. Auth signup
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email: params.email,
       password: params.password,
@@ -25,8 +25,6 @@ export const vendorService = {
     const userId = authData.user?.id;
     if (!userId) throw new Error("Registrazione fallita: utente non creato");
 
-    // We need a tenant_id. For supplier self-registration we use a default tenant.
-    // The edge function / trigger should handle this, but for now we fetch it.
     const { data: tenants } = await supabase
       .from("tenants")
       .select("id")
@@ -36,7 +34,6 @@ export const vendorService = {
     const tenantId = tenants?.id;
     if (!tenantId) throw new Error("Nessun tenant configurato");
 
-    // 2. Insert supplier
     const { data: supplier, error: supErr } = await supabase
       .from("suppliers")
       .insert({
@@ -49,7 +46,6 @@ export const vendorService = {
       .single();
     if (supErr) throw supErr;
 
-    // 3. Insert profile
     const { error: profErr } = await supabase
       .from("profiles")
       .insert({
@@ -63,7 +59,6 @@ export const vendorService = {
       });
     if (profErr) throw profErr;
 
-    // 4. Insert supplier_status_history
     const { error: histErr } = await supabase
       .from("supplier_status_history")
       .insert({
@@ -73,7 +68,6 @@ export const vendorService = {
       });
     if (histErr) console.error("Status history error:", histErr);
 
-    // 5. Insert supplier_categories if selected
     if (params.category_id) {
       await supabase.from("supplier_categories").insert({
         supplier_id: supplier.id,
@@ -82,7 +76,6 @@ export const vendorService = {
       });
     }
 
-    // 6. Send notification via edge function
     try {
       await supabase.functions.invoke("send-notification", {
         body: {
@@ -110,7 +103,9 @@ export const vendorService = {
   },
 
   async getMySupplier(): Promise<Supplier | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return null;
     const { data: profile } = await supabase
       .from("profiles")
@@ -132,43 +127,88 @@ export const vendorService = {
     return data as Supplier;
   },
 
+  /**
+   * Full status change: update supplier, insert history, audit, notify supplier.
+   */
+  async changeStatus(params: {
+    supplierId: string;
+    fromStatus: string;
+    toStatus: string;
+    reason?: string;
+    extraUpdate?: Partial<Supplier>;
+  }) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: sup } = await supabase
+      .from("suppliers")
+      .select("tenant_id")
+      .eq("id", params.supplierId)
+      .single();
+    if (!sup) throw new Error("Fornitore non trovato");
+
+    // Update supplier
+    const updatePayload: Record<string, unknown> = {
+      status: params.toStatus,
+      ...(params.extraUpdate || {}),
+    };
+    const { error: updErr } = await supabase
+      .from("suppliers")
+      .update(updatePayload)
+      .eq("id", params.supplierId);
+    if (updErr) throw updErr;
+
+    // Insert history
+    const { error: histErr } = await supabase
+      .from("supplier_status_history")
+      .insert({
+        supplier_id: params.supplierId,
+        from_status: params.fromStatus,
+        to_status: params.toStatus,
+        changed_by: user?.id || null,
+        reason: params.reason || null,
+      });
+    if (histErr) console.error("History error:", histErr);
+
+    // Audit
+    await auditService.log({
+      tenant_id: sup.tenant_id,
+      entity_type: "suppliers",
+      entity_id: params.supplierId,
+      event_type: "status_change",
+      old_state: { status: params.fromStatus },
+      new_state: { status: params.toStatus, reason: params.reason },
+    });
+
+    // Notify supplier
+    try {
+      const profileId = await this.getSupplierProfileId(params.supplierId);
+      if (profileId) {
+        await notificationService.send({
+          event_type: `supplier_${params.toStatus}`,
+          recipient_id: profileId,
+          tenant_id: sup.tenant_id,
+          variables: { status: params.toStatus, reason: params.reason || "" },
+        });
+      }
+    } catch (e) {
+      console.error("Notification error:", e);
+    }
+  },
+
+  /** @deprecated Use changeStatus instead */
   async updateSupplierStatus(
     supplierId: string,
     toStatus: string,
     fromStatus?: string,
     reason?: string
   ) {
-    const { data: { user } } = await supabase.auth.getUser();
-    // Get tenant_id from supplier
-    const { data: sup } = await supabase
-      .from("suppliers")
-      .select("tenant_id")
-      .eq("id", supplierId)
-      .single();
-    // Update supplier
-    await supabase
-      .from("suppliers")
-      .update({ status: toStatus })
-      .eq("id", supplierId);
-    // Insert history
-    await supabase.from("supplier_status_history").insert({
-      supplier_id: supplierId,
-      to_status: toStatus,
-      from_status: fromStatus || null,
-      changed_by: user?.id || null,
-      reason: reason || null,
+    await this.changeStatus({
+      supplierId,
+      fromStatus: fromStatus || "",
+      toStatus,
+      reason,
     });
-    // Audit log
-    if (sup?.tenant_id) {
-      await auditService.log({
-        tenant_id: sup.tenant_id,
-        entity_type: "suppliers",
-        entity_id: supplierId,
-        event_type: "status_change",
-        old_state: { status: fromStatus },
-        new_state: { status: toStatus, reason },
-      });
-    }
   },
 
   async getSupplierProfileId(supplierId: string): Promise<string | null> {
@@ -179,6 +219,47 @@ export const vendorService = {
       .limit(1)
       .maybeSingle();
     return data?.id || null;
+  },
+
+  /**
+   * Paginated + filtered supplier list.
+   */
+  async listSuppliersPaginated(params: {
+    page: number;
+    pageSize: number;
+    status?: string;
+    categoryId?: string;
+    search?: string;
+  }): Promise<{ data: Supplier[]; count: number }> {
+    const from = (params.page - 1) * params.pageSize;
+    const to = from + params.pageSize - 1;
+
+    let query = supabase
+      .from("suppliers")
+      .select("*", { count: "exact" })
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (params.status) query = query.eq("status", params.status);
+    if (params.search)
+      query = query.ilike("company_name", `%${params.search}%`);
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    // If filtering by category, we need a second query
+    if (params.categoryId && data) {
+      const { data: catSuppliers } = await supabase
+        .from("supplier_categories")
+        .select("supplier_id")
+        .eq("category_id", params.categoryId);
+      const ids = new Set((catSuppliers || []).map((c) => c.supplier_id));
+      const filtered = data.filter((s) => ids.has(s.id));
+      return { data: filtered as Supplier[], count: filtered.length };
+    }
+
+    return { data: (data || []) as Supplier[], count: count || 0 };
   },
 
   async listSuppliers(tenantId?: string) {
@@ -193,30 +274,68 @@ export const vendorService = {
     return data as Supplier[];
   },
 
-  async getSupplierCategories(supplierId: string) {
+  async getStatusCounts(): Promise<Record<string, number>> {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("status")
+      .is("deleted_at", null);
+    if (error) throw error;
+    const counts: Record<string, number> = {};
+    (data || []).forEach((s) => {
+      counts[s.status] = (counts[s.status] || 0) + 1;
+    });
+    return counts;
+  },
+
+  async getSupplierCategories(
+    supplierId: string
+  ): Promise<SupplierCategory[]> {
     const { data, error } = await supabase
       .from("supplier_categories")
       .select("*, categories:category_id(id, name, code)")
       .eq("supplier_id", supplierId);
     if (error) throw error;
-    return data;
+    return data as unknown as SupplierCategory[];
+  },
+
+  async approveCategory(id: string) {
+    const { error } = await supabase
+      .from("supplier_categories")
+      .update({
+        status: "qualified",
+        qualified_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
   },
 
   async setSupplierCategories(supplierId: string, categoryIds: string[]) {
-    // Delete existing
     await supabase
       .from("supplier_categories")
       .delete()
       .eq("supplier_id", supplierId);
-    // Insert new
     if (categoryIds.length > 0) {
       const rows = categoryIds.map((cid) => ({
         supplier_id: supplierId,
         category_id: cid,
         status: "pending" as const,
       }));
-      const { error } = await supabase.from("supplier_categories").insert(rows);
+      const { error } = await supabase
+        .from("supplier_categories")
+        .insert(rows);
       if (error) throw error;
     }
+  },
+
+  async getStatusHistory(
+    supplierId: string
+  ): Promise<SupplierStatusHistory[]> {
+    const { data, error } = await supabase
+      .from("supplier_status_history")
+      .select("*, changer:changed_by(full_name)")
+      .eq("supplier_id", supplierId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as unknown as SupplierStatusHistory[];
   },
 };
