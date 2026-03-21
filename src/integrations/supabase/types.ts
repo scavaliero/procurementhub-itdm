@@ -14,13 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      grants: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          module: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          last_login_at: string | null
+          phone: string | null
+          supplier_id: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          phone?: string | null
+          supplier_id?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          phone?: string | null
+          supplier_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_grants: {
+        Row: {
+          grant_id: string
+          role_id: string
+        }
+        Insert: {
+          grant_id: string
+          role_id: string
+        }
+        Update: {
+          grant_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_grants_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_grants_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_grants: {
+        Row: {
+          expires_at: string | null
+          grant_id: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          expires_at?: string | null
+          grant_id?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          grant_id?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_grants_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_grants_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      user_effective_grants: {
+        Row: {
+          grant_name: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      current_tenant_id: { Args: never; Returns: string }
+      user_has_grant: { Args: { grant_name: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
