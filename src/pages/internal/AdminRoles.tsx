@@ -109,6 +109,7 @@ export default function AdminRoles() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Gestione Ruoli" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Gestione Ruoli</h1>
         <Button onClick={() => setCreateOpen(true)}>

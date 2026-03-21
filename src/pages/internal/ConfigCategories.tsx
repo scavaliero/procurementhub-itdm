@@ -89,6 +89,7 @@ export default function ConfigCategories() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Categorie Merceologiche" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Categorie Merceologiche</h1>
         <Button onClick={openCreate}>
