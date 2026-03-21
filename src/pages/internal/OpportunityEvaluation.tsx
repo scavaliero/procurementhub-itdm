@@ -383,6 +383,52 @@ export default function InternalOpportunityEvaluation() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Award Dialog */}
+      <Dialog open={awardDialog} onOpenChange={(open) => { if (!open) { setAwardDialog(false); setSelectedWinner(""); setAwardJustification(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Seleziona vincitore</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Offerta vincitrice *</Label>
+              <Select value={selectedWinner} onValueChange={setSelectedWinner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona un fornitore..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {admittedBids.map((b) => (
+                    <SelectItem key={b.bidId} value={b.bidId}>
+                      {b.supplierName} — € {b.totalAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })} (punteggio: {b.score.toFixed(2)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivazione aggiudicazione *</Label>
+              <Textarea
+                value={awardJustification}
+                onChange={(e) => setAwardJustification(e.target.value)}
+                rows={3}
+                placeholder="Inserisci la motivazione dell'aggiudicazione..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setAwardDialog(false); setSelectedWinner(""); setAwardJustification(""); }}>
+              Annulla
+            </Button>
+            <Button
+              disabled={!selectedWinner || !awardJustification.trim() || awardMutation.isPending}
+              onClick={() => awardMutation.mutate()}
+            >
+              Conferma aggiudicazione
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
