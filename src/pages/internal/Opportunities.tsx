@@ -115,7 +115,7 @@ export default function InternalOpportunities() {
         pageSize: 10000,
         page: 0,
       });
-      const csv = exportService.generateCsv(all.data as any[], [
+      const csv = exportService.generateCsv(all.data as Record<string, unknown>[], [
         { key: "code", header: "Codice" },
         { key: "title", header: "Titolo" },
         { key: "status", header: "Stato", formatter: (v) => STATUS_LABELS[v as string] || String(v) },

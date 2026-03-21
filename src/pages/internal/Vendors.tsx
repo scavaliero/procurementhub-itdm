@@ -176,7 +176,7 @@ export default function InternalVendors() {
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
       });
-      const csv = exportService.generateCsv(allData as any[], [
+      const csv = exportService.generateCsv(allData as Record<string, unknown>[], [
         { key: "company_name", header: "Ragione Sociale" },
         { key: "status", header: "Stato", formatter: (v) => STATUS_CONFIG[v as string]?.label || String(v) },
         { key: "created_at", header: "Data Registrazione", formatter: (v) => v ? new Date(v as string).toLocaleDateString("it-IT") : "" },
