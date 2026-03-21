@@ -161,11 +161,13 @@ export default function InternalVendorDetail() {
     mutationFn: async ({
       doc,
       action,
+      reviewNotes,
     }: {
       doc: UploadedDocument;
       action: "approved" | "rejected";
+      reviewNotes?: string;
     }) => {
-      const result = await documentService.reviewDocument(doc.id, action);
+      const result = await documentService.reviewDocument(doc.id, action, reviewNotes);
       if (supplier) {
         await auditService.log({
           tenant_id: supplier.tenant_id,
@@ -173,7 +175,7 @@ export default function InternalVendorDetail() {
           entity_id: doc.id,
           event_type: `document_${action}`,
           old_state: { status: doc.status },
-          new_state: { status: action },
+          new_state: { status: action, review_notes: reviewNotes || null },
         });
         try {
           const profileId = await vendorService.getSupplierProfileId(supplier.id);
@@ -185,6 +187,7 @@ export default function InternalVendorDetail() {
               variables: {
                 document_name:
                   docTypes.find((dt) => dt.id === doc.document_type_id)?.name || "",
+                ...(reviewNotes ? { review_notes: reviewNotes } : {}),
               },
             });
           }
@@ -197,6 +200,8 @@ export default function InternalVendorDetail() {
     onSuccess: () => {
       toast.success("Documento aggiornato");
       invalidateAll();
+      setRejectDocDialog(null);
+      setRejectDocNotes("");
     },
     onError: (err: Error) => toast.error(err.message),
   });
