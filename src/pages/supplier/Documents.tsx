@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Upload, FileText, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import type { DocumentType, UploadedDocument } from "@/types";
 
@@ -37,6 +37,15 @@ function DocumentCard({
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const expiryRef = useRef<HTMLInputElement>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: (docId: string) => documentService.deleteDocument(docId),
+    onSuccess: () => {
+      toast.success("Documento eliminato — puoi ricaricarlo");
+      qc.invalidateQueries({ queryKey: ["supplier-documents"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -82,49 +91,76 @@ function DocumentCard({
         {docType.description && (
           <p className="text-xs text-muted-foreground">{docType.description}</p>
         )}
-        {uploaded?.expiry_date && (
+        {uploaded?.review_notes && uploaded.status === "rejected" && (
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
+            <p className="text-xs font-medium text-destructive">Motivo rifiuto:</p>
+            <p className="text-xs text-destructive/80 mt-0.5">{uploaded.review_notes}</p>
+          </div>
+        )}
+        {uploaded?.expiry_date && uploaded.status !== "rejected" && (
           <p className="text-xs text-muted-foreground">
             Scadenza: {new Date(uploaded.expiry_date).toLocaleDateString("it-IT")}
           </p>
         )}
-        {uploaded?.original_filename && (
+        {uploaded?.original_filename && uploaded.status !== "rejected" && (
           <p className="text-xs truncate">{uploaded.original_filename}</p>
         )}
-        <div className="space-y-1">
-          <Label className="text-xs">
-            Data scadenza <span className="text-destructive">*</span>
-          </Label>
-          <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
-        </div>
-        <div>
-          <input
-            ref={fileRef}
-            type="file"
-            className="hidden"
-            accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
-                if (file.size > maxBytes) {
-                  toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
-                  return;
-                }
-                uploadMutation.mutate(file);
-              }
-            }}
-          />
+
+        {/* Show delete + re-upload for rejected docs */}
+        {uploaded?.status === "rejected" && (
           <Button
             size="sm"
-            variant="outline"
+            variant="destructive"
             className="w-full"
-            disabled={uploadMutation.isPending}
-            onClick={() => fileRef.current?.click()}
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate(uploaded.id)}
           >
-            <Upload className="h-3.5 w-3.5 mr-1" />
-            {uploadMutation.isPending ? "Caricamento…" : uploaded ? "Ricarica" : "Carica"}
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            {deleteMutation.isPending ? "Eliminazione…" : "Elimina e ricarica"}
           </Button>
-        </div>
+        )}
+
+        {/* Upload form: show when no doc, or doc is not rejected */}
+        {(!uploaded || uploaded.status !== "rejected") && (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs">
+                Data scadenza <span className="text-destructive">*</span>
+              </Label>
+              <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
+            </div>
+            <div>
+              <input
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
+                    if (file.size > maxBytes) {
+                      toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
+                      return;
+                    }
+                    uploadMutation.mutate(file);
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                disabled={uploadMutation.isPending}
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload className="h-3.5 w-3.5 mr-1" />
+                {uploadMutation.isPending ? "Caricamento…" : uploaded ? "Ricarica" : "Carica"}
+              </Button>
+            </div>
+          </>
+        )}
+
         {docType.is_mandatory && (
           <p className="text-[10px] text-destructive">* Obbligatorio</p>
         )}

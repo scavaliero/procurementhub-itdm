@@ -308,12 +308,28 @@ export default function InternalVendorDetail() {
       case "enable":
         statusMutation.mutate({ toStatus: "enabled" });
         break;
-      case "approve":
+      case "approve": {
+        // Check all uploaded documents are approved
+        const pendingDocs = docs.filter(
+          (d) => d.status !== "approved"
+        );
+        if (pendingDocs.length > 0) {
+          const rejectedCount = pendingDocs.filter((d) => d.status === "rejected").length;
+          const uploadedCount = pendingDocs.filter((d) => d.status === "uploaded").length;
+          const parts: string[] = [];
+          if (rejectedCount > 0) parts.push(`${rejectedCount} respinti`);
+          if (uploadedCount > 0) parts.push(`${uploadedCount} in revisione`);
+          toast.error(
+            `Impossibile approvare: ${parts.join(", ")}. Tutti i documenti devono essere approvati.`
+          );
+          return;
+        }
         statusMutation.mutate({
           toStatus: "accredited",
           extraUpdate: { accredited_at: new Date().toISOString() },
         });
         break;
+      }
       case "integrate":
         if (!dialogMessage.trim()) {
           toast.error("Inserisci un messaggio");

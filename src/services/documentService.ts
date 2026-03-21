@@ -130,4 +130,13 @@ export const documentService = {
     if (error) throw error;
     return data.signedUrl;
   },
+
+  /** Soft-delete a rejected document so supplier can re-upload */
+  async deleteDocument(id: string) {
+    const { error } = await supabase
+      .from("uploaded_documents")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  },
 };
