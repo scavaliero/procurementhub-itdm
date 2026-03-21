@@ -264,7 +264,6 @@ export default function InternalVendors() {
                           {s.company_name}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground font-mono text-xs">
                         {s.vat_number_hash
                           ? `${s.vat_number_hash.slice(0, 8)}…`
                           : "—"}
