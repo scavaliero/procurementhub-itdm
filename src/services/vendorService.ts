@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { auditService } from "@/services/auditService";
 import type { Supplier } from "@/types";
 
 export const vendorService = {
