@@ -1550,6 +1550,21 @@ export type Database = {
       }
       current_tenant_id: { Args: never; Returns: string }
       user_has_grant: { Args: { grant_name: string }; Returns: boolean }
+      verify_append_only: { Args: { p_table_name: string }; Returns: Json }
+      verify_function_exists: {
+        Args: { p_func_name: string }
+        Returns: boolean
+      }
+      verify_rls_enabled: { Args: { p_table_name: string }; Returns: boolean }
+      verify_table_exists: { Args: { p_table_name: string }; Returns: boolean }
+      verify_trigger_exists: {
+        Args: { p_table_name: string; p_trigger_name: string }
+        Returns: boolean
+      }
+      verify_view_columns: {
+        Args: { p_columns: string[]; p_view_name: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
