@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
 import type { Bid, BidEvaluation } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface BidDraft {
   opportunity_id: string;
