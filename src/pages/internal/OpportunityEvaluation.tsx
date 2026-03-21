@@ -227,9 +227,16 @@ export default function InternalOpportunityEvaluation() {
           </Button>
         )}
         {isAwarded && (
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
-            Aggiudicata
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
+              Aggiudicata
+            </Badge>
+            {canCreateOrder && (
+              <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${opportunityId}/create-order`)}>
+                Genera ordine
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
