@@ -100,6 +100,7 @@ const App = () => (
             <Route path="/internal/orders" element={<InternalOrders />} />
             <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
+            <Route path="/internal/notifications" element={<InternalNotifications />} />
             <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
             <Route path="/internal/config/categories" element={<ConfigCategories />} />
             <Route path="/internal/admin/roles" element={<AdminRoles />} />
