@@ -101,6 +101,7 @@ export default function InternalCreateOrder() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: "Genera Ordine" }]} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
