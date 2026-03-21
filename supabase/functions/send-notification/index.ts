@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [profile.email],
+        to: [toEmail],
         subject,
         html: html_body,
       }),
