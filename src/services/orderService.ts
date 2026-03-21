@@ -58,7 +58,7 @@ export const orderService = {
         amount: params.amount,
         start_date: params.startDate,
         end_date: params.endDate,
-        milestones: (params.milestones as any) || [],
+        milestones: (params.milestones as unknown as Json) || [],
         contract_conditions: params.contractConditions || null,
         status,
       })
