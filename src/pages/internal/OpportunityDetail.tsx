@@ -51,7 +51,7 @@ export default function InternalOpportunityDetail() {
   });
 
   if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
-  if (!opp) return <EmptyState icon={<FileText className="h-12 w-12" />} title="Opportunità non trovata" description="" />;
+  if (!opp) return <EmptyState title="Opportunità non trovata" />;
 
   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
