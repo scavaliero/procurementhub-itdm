@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentService } from "@/services/documentService";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,6 +137,7 @@ export default function ConfigDocumentTypes() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Tipi Documento" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Tipi Documento</h1>
         <Button onClick={openCreate}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { billingApprovalService } from "@/services/billingApprovalService";
@@ -206,6 +207,7 @@ export default function InternalBillingApprovals() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Benestari" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Benestari di Fatturazione</h1>
         {canCreate && (

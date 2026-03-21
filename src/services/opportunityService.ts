@@ -6,6 +6,7 @@ import type { Opportunity } from "@/types";
 export interface OpportunityFilters {
   status?: string;
   category_id?: string;
+  internal_ref_id?: string;
   date_from?: string;
   date_to?: string;
   search?: string;
@@ -36,6 +37,7 @@ export const opportunityService = {
 
     if (filters.status) q = q.eq("status", filters.status);
     if (filters.category_id) q = q.eq("category_id", filters.category_id);
+    if (filters.internal_ref_id) q = q.eq("internal_ref_id", filters.internal_ref_id);
     if (filters.date_from) q = q.gte("bids_deadline", filters.date_from);
     if (filters.date_to) q = q.lte("bids_deadline", filters.date_to);
     if (filters.search) q = q.ilike("title", `%${filters.search}%`);

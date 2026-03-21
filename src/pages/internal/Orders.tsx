@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useNavigate } from "react-router-dom";
 import { orderService } from "@/services/orderService";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +47,7 @@ export default function InternalOrders() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Ordini" }]} />
       <h1 className="text-2xl font-bold">Ordini</h1>
 
       {orders.length === 0 ? (

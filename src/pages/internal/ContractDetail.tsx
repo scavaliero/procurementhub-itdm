@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery } from "@tanstack/react-query";
 import { contractService } from "@/services/contractService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ export default function InternalContractDetail() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Ordini", href: "/internal/orders" }, { label: `Contratto — ${contract.orders?.code ?? "—"}` }]} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
