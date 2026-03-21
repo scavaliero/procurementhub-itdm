@@ -55,6 +55,9 @@ export default function InternalOpportunityEvaluation() {
   const { hasGrant } = useGrants();
   const [excludeDialog, setExcludeDialog] = useState<{ bidId: string; supplierName: string } | null>(null);
   const [excludeReason, setExcludeReason] = useState("");
+  const [awardDialog, setAwardDialog] = useState(false);
+  const [selectedWinner, setSelectedWinner] = useState("");
+  const [awardJustification, setAwardJustification] = useState("");
 
   // Scores: { [bidId]: { [criterionName]: score } }
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
