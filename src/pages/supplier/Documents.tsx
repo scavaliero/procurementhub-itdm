@@ -90,12 +90,12 @@ function DocumentCard({
         {uploaded?.original_filename && (
           <p className="text-xs truncate">{uploaded.original_filename}</p>
         )}
-        {docType.requires_expiry && (
-          <div className="space-y-1">
-            <Label className="text-xs">Data scadenza</Label>
-            <Input ref={expiryRef} type="date" className="h-8 text-xs" />
-          </div>
-        )}
+        <div className="space-y-1">
+          <Label className="text-xs">
+            Data scadenza <span className="text-destructive">*</span>
+          </Label>
+          <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
+        </div>
         <div>
           <input
             ref={fileRef}
