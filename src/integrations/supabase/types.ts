@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          event_type: string
+          id: string
+          ip_address: unknown
+          new_state: Json | null
+          old_state: Json | null
+          tenant_id: string
+          user_email: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          new_state?: Json | null
+          old_state?: Json | null
+          tenant_id: string
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          new_state?: Json | null
+          old_state?: Json | null
+          tenant_id?: string
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       awards: {
         Row: {
           awarded_at: string | null
@@ -289,6 +334,13 @@ export type Database = {
             foreignKeyName: "billing_approvals_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
+            referencedRelation: "contract_economic_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
@@ -514,6 +566,50 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          event_type: string
+          html_body: string
+          id: string
+          is_active: boolean | null
+          subject: string
+          tenant_id: string
+          text_body: string | null
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          event_type: string
+          html_body: string
+          id?: string
+          is_active?: boolean | null
+          subject: string
+          tenant_id: string
+          text_body?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          event_type?: string
+          html_body?: string
+          id?: string
+          is_active?: boolean | null
+          subject?: string
+          tenant_id?: string
+          text_body?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grants: {
         Row: {
           created_at: string | null
@@ -537,6 +633,66 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          event_type: string
+          id: string
+          is_read: boolean | null
+          link_url: string | null
+          read_at: string | null
+          recipient_id: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          read_at?: string | null
+          recipient_id: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opportunities: {
         Row: {
@@ -1336,6 +1492,44 @@ export type Database = {
       }
     }
     Views: {
+      contract_economic_summary: {
+        Row: {
+          approved_billing_total: number | null
+          contract_id: string | null
+          current_authorized_amount: number | null
+          order_id: string | null
+          original_order_amount: number | null
+          pending_approval_amount: number | null
+          pending_approval_count: number | null
+          residual_amount: number | null
+          residual_pct: number | null
+          supplier_id: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_effective_grants: {
         Row: {
           grant_name: string | null
