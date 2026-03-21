@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { maskIBAN } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
@@ -433,7 +434,7 @@ export default function InternalVendorDetail() {
                       label="P.IVA"
                       value={supplier.vat_number_hash ? "•••••••••••" : "—"}
                     />
-                    <InfoRow label="IBAN (mascherato)" value={supplier.iban_masked} />
+                    <InfoRow label="IBAN (mascherato)" value={maskIBAN(supplier.iban_masked)} />
                     <InfoRow
                       label="Rating"
                       value={

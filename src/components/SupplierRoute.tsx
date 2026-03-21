@@ -2,6 +2,8 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
+import { useRealtimeNotifications } from "@/hooks/useRealtime";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { AlertCircle, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 export function SupplierRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, isLoading } = useAuth();
   const location = useLocation();
+
+  useRealtimeNotifications();
+  const { SessionTimeoutModal } = useSessionTimeout();
 
   const { data: supplier, isLoading: supLoading } = useQuery({
     queryKey: ["my-supplier"],
@@ -29,12 +34,7 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
   const isAllowedPath = allowedPaths.some((p) => location.pathname.startsWith(p));
 
   // Block access if supplier status is "pending" (reverted due to expired docs)
-  // Allow pre_registered and onboarding statuses as they're part of normal flow
-  if (
-    supplier &&
-    supplier.status === "pending" &&
-    !isAllowedPath
-  ) {
+  if (supplier && supplier.status === "pending" && !isAllowedPath) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <Card className="max-w-lg w-full">
@@ -61,9 +61,15 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
             </div>
           </CardContent>
         </Card>
+        <SessionTimeoutModal />
       </div>
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <SessionTimeoutModal />
+    </>
+  );
 }
