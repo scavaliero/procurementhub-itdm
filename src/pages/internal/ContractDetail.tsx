@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery } from "@tanstack/react-query";
 import { contractService } from "@/services/contractService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
