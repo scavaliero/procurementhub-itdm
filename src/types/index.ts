@@ -6,10 +6,14 @@ import type { Json } from "@/integrations/supabase/types";
 // ── Status unions ──────────────────────────────────────────────
 export type SupplierStatus =
   | "pre_registered"
+  | "enabled"
+  | "in_accreditation"
+  | "in_approval"
   | "pending_review"
   | "accredited"
   | "suspended"
   | "rejected"
+  | "revoked"
   | "blacklisted";
 
 export type OpportunityStatus =
