@@ -408,10 +408,10 @@ export default function InternalOpportunityNew() {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Indietro
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft} disabled={createMutation.isPending}>
+                <Button variant="outline" onClick={handleSaveDraft} disabled={publishMutation.isPending}>
                   <Save className="mr-2 h-4 w-4" /> Salva bozza
                 </Button>
-                <Button onClick={handlePublish} disabled={createMutation.isPending}>
+                <Button onClick={handlePublish} disabled={publishMutation.isPending}>
                   <Send className="mr-2 h-4 w-4" /> Pubblica
                 </Button>
               </div>
