@@ -77,12 +77,22 @@ export const vendorService = {
     }
 
     try {
+      // Notify supplier
       await supabase.functions.invoke("send-notification", {
         body: {
           event_type: "pre_registration",
           recipient_id: userId,
           tenant_id: tenantId,
           variables: { company_name: params.company_name },
+        },
+      });
+      // Notify procurement team
+      await supabase.functions.invoke("send-notification", {
+        body: {
+          event_type: "pre_registration",
+          recipient_email: "procurement@itdm.it",
+          tenant_id: tenantId,
+          variables: { company_name: params.company_name, contact_name: params.contact_name, email: params.email },
         },
       });
     } catch (e) {

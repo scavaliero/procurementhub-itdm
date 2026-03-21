@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { event_type, recipient_id, variables, tenant_id } = await req.json();
+    const { event_type, recipient_id, recipient_email, variables, tenant_id } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -36,18 +36,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Fetch recipient email
-    const { data: profile, error: profErr } = await supabase
-      .from("profiles")
-      .select("email, full_name")
-      .eq("id", recipient_id)
-      .maybeSingle();
+    // 2. Resolve recipient email
+    let toEmail: string;
+    let recipientName: string | null = null;
 
-    if (profErr) throw profErr;
-    if (!profile) {
+    if (recipient_email) {
+      // Direct email provided (e.g. fixed procurement address)
+      toEmail = recipient_email;
+    } else if (recipient_id) {
+      const { data: profile, error: profErr } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", recipient_id)
+        .maybeSingle();
+
+      if (profErr) throw profErr;
+      if (!profile) {
+        return new Response(
+          JSON.stringify({ error: "recipient_not_found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      toEmail = profile.email;
+      recipientName = profile.full_name;
+    } else {
       return new Response(
-        JSON.stringify({ error: "recipient_not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "no_recipient" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -74,7 +89,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [profile.email],
+        to: [toEmail],
         subject,
         html: html_body,
       }),
@@ -86,18 +101,20 @@ Deno.serve(async (req) => {
       // Still insert notification even if email fails
     }
 
-    // 5. Insert notification
-    const { error: notifErr } = await supabase.from("notifications").insert({
-      tenant_id,
-      recipient_id,
-      event_type,
-      title: subject,
-      body: html_body,
-      is_read: false,
-    });
+    // 5. Insert notification (only if we have a recipient_id for in-app notification)
+    if (recipient_id) {
+      const { error: notifErr } = await supabase.from("notifications").insert({
+        tenant_id,
+        recipient_id,
+        event_type,
+        title: subject,
+        body: html_body,
+        is_read: false,
+      });
 
-    if (notifErr) {
-      console.error("Notification insert error:", notifErr);
+      if (notifErr) {
+        console.error("Notification insert error:", notifErr);
+      }
     }
 
     return new Response(
