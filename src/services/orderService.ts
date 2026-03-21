@@ -39,7 +39,7 @@ export const orderService = {
       .eq("opportunity_id", opportunityId)
       .single();
     if (error) throw error;
-    return data as any;
+    return data as AwardForOrder;
   },
 
   /** Create order + contract */
