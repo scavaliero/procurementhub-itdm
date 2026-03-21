@@ -72,7 +72,7 @@ export default function InternalOpportunityEvaluation() {
   });
 
   const criteria: CriterionDef[] = useMemo(
-    () => (Array.isArray(opp?.evaluation_criteria) ? (opp.evaluation_criteria as CriterionDef[]) : []),
+    () => (Array.isArray(opp?.evaluation_criteria) ? (opp.evaluation_criteria as unknown as CriterionDef[]) : []),
     [opp]
   );
 
