@@ -6,10 +6,14 @@ import type { Json } from "@/integrations/supabase/types";
 // ── Status unions ──────────────────────────────────────────────
 export type SupplierStatus =
   | "pre_registered"
+  | "enabled"
+  | "in_accreditation"
+  | "in_approval"
   | "pending_review"
   | "accredited"
   | "suspended"
   | "rejected"
+  | "revoked"
   | "blacklisted";
 
 export type OpportunityStatus =
@@ -333,6 +337,29 @@ export interface Role {
   is_system: boolean | null;
   is_active: boolean | null;
   created_at: string | null;
+}
+
+// ── Junction / history types ──────────────────────────────────
+export interface SupplierCategory {
+  id: string;
+  supplier_id: string;
+  category_id: string;
+  status: string | null;
+  qualified_at: string | null;
+  valid_until: string | null;
+  categories?: { id: string; name: string; code: string } | null;
+}
+
+export interface SupplierStatusHistory {
+  id: string;
+  supplier_id: string;
+  from_status: string | null;
+  to_status: string;
+  changed_by: string | null;
+  reason: string | null;
+  notes: string | null;
+  created_at: string | null;
+  changer?: { full_name: string } | null;
 }
 
 // ── View types ────────────────────────────────────────────────
