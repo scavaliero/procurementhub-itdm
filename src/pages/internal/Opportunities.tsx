@@ -136,7 +136,7 @@ export default function InternalOpportunities() {
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
       ) : opps.length === 0 ? (
-        <EmptyState icon={<FileText className="h-12 w-12" />} title="Nessuna opportunità" description="Non ci sono opportunità con i filtri selezionati." />
+        <EmptyState title="Nessuna opportunità" description="Non ci sono opportunità con i filtri selezionati." />
       ) : (
         <>
           <Table>

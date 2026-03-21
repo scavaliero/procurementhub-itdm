@@ -54,7 +54,7 @@ export default function SupplierOpportunities() {
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
       ) : invitations.length === 0 ? (
-        <EmptyState icon={<FileText className="h-12 w-12" />} title="Nessuna opportunità" description="Non sei stato ancora invitato a nessuna gara." />
+        <EmptyState title="Nessuna opportunità" description="Non sei stato ancora invitato a nessuna gara." />
       ) : (
         <div className="space-y-3">
           {invitations.map((inv: any) => {

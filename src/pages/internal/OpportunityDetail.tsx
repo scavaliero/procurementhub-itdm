@@ -141,7 +141,7 @@ export default function InternalOpportunityDetail() {
           <Card>
             <CardContent className="p-6">
               {invitations.length === 0 ? (
-                <EmptyState icon={<Users className="h-10 w-10" />} title="Nessun invito" description="Non sono stati ancora inviati inviti per questa opportunità." />
+                <EmptyState title="Nessun invito" description="Non sono stati ancora inviati inviti per questa opportunità." />
               ) : (
                 <Table>
                   <TableHeader>
