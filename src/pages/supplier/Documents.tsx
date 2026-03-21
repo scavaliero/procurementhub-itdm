@@ -38,6 +38,15 @@ function DocumentCard({
   const fileRef = useRef<HTMLInputElement>(null);
   const expiryRef = useRef<HTMLInputElement>(null);
 
+  const deleteMutation = useMutation({
+    mutationFn: (docId: string) => documentService.deleteDocument(docId),
+    onSuccess: () => {
+      toast.success("Documento eliminato — puoi ricaricarlo");
+      qc.invalidateQueries({ queryKey: ["supplier-documents"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const expiryDate = expiryRef.current?.value;
