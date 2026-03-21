@@ -747,6 +747,57 @@ export default function InternalVendorDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* ── Dialog rifiuto documento ── */}
+      <Dialog
+        open={!!rejectDocDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectDocDialog(null);
+            setRejectDocNotes("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Respingi documento</DialogTitle>
+            <DialogDescription>
+              Documento: {rejectDocDialog ? (dtMap[rejectDocDialog.document_type_id]?.name ?? rejectDocDialog.original_filename) : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Motivo del rifiuto <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={rejectDocNotes}
+                onChange={(e) => setRejectDocNotes(e.target.value)}
+                placeholder="Specifica il motivo del rifiuto…"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDocDialog(null)}>
+              Annulla
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectDocNotes.trim() || reviewMutation.isPending}
+              onClick={() => {
+                if (rejectDocDialog) {
+                  reviewMutation.mutate({
+                    doc: rejectDocDialog,
+                    action: "rejected",
+                    reviewNotes: rejectDocNotes.trim(),
+                  });
+                }
+              }}
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Conferma rifiuto
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
