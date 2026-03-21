@@ -207,7 +207,7 @@ export default function InternalCreateOrder() {
           onClick={() => createMutation.mutate()}
           className="min-w-[200px]"
         >
-          {amount > 10000 ? "Crea ordine (richiede approvazione)" : "Emetti ordine"}
+          Crea ordine (in approvazione)
         </Button>
       </div>
     </div>
