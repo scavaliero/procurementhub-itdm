@@ -6,6 +6,7 @@ import type { Opportunity } from "@/types";
 export interface OpportunityFilters {
   status?: string;
   category_id?: string;
+  internal_ref_id?: string;
   date_from?: string;
   date_to?: string;
   search?: string;
