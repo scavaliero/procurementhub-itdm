@@ -10,13 +10,16 @@ export const auditService = {
     new_state?: Record<string, unknown>;
   }) {
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("audit_logs").insert({
-      ...params,
+    const { error } = await supabase.from("audit_logs").insert([{
+      tenant_id: params.tenant_id,
+      entity_type: params.entity_type,
+      entity_id: params.entity_id,
+      event_type: params.event_type,
       user_id: user?.id || null,
       user_email: user?.email || null,
-      old_state: params.old_state || null,
-      new_state: params.new_state || null,
-    });
+      old_state: (params.old_state as any) || null,
+      new_state: (params.new_state as any) || null,
+    }]);
     if (error) console.error("Audit log error:", error);
   },
 };
