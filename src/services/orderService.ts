@@ -36,8 +36,7 @@ export const orderService = {
 
   /** Create order + contract */
   async createOrder(params: CreateOrderParams): Promise<Order> {
-    const autoIssue = params.amount <= 10000;
-    const status = autoIssue ? "issued" : "pending_approval";
+    const status = "pending_approval";
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -54,7 +53,6 @@ export const orderService = {
         milestones: (params.milestones as any) || [],
         contract_conditions: params.contractConditions || null,
         status,
-        issued_by: autoIssue ? params.issuedBy : null,
       })
       .select()
       .single();
