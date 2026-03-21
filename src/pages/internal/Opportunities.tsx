@@ -106,7 +106,15 @@ export default function InternalOpportunities() {
 
   const handleExportCsv = async () => {
     try {
-      const all = await opportunityService.list({ pageSize: 1000 });
+      // Fetch ALL records matching active filters (no pagination limit)
+      const all = await opportunityService.list({
+        status: statusParam || undefined,
+        category_id: categoryParam || undefined,
+        internal_ref_id: refIdParam || undefined,
+        search: searchParam || undefined,
+        pageSize: 10000,
+        page: 0,
+      });
       const csv = exportService.generateCsv(all.data as any[], [
         { key: "code", header: "Codice" },
         { key: "title", header: "Titolo" },
@@ -114,7 +122,7 @@ export default function InternalOpportunities() {
         { key: "bids_deadline", header: "Scadenza Offerte", formatter: (v) => v ? format(new Date(v as string), "dd/MM/yyyy HH:mm") : "" },
       ]);
       exportService.downloadCsv(csv, `opportunita_${new Date().toISOString().slice(0, 10)}.csv`);
-      toast.success("CSV esportato");
+      toast.success(`${all.data.length} opportunità esportate`);
     } catch {
       toast.error("Errore nell'esportazione");
     }
