@@ -101,18 +101,20 @@ Deno.serve(async (req) => {
       // Still insert notification even if email fails
     }
 
-    // 5. Insert notification
-    const { error: notifErr } = await supabase.from("notifications").insert({
-      tenant_id,
-      recipient_id,
-      event_type,
-      title: subject,
-      body: html_body,
-      is_read: false,
-    });
+    // 5. Insert notification (only if we have a recipient_id for in-app notification)
+    if (recipient_id) {
+      const { error: notifErr } = await supabase.from("notifications").insert({
+        tenant_id,
+        recipient_id,
+        event_type,
+        title: subject,
+        body: html_body,
+        is_read: false,
+      });
 
-    if (notifErr) {
-      console.error("Notification insert error:", notifErr);
+      if (notifErr) {
+        console.error("Notification insert error:", notifErr);
+      }
     }
 
     return new Response(
