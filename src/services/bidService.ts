@@ -196,7 +196,7 @@ export const bidService = {
       const { error } = await supabase
         .from("bid_evaluations")
         .update({
-          criteria_scores: params.criteriaScores as any,
+          criteria_scores: params.criteriaScores as unknown as Json,
           total_score: params.totalScore,
           evaluated_at: new Date().toISOString(),
         })
