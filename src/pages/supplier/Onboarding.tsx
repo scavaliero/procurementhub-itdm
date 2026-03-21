@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
 import { categoryService } from "@/services/categoryService";
+import { notificationService } from "@/services/notificationService";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,14 +113,11 @@ export default function SupplierOnboarding() {
       );
       // Send notification
       try {
-        const { supabase } = await import("@/integrations/supabase/client");
-        await supabase.functions.invoke("send-notification", {
-          body: {
-            event_type: "onboarding_completed",
-            recipient_id: profile.id,
-            tenant_id: profile.tenant_id,
-            variables: { company_name: companyData.company_name || supplier.company_name },
-          },
+        await notificationService.send({
+          event_type: "onboarding_completed",
+          recipient_id: profile.id,
+          tenant_id: profile.tenant_id,
+          variables: { company_name: companyData.company_name || supplier.company_name },
         });
       } catch (e) {
         console.error(e);
