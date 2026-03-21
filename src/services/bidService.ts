@@ -238,4 +238,87 @@ export const bidService = {
       new_state: { status, reason },
     });
   },
+
+  /** Award opportunity to a winning bid */
+  async awardOpportunity(params: {
+    opportunityId: string;
+    winningBidId: string;
+    supplierId: string;
+    awardedBy: string;
+    justification: string;
+    tenantId: string;
+    allBidIds: string[];
+  }) {
+    // 1. Insert award
+    const { data: award, error: awardErr } = await supabase
+      .from("awards")
+      .insert({
+        opportunity_id: params.opportunityId,
+        winning_bid_id: params.winningBidId,
+        supplier_id: params.supplierId,
+        awarded_by: params.awardedBy,
+        justification: params.justification,
+      })
+      .select()
+      .single();
+    if (awardErr) throw awardErr;
+
+    // 2. Update winning bid status
+    await supabase
+      .from("bids")
+      .update({ status: "accepted" })
+      .eq("id", params.winningBidId);
+
+    // 3. Update other bids to not_awarded
+    const loserIds = params.allBidIds.filter((id) => id !== params.winningBidId);
+    if (loserIds.length > 0) {
+      await supabase
+        .from("bids")
+        .update({ status: "rejected" })
+        .in("id", loserIds);
+    }
+
+    // 4. Update opportunity status
+    await supabase
+      .from("opportunities")
+      .update({ status: "awarded" })
+      .eq("id", params.opportunityId);
+
+    // 5. Audit
+    await auditService.log({
+      tenant_id: params.tenantId,
+      entity_type: "award",
+      entity_id: award.id,
+      event_type: "opportunity_awarded",
+      new_state: {
+        winning_bid_id: params.winningBidId,
+        supplier_id: params.supplierId,
+      },
+    });
+
+    // 6. Notify all invited suppliers
+    const { data: invitations } = await supabase
+      .from("opportunity_invitations")
+      .select("supplier_id, suppliers(id)")
+      .eq("opportunity_id", params.opportunityId);
+
+    if (invitations) {
+      const { data: supplierProfiles } = await supabase
+        .from("profiles")
+        .select("id, supplier_id")
+        .in("supplier_id", invitations.map((i: any) => i.supplier_id));
+
+      if (supplierProfiles) {
+        for (const sp of supplierProfiles) {
+          await notificationService.send({
+            event_type: "opportunity_awarded",
+            recipient_id: sp.id,
+            tenant_id: params.tenantId,
+          });
+        }
+      }
+    }
+
+    return award;
+  },
 };
