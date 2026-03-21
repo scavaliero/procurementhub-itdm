@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { notificationService } from "@/services/notificationService";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -12,25 +13,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import type { Notification } from "@/types";
 
-async function fetchNotifications(userId: string): Promise<Notification[]> {
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("recipient_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(20);
-  if (error) throw error;
-  return data as Notification[];
-}
-
-async function markAsRead(id: string) {
-  const { error } = await supabase
-    .from("notifications")
-    .update({ is_read: true, read_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw error;
-}
-
 export function NotificationBell() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -38,13 +20,13 @@ export function NotificationBell() {
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications"],
-    queryFn: () => fetchNotifications(user!.id),
+    queryFn: () => notificationService.list(user!.id),
     enabled: !!user,
     refetchInterval: 30_000,
   });
 
   const markReadMutation = useMutation({
-    mutationFn: markAsRead,
+    mutationFn: (id: string) => notificationService.markAsRead(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
