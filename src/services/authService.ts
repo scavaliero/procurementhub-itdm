@@ -54,4 +54,32 @@ export const authService = {
       .map((g) => g.grant_name)
       .filter((n): n is string => n !== null);
   },
+
+  async inviteInternalUser(params: {
+    email: string;
+    fullName: string;
+    tenantId: string;
+  }): Promise<string> {
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email: params.email,
+      password: crypto.randomUUID() + "Aa1!",
+      options: {
+        data: { full_name: params.fullName },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (authErr) throw authErr;
+    if (!authData.user) throw new Error("Utente non creato");
+
+    const { error: profErr } = await supabase.from("profiles").insert({
+      id: authData.user.id,
+      email: params.email,
+      full_name: params.fullName,
+      user_type: "internal",
+      tenant_id: params.tenantId,
+    });
+    if (profErr) throw profErr;
+
+    return authData.user.id;
+  },
 };
