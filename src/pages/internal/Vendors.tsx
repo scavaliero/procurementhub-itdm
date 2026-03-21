@@ -264,10 +264,6 @@ export default function InternalVendors() {
                           {s.company_name}
                         </div>
                       </TableCell>
-                        {s.vat_number_hash
-                          ? `${s.vat_number_hash.slice(0, 8)}…`
-                          : "—"}
-                      </TableCell>
                       <TableCell>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
                       </TableCell>

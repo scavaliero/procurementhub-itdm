@@ -407,12 +407,8 @@ export default function InternalVendorDetail() {
                       value={formatAddress(supplier.legal_address)}
                     />
                     <InfoRow
-                      label="P.IVA (hash)"
-                      value={
-                        supplier.vat_number_hash
-                          ? `${supplier.vat_number_hash.slice(0, 12)}…`
-                          : null
-                      }
+                      label="P.IVA"
+                      value={supplier.vat_number_hash ? "•••••••••••" : "—"}
                     />
                     <InfoRow label="IBAN (mascherato)" value={supplier.iban_masked} />
                     <InfoRow
