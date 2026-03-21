@@ -166,17 +166,23 @@ export default function InternalVendors() {
   const totalCount = result?.count || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // CSV Export
+  // CSV Export — exports ALL records matching active filters (no pagination)
   const handleExportCsv = async () => {
     try {
-      const allData = await vendorService.listSuppliers();
+      const allData = await vendorService.listSuppliersForExport({
+        status: statusFilter || undefined,
+        categoryId: categoryFilter || undefined,
+        search: search || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
       const csv = exportService.generateCsv(allData as any[], [
         { key: "company_name", header: "Ragione Sociale" },
         { key: "status", header: "Stato", formatter: (v) => STATUS_CONFIG[v as string]?.label || String(v) },
         { key: "created_at", header: "Data Registrazione", formatter: (v) => v ? new Date(v as string).toLocaleDateString("it-IT") : "" },
       ]);
       exportService.downloadCsv(csv, `fornitori_${new Date().toISOString().slice(0, 10)}.csv`);
-      toast.success("CSV esportato");
+      toast.success(`${allData.length} fornitori esportati`);
     } catch {
       toast.error("Errore nell'esportazione");
     }
