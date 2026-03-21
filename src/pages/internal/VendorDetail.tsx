@@ -90,6 +90,8 @@ export default function InternalVendorDetail() {
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
+  const [rejectDocDialog, setRejectDocDialog] = useState<UploadedDocument | null>(null);
+  const [rejectDocNotes, setRejectDocNotes] = useState("");
 
   // ── Queries ──
   const { data: supplier, isLoading } = useQuery({
@@ -159,11 +161,13 @@ export default function InternalVendorDetail() {
     mutationFn: async ({
       doc,
       action,
+      reviewNotes,
     }: {
       doc: UploadedDocument;
       action: "approved" | "rejected";
+      reviewNotes?: string;
     }) => {
-      const result = await documentService.reviewDocument(doc.id, action);
+      const result = await documentService.reviewDocument(doc.id, action, reviewNotes);
       if (supplier) {
         await auditService.log({
           tenant_id: supplier.tenant_id,
@@ -171,7 +175,7 @@ export default function InternalVendorDetail() {
           entity_id: doc.id,
           event_type: `document_${action}`,
           old_state: { status: doc.status },
-          new_state: { status: action },
+          new_state: { status: action, review_notes: reviewNotes || null },
         });
         try {
           const profileId = await vendorService.getSupplierProfileId(supplier.id);
@@ -183,6 +187,7 @@ export default function InternalVendorDetail() {
               variables: {
                 document_name:
                   docTypes.find((dt) => dt.id === doc.document_type_id)?.name || "",
+                ...(reviewNotes ? { review_notes: reviewNotes } : {}),
               },
             });
           }
@@ -195,6 +200,8 @@ export default function InternalVendorDetail() {
     onSuccess: () => {
       toast.success("Documento aggiornato");
       invalidateAll();
+      setRejectDocDialog(null);
+      setRejectDocNotes("");
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -509,12 +516,10 @@ export default function InternalVendorDetail() {
                                   size="sm"
                                   variant="destructive"
                                   disabled={reviewMutation.isPending}
-                                  onClick={() =>
-                                    reviewMutation.mutate({
-                                      doc,
-                                      action: "rejected",
-                                    })
-                                  }
+                                  onClick={() => {
+                                    setRejectDocDialog(doc);
+                                    setRejectDocNotes("");
+                                  }}
                                 >
                                   <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
                                 </Button>
@@ -738,6 +743,57 @@ export default function InternalVendorDetail() {
               onClick={handleDialogSubmit}
             >
               {statusMutation.isPending ? "Salvataggio…" : "Conferma"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* ── Dialog rifiuto documento ── */}
+      <Dialog
+        open={!!rejectDocDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectDocDialog(null);
+            setRejectDocNotes("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Respingi documento</DialogTitle>
+            <DialogDescription>
+              Documento: {rejectDocDialog ? (dtMap[rejectDocDialog.document_type_id]?.name ?? rejectDocDialog.original_filename) : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Motivo del rifiuto <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={rejectDocNotes}
+                onChange={(e) => setRejectDocNotes(e.target.value)}
+                placeholder="Specifica il motivo del rifiuto…"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDocDialog(null)}>
+              Annulla
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectDocNotes.trim() || reviewMutation.isPending}
+              onClick={() => {
+                if (rejectDocDialog) {
+                  reviewMutation.mutate({
+                    doc: rejectDocDialog,
+                    action: "rejected",
+                    reviewNotes: rejectDocNotes.trim(),
+                  });
+                }
+              }}
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Conferma rifiuto
             </Button>
           </DialogFooter>
         </DialogContent>
