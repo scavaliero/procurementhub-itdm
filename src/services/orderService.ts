@@ -1,7 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
-import type { Order } from "@/types";
+import type { Order, Award, Bid, Supplier } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
+
+export interface AwardForOrder extends Award {
+  suppliers: Pick<Supplier, "id" | "company_name"> | null;
+  bids: Pick<Bid, "id" | "total_amount" | "execution_days" | "proposed_conditions"> | null;
+}
+
+export type OrderWithSupplier = Order & { suppliers: { company_name: string } | null };
 
 export interface CreateOrderParams {
   tenantId: string;
