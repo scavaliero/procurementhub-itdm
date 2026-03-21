@@ -5,19 +5,19 @@ import { opportunityService } from "@/services/opportunityService";
 import { bidService } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, X, Save } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowLeft, Check, AlertTriangle, X, Save, Trophy } from "lucide-react";
 
 interface CriterionDef {
   name: string;
@@ -55,6 +55,9 @@ export default function InternalOpportunityEvaluation() {
   const { hasGrant } = useGrants();
   const [excludeDialog, setExcludeDialog] = useState<{ bidId: string; supplierName: string } | null>(null);
   const [excludeReason, setExcludeReason] = useState("");
+  const [awardDialog, setAwardDialog] = useState(false);
+  const [selectedWinner, setSelectedWinner] = useState("");
+  const [awardJustification, setAwardJustification] = useState("");
 
   // Scores: { [bidId]: { [criterionName]: score } }
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
@@ -141,6 +144,59 @@ export default function InternalOpportunityEvaluation() {
     onError: (err: any) => toast.error(err.message || "Errore"),
   });
 
+  // Admitted bids for award selection
+  const admittedBids = useMemo(() => {
+    const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number }[] = [];
+    invitations.forEach((inv: any) => {
+      const bid = inv.bids?.[0];
+      if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
+        result.push({
+          bidId: bid.id,
+          supplierId: inv.supplier_id,
+          supplierName: inv.suppliers?.company_name ?? "—",
+          totalAmount: Number(bid.total_amount ?? 0),
+          score: computeTotal(bid.id),
+        });
+      }
+    });
+    return result;
+  }, [invitations, computeTotal]);
+
+  const allSubmittedBidIds = useMemo(() => {
+    return invitations
+      .map((inv: any) => inv.bids?.[0]?.id)
+      .filter(Boolean) as string[];
+  }, [invitations]);
+
+  const canAward = hasGrant("approve_award");
+  const isAwarded = opp?.status === "awarded";
+
+  const awardMutation = useMutation({
+    mutationFn: async () => {
+      if (!profile || !selectedWinner) throw new Error("Dati mancanti");
+      const winner = admittedBids.find((b) => b.bidId === selectedWinner);
+      if (!winner) throw new Error("Offerta non trovata");
+      await bidService.awardOpportunity({
+        opportunityId: opportunityId!,
+        winningBidId: winner.bidId,
+        supplierId: winner.supplierId,
+        awardedBy: profile.id,
+        justification: awardJustification,
+        tenantId: profile.tenant_id,
+        allBidIds: allSubmittedBidIds,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Aggiudicazione completata");
+      qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
+      setAwardDialog(false);
+      setSelectedWinner("");
+      setAwardJustification("");
+    },
+    onError: (err: any) => toast.error(err.message || "Errore"),
+  });
+
   if (oppLoading || invLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   }
@@ -153,14 +209,27 @@ export default function InternalOpportunityEvaluation() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/internal/opportunities/${opportunityId}`)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
-          <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/internal/opportunities/${opportunityId}`)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
+            <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
+          </div>
         </div>
+        {canAward && !isAwarded && admittedBids.length > 0 && (
+          <Button onClick={() => setAwardDialog(true)} className="gap-2">
+            <Trophy className="h-4 w-4" />
+            Seleziona vincitore
+          </Button>
+        )}
+        {isAwarded && (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
+            Aggiudicata
+          </Badge>
+        )}
       </div>
 
       {invitations.length === 0 ? (
@@ -310,6 +379,52 @@ export default function InternalOpportunityEvaluation() {
               }}
             >
               Conferma esclusione
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Award Dialog */}
+      <Dialog open={awardDialog} onOpenChange={(open) => { if (!open) { setAwardDialog(false); setSelectedWinner(""); setAwardJustification(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Seleziona vincitore</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Offerta vincitrice *</Label>
+              <Select value={selectedWinner} onValueChange={setSelectedWinner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona un fornitore..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {admittedBids.map((b) => (
+                    <SelectItem key={b.bidId} value={b.bidId}>
+                      {b.supplierName} — € {b.totalAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })} (punteggio: {b.score.toFixed(2)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivazione aggiudicazione *</Label>
+              <Textarea
+                value={awardJustification}
+                onChange={(e) => setAwardJustification(e.target.value)}
+                rows={3}
+                placeholder="Inserisci la motivazione dell'aggiudicazione..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setAwardDialog(false); setSelectedWinner(""); setAwardJustification(""); }}>
+              Annulla
+            </Button>
+            <Button
+              disabled={!selectedWinner || !awardJustification.trim() || awardMutation.isPending}
+              onClick={() => awardMutation.mutate()}
+            >
+              Conferma aggiudicazione
             </Button>
           </DialogFooter>
         </DialogContent>
