@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { grantService } from "@/services/grantService";
+import { auditService } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,15 @@ export default function AdminRoles() {
         await grantService.addRoleGrant(selectedRole!.id, grantId);
       } else {
         await grantService.removeRoleGrant(selectedRole!.id, grantId);
+      }
+      if (profile) {
+        await auditService.log({
+          tenant_id: profile.tenant_id,
+          entity_type: "role_grants",
+          entity_id: selectedRole!.id,
+          event_type: add ? "grant_assigned" : "grant_removed",
+          new_state: { role_id: selectedRole!.id, grant_id: grantId, action: add ? "add" : "remove" },
+        });
       }
     },
     onSuccess: () => {

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { auditService } from "@/services/auditService";
 import type { Supplier } from "@/types";
 
 export const vendorService = {
@@ -138,6 +139,12 @@ export const vendorService = {
     reason?: string
   ) {
     const { data: { user } } = await supabase.auth.getUser();
+    // Get tenant_id from supplier
+    const { data: sup } = await supabase
+      .from("suppliers")
+      .select("tenant_id")
+      .eq("id", supplierId)
+      .single();
     // Update supplier
     await supabase
       .from("suppliers")
@@ -151,6 +158,27 @@ export const vendorService = {
       changed_by: user?.id || null,
       reason: reason || null,
     });
+    // Audit log
+    if (sup?.tenant_id) {
+      await auditService.log({
+        tenant_id: sup.tenant_id,
+        entity_type: "suppliers",
+        entity_id: supplierId,
+        event_type: "status_change",
+        old_state: { status: fromStatus },
+        new_state: { status: toStatus, reason },
+      });
+    }
+  },
+
+  async getSupplierProfileId(supplierId: string): Promise<string | null> {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("supplier_id", supplierId)
+      .limit(1)
+      .maybeSingle();
+    return data?.id || null;
   },
 
   async listSuppliers(tenantId?: string) {
