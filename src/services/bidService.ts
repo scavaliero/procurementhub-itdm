@@ -173,7 +173,7 @@ export const bidService = {
       `)
       .eq("opportunity_id", opportunityId);
     if (error) throw error;
-    return data as any[];
+    return data as EvaluationInvitation[];
   },
 
   /** Save evaluation for a bid */
