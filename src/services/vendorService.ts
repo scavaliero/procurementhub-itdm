@@ -256,6 +256,10 @@ export const vendorService = {
     if (params.status) query = query.eq("status", params.status);
     if (params.search)
       query = query.ilike("company_name", `%${params.search}%`);
+    if (params.dateFrom)
+      query = query.gte("created_at", params.dateFrom);
+    if (params.dateTo)
+      query = query.lte("created_at", params.dateTo + "T23:59:59");
 
     const { data, error, count } = await query;
     if (error) throw error;
