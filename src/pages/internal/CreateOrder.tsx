@@ -134,9 +134,6 @@ export default function InternalCreateOrder() {
             <div className="space-y-2">
               <Label>Importo (€) *</Label>
               <Input type="number" min={0} step="0.01" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} />
-              {amount > 10000 && (
-                <p className="text-xs text-amber-600">Importo &gt; €10.000 — richiede approvazione</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label>Data inizio *</Label>
