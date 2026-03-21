@@ -1,5 +1,5 @@
 import { NotificationList } from "@/components/NotificationList";
 
-export default function SupplierNotifications() {
+export default function InternalNotifications() {
   return <NotificationList />;
 }

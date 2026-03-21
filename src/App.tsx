@@ -40,6 +40,7 @@ import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
 import AdminRoles from "@/pages/internal/AdminRoles";
 import AdminUsers from "@/pages/internal/AdminUsers";
+import InternalNotifications from "@/pages/internal/Notifications";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/internal/orders" element={<InternalOrders />} />
             <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
+            <Route path="/internal/notifications" element={<InternalNotifications />} />
             <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
             <Route path="/internal/config/categories" element={<ConfigCategories />} />
             <Route path="/internal/admin/roles" element={<AdminRoles />} />
