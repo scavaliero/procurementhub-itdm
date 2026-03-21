@@ -15,11 +15,12 @@ export const invitationService = {
     if (error) throw error;
     // Filter valid_until client-side (null = no expiry, or > today)
     const today = new Date().toISOString().slice(0, 10);
-    return (data ?? []).filter((s: any) =>
-      s.supplier_categories.some(
-        (sc: any) => sc.valid_until === null || sc.valid_until > today
-      )
-    );
+    return (data ?? []).filter((s) => {
+      const cats = s.supplier_categories as Array<{ category_id: string; status: string; valid_until: string | null }>;
+      return cats.some(
+        (sc) => sc.valid_until === null || sc.valid_until > today
+      );
+    });
   },
 
   async getInvitationsByOpportunity(opportunityId: string) {
