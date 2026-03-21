@@ -86,7 +86,7 @@ export default function InternalCreateOrder() {
       toast.success(msg);
       navigate("/internal/orders");
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (_err: Error) => toast.error(err.message || "Errore"),
   });
 
   if (isLoading) {

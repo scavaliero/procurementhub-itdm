@@ -109,7 +109,7 @@ export default function InternalOpportunityNew() {
     onSuccess: (opp) => {
       if (!draftId) setDraftId(opp.id);
     },
-    onError: (err: any) => toast.error(err.message || "Errore nel salvataggio bozza"),
+    onError: (_err: Error) => toast.error(err.message || "Errore nel salvataggio bozza"),
   });
 
   const publishMutation = useMutation({
@@ -135,7 +135,7 @@ export default function InternalOpportunityNew() {
       toast.success("Opportunità creata con successo");
       navigate(`/internal/opportunities/${opp.id}`);
     },
-    onError: (err: any) => toast.error(err.message || "Errore nella creazione"),
+    onError: (_err: Error) => toast.error(err.message || "Errore nella creazione"),
   });
 
   const canViewBudget = hasGrant("view_budget");

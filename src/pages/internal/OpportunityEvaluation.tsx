@@ -128,7 +128,7 @@ export default function InternalOpportunityEvaluation() {
       toast.success("Valutazione salvata");
       qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (_err: Error) => toast.error(err.message || "Errore"),
   });
 
   const statusMutation = useMutation({
@@ -142,7 +142,7 @@ export default function InternalOpportunityEvaluation() {
       setExcludeDialog(null);
       setExcludeReason("");
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (_err: Error) => toast.error(err.message || "Errore"),
   });
 
   // Admitted bids for award selection
@@ -196,7 +196,7 @@ export default function InternalOpportunityEvaluation() {
       setSelectedWinner("");
       setAwardJustification("");
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (_err: Error) => toast.error(err.message || "Errore"),
   });
 
   if (oppLoading || invLoading) {
