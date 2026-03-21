@@ -41,6 +41,7 @@ export type BidStatus =
 
 export type OrderStatus =
   | "draft"
+  | "pending_approval"
   | "issued"
   | "accepted"
   | "rejected"
