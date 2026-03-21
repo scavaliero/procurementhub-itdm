@@ -17,9 +17,9 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: () => authService.signIn(email, password),
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Accesso effettuato");
-      // Profile will load via useAuth; redirect handled by PostLoginRedirect
+      navigate("/", { replace: true });
     },
     onError: (err: Error) => {
       toast.error(err.message || "Credenziali non valide");
