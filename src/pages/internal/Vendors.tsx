@@ -113,7 +113,7 @@ export default function InternalVendors() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: () => categoryService.listCategories(),
+    queryFn: () => categoryService.list(),
   });
 
   const {
