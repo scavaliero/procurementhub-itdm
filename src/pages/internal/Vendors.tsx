@@ -244,7 +244,6 @@ export default function InternalVendors() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Ragione Sociale</TableHead>
-                  <TableHead>P.IVA (hash)</TableHead>
                   <TableHead>Stato</TableHead>
                   <TableHead>Registrato il</TableHead>
                 </TableRow>
@@ -264,11 +263,6 @@ export default function InternalVendors() {
                           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                           {s.company_name}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground font-mono text-xs">
-                        {s.vat_number_hash
-                          ? `${s.vat_number_hash.slice(0, 8)}…`
-                          : "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
