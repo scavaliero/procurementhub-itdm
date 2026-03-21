@@ -3,7 +3,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { opportunityService } from "@/services/opportunityService";
-import { bidService } from "@/services/bidService";
+import { bidService, type EvaluationInvitation } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent } from "@/components/ui/card";
