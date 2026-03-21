@@ -169,6 +169,7 @@ export default function InternalOpportunityEvaluation() {
   }, [invitations]);
 
   const canAward = hasGrant("approve_award");
+  const canCreateOrder = hasGrant("manage_orders");
   const isAwarded = opp?.status === "awarded";
 
   const awardMutation = useMutation({
