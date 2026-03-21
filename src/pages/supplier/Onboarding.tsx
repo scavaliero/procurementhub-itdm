@@ -112,14 +112,11 @@ export default function SupplierOnboarding() {
       );
       // Send notification
       try {
-        const { supabase } = await import("@/integrations/supabase/client");
-        await supabase.functions.invoke("send-notification", {
-          body: {
-            event_type: "onboarding_completed",
-            recipient_id: profile.id,
-            tenant_id: profile.tenant_id,
-            variables: { company_name: companyData.company_name || supplier.company_name },
-          },
+        await notificationService.send({
+          event_type: "onboarding_completed",
+          recipient_id: profile.id,
+          tenant_id: profile.tenant_id,
+          variables: { company_name: companyData.company_name || supplier.company_name },
         });
       } catch (e) {
         console.error(e);
