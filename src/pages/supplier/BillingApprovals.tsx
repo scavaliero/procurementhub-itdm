@@ -53,7 +53,7 @@ export default function SupplierBillingApprovals() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {billings.map((b: any) => (
+                {billings.map((b: BillingApproval) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-mono text-sm">{b.code ?? "—"}</TableCell>
                     <TableCell className="text-sm">

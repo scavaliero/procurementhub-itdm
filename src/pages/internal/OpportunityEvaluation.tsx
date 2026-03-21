@@ -83,7 +83,7 @@ export default function InternalOpportunityEvaluation() {
   // Initialize scores from existing evaluations
   useMemo(() => {
     const initial: Record<string, Record<string, number>> = {};
-    invitations.forEach((inv: any) => {
+    invitations.forEach((inv: EvaluationInvitation) => {
       const bid = inv.bids?.[0];
       if (bid?.bid_evaluations?.[0]) {
         const cs = bid.bid_evaluations[0].criteria_scores as Record<string, number>;
@@ -148,7 +148,7 @@ export default function InternalOpportunityEvaluation() {
   // Admitted bids for award selection
   const admittedBids = useMemo(() => {
     const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number }[] = [];
-    invitations.forEach((inv: any) => {
+    invitations.forEach((inv: EvaluationInvitation) => {
       const bid = inv.bids?.[0];
       if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
         result.push({
@@ -165,7 +165,7 @@ export default function InternalOpportunityEvaluation() {
 
   const allSubmittedBidIds = useMemo(() => {
     return invitations
-      .map((inv: any) => inv.bids?.[0]?.id)
+      .map((inv: EvaluationInvitation) => inv.bids?.[0]?.id)
       .filter(Boolean) as string[];
   }, [invitations]);
 
@@ -265,7 +265,7 @@ export default function InternalOpportunityEvaluation() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invitations.map((inv: any) => {
+                {invitations.map((inv: EvaluationInvitation) => {
                   const bid = inv.bids?.[0];
                   const bidId = bid?.id;
                   const bidStatus = bid?.status ?? "no_bid";
