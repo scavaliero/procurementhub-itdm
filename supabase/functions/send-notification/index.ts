@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { event_type, recipient_id, variables, tenant_id } = await req.json();
+    const { event_type, recipient_id, recipient_email, variables, tenant_id } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
