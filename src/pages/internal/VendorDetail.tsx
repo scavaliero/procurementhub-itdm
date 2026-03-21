@@ -433,7 +433,7 @@ export default function InternalVendorDetail() {
                       label="P.IVA"
                       value={supplier.vat_number_hash ? "•••••••••••" : "—"}
                     />
-                    <InfoRow label="IBAN (mascherato)" value={supplier.iban_masked} />
+                    <InfoRow label="IBAN (mascherato)" value={maskIBAN(supplier.iban_masked)} />
                     <InfoRow
                       label="Rating"
                       value={
