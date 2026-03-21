@@ -266,7 +266,7 @@ export const bidService = {
     // 2. Update winning bid status
     await supabase
       .from("bids")
-      .update({ status: "accepted" })
+      .update({ status: "winning" })
       .eq("id", params.winningBidId);
 
     // 3. Update other bids to not_awarded
@@ -274,8 +274,28 @@ export const bidService = {
     if (loserIds.length > 0) {
       await supabase
         .from("bids")
-        .update({ status: "rejected" })
+        .update({ status: "not_awarded" })
         .in("id", loserIds);
+    }
+
+    // 3b. Update invitation statuses
+    await supabase
+      .from("opportunity_invitations")
+      .update({ status: "accepted" })
+      .eq("opportunity_id", params.opportunityId)
+      .eq("supplier_id", params.supplierId);
+    
+    // Mark non-winning invitations as declined
+    const { data: otherInvs } = await supabase
+      .from("opportunity_invitations")
+      .select("id")
+      .eq("opportunity_id", params.opportunityId)
+      .neq("supplier_id", params.supplierId);
+    if (otherInvs && otherInvs.length > 0) {
+      await supabase
+        .from("opportunity_invitations")
+        .update({ status: "declined" })
+        .in("id", otherInvs.map(i => i.id));
     }
 
     // 4. Update opportunity status

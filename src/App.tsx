@@ -33,6 +33,8 @@ import InternalOpportunityNew from "@/pages/internal/OpportunityNew";
 import InternalOpportunityDetail from "@/pages/internal/OpportunityDetail";
 import InternalOpportunityEvaluation from "@/pages/internal/OpportunityEvaluation";
 import InternalOrders from "@/pages/internal/Orders";
+import InternalCreateOrder from "@/pages/internal/CreateOrder";
+import InternalContractDetail from "@/pages/internal/ContractDetail";
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
 import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
@@ -93,7 +95,9 @@ const App = () => (
             <Route path="/internal/opportunities/new" element={<InternalOpportunityNew />} />
             <Route path="/internal/opportunities/:id" element={<InternalOpportunityDetail />} />
             <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
+            <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
             <Route path="/internal/orders" element={<InternalOrders />} />
+            <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
             <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
             <Route path="/internal/config/categories" element={<ConfigCategories />} />

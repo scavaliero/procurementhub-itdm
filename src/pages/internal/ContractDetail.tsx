@@ -1,0 +1,172 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { contractService } from "@/services/contractService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
+
+const STATUS_LABELS: Record<string, string> = {
+  planned: "Pianificato",
+  active: "Attivo",
+  completed: "Completato",
+  terminated: "Terminato",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  planned: "bg-gray-100 text-gray-700",
+  active: "bg-emerald-100 text-emerald-700",
+  completed: "bg-blue-100 text-blue-700",
+  terminated: "bg-red-100 text-red-700",
+};
+
+function formatCurrency(v: number | null | undefined) {
+  return `€ ${Number(v ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`;
+}
+
+export default function InternalContractDetail() {
+  const { id: contractId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { data: contract, isLoading: cLoading } = useQuery({
+    queryKey: ["contract", contractId],
+    queryFn: () => contractService.getById(contractId!),
+    enabled: !!contractId,
+  });
+
+  const { data: summary, isLoading: sLoading } = useQuery({
+    queryKey: ["contract-summary", contractId],
+    queryFn: () => contractService.getEconomicSummary(contractId!),
+    enabled: !!contractId,
+  });
+
+  const isLoading = cLoading || sLoading;
+
+  if (isLoading) {
+    return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>;
+  }
+
+  if (!contract) {
+    return <EmptyState title="Contratto non trovato" />;
+  }
+
+  const usedPct = summary ? Math.round(100 - (summary.residual_pct ?? 100)) : 0;
+  const residualPct = summary?.residual_pct ?? 100;
+  const barColor = usedPct >= 90 ? "bg-destructive" : usedPct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+
+  return (
+    <div className="p-6 space-y-6 max-w-4xl">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">
+            Contratto — {contract.orders?.code ?? "—"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {contract.suppliers?.company_name ?? "—"} ·{" "}
+            <Badge variant="secondary" className={STATUS_COLORS[contract.status] ?? ""}>
+              {STATUS_LABELS[contract.status] ?? contract.status}
+            </Badge>
+          </p>
+        </div>
+      </div>
+
+      {residualPct < 10 && (
+        <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>Budget quasi esaurito — residuo inferiore al 10%</span>
+        </div>
+      )}
+
+      {/* Metrics cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs text-muted-foreground font-normal">Importo autorizzato</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{formatCurrency(summary?.current_authorized_amount)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs text-muted-foreground font-normal">Fatturato approvato</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{formatCurrency(summary?.approved_billing_total)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs text-muted-foreground font-normal">Residuo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{formatCurrency(summary?.residual_amount)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs text-muted-foreground font-normal">In approvazione</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">
+              {formatCurrency(summary?.pending_approval_amount)}
+              {summary?.pending_approval_count ? (
+                <span className="text-sm font-normal text-muted-foreground ml-1">
+                  ({summary.pending_approval_count})
+                </span>
+              ) : null}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Usage bar */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Utilizzo budget</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Utilizzato: {usedPct}%</span>
+            <span>Residuo: {residualPct?.toFixed(1)}%</span>
+          </div>
+          <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${barColor}`}
+              style={{ width: `${Math.min(usedPct, 100)}%` }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contract details */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Dettagli</CardTitle></CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Oggetto ordine</dt>
+              <dd className="font-medium">{contract.orders?.subject ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Importo ordine</dt>
+              <dd className="font-medium">{formatCurrency(contract.orders?.amount)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Periodo</dt>
+              <dd className="font-medium">{contract.start_date} — {contract.end_date}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Importo contratto</dt>
+              <dd className="font-medium">{formatCurrency(contract.total_amount)}</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

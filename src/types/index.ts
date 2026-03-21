@@ -30,12 +30,18 @@ export type BidStatus =
   | "draft"
   | "submitted"
   | "under_evaluation"
+  | "admitted"
+  | "admitted_with_reserve"
+  | "excluded"
+  | "winning"
+  | "not_awarded"
   | "accepted"
   | "rejected"
   | "withdrawn";
 
 export type OrderStatus =
   | "draft"
+  | "pending_approval"
   | "issued"
   | "accepted"
   | "rejected"
