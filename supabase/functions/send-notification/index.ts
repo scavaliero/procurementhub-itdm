@@ -36,18 +36,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Fetch recipient email
-    const { data: profile, error: profErr } = await supabase
-      .from("profiles")
-      .select("email, full_name")
-      .eq("id", recipient_id)
-      .maybeSingle();
+    // 2. Resolve recipient email
+    let toEmail: string;
+    let recipientName: string | null = null;
 
-    if (profErr) throw profErr;
-    if (!profile) {
+    if (recipient_email) {
+      // Direct email provided (e.g. fixed procurement address)
+      toEmail = recipient_email;
+    } else if (recipient_id) {
+      const { data: profile, error: profErr } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", recipient_id)
+        .maybeSingle();
+
+      if (profErr) throw profErr;
+      if (!profile) {
+        return new Response(
+          JSON.stringify({ error: "recipient_not_found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      toEmail = profile.email;
+      recipientName = profile.full_name;
+    } else {
       return new Response(
-        JSON.stringify({ error: "recipient_not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "no_recipient" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
