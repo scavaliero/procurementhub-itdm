@@ -49,7 +49,7 @@ export const bidService = {
       tenant_id: params.tenant_id,
       invitation_id: params.invitation_id || null,
       total_amount: params.total_amount ?? null,
-      economic_detail: params.economic_detail ? (params.economic_detail as any) : null,
+      economic_detail: params.economic_detail ? (params.economic_detail as unknown as Json) : null,
       technical_description: params.technical_description || null,
       execution_days: params.execution_days ?? null,
       bid_validity_date: params.bid_validity_date || null,
