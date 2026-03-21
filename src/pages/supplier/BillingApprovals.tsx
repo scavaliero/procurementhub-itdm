@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { billingApprovalService } from "@/services/billingApprovalService";
 import { useAuth } from "@/hooks/useAuth";
+import type { BillingApproval } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
