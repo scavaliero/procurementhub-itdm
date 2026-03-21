@@ -52,6 +52,6 @@ export const contractService = {
       .select("*, orders(code, subject), suppliers(company_name)")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return data as ContractListItem[];
   },
 };
