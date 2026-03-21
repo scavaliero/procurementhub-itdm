@@ -240,6 +240,8 @@ export const vendorService = {
     status?: string;
     categoryId?: string;
     search?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }): Promise<{ data: Supplier[]; count: number }> {
     const from = (params.page - 1) * params.pageSize;
     const to = from + params.pageSize - 1;
