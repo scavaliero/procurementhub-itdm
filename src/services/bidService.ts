@@ -208,7 +208,7 @@ export const bidService = {
         .insert({
           bid_id: params.bidId,
           evaluator_id: params.evaluatorId,
-          criteria_scores: params.criteriaScores as any,
+          criteria_scores: params.criteriaScores as unknown as Json,
           total_score: params.totalScore,
         });
       if (error) throw error;
