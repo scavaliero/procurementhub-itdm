@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { vendorService } from "@/services/vendorService";
 import { categoryService } from "@/services/categoryService";
+import { exportService } from "@/services/exportService";
 import { useAuth } from "@/hooks/useAuth";
+import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +27,7 @@ import {
 } from "@/components/ui/table";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { useNavigate } from "react-router-dom";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import {
   Building2,
   ChevronLeft,
@@ -34,8 +37,9 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  ShieldAlert,
+  Download,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<
   string,
@@ -86,24 +90,39 @@ function MetricCard({
 
 export default function InternalVendors() {
   const { profile } = useAuth();
+  const { hasGrant } = useGrants();
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [search, setSearch] = useState("");
-  const [searchDebounced, setSearchDebounced] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read filters from URL params
+  const page = Number(searchParams.get("page") || "1");
+  const statusFilter = searchParams.get("status") || "";
+  const categoryFilter = searchParams.get("category") || "";
+  const search = searchParams.get("q") || "";
+  const dateFrom = searchParams.get("date_from") || "";
+  const dateTo = searchParams.get("date_to") || "";
+
+  const [searchInput, setSearchInput] = useState(search);
+
+  // Sync URL params helper
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v) next.set(k, v);
+      else next.delete(k);
+    });
+    // Reset page on filter change unless explicitly setting page
+    if (!("page" in updates)) next.set("page", "1");
+    setSearchParams(next, { replace: true });
+  };
 
   // Debounce search
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    setPage(1);
-    // Simple debounce via timeout
-    clearTimeout((window as any).__vendorSearchTimer);
-    (window as any).__vendorSearchTimer = setTimeout(
-      () => setSearchDebounced(val),
-      300
-    );
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== search) updateParams({ q: searchInput });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { data: statusCounts = {}, isLoading: countsLoading } = useQuery({
     queryKey: ["supplier-status-counts"],
@@ -126,7 +145,9 @@ export default function InternalVendors() {
       page,
       statusFilter,
       categoryFilter,
-      searchDebounced,
+      search,
+      dateFrom,
+      dateTo,
     ],
     queryFn: () =>
       vendorService.listSuppliersPaginated({
@@ -134,7 +155,9 @@ export default function InternalVendors() {
         pageSize: PAGE_SIZE,
         status: statusFilter || undefined,
         categoryId: categoryFilter || undefined,
-        search: searchDebounced || undefined,
+        search: search || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
       }),
     enabled: !!profile,
   });
@@ -143,11 +166,36 @@ export default function InternalVendors() {
   const totalCount = result?.count || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
+  // CSV Export
+  const handleExportCsv = async () => {
+    try {
+      const allData = await vendorService.listSuppliers();
+      const csv = exportService.generateCsv(allData as any[], [
+        { key: "company_name", header: "Ragione Sociale" },
+        { key: "status", header: "Stato", formatter: (v) => STATUS_CONFIG[v as string]?.label || String(v) },
+        { key: "created_at", header: "Data Registrazione", formatter: (v) => v ? new Date(v as string).toLocaleDateString("it-IT") : "" },
+      ]);
+      exportService.downloadCsv(csv, `fornitori_${new Date().toISOString().slice(0, 10)}.csv`);
+      toast.success("CSV esportato");
+    } catch {
+      toast.error("Errore nell'esportazione");
+    }
+  };
+
   if (isLoading && countsLoading) return <PageSkeleton />;
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Albo Fornitori</h1>
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Albo Fornitori" }]} />
+
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Albo Fornitori</h1>
+        {hasGrant("export_data") && (
+          <Button variant="outline" onClick={handleExportCsv} className="gap-2">
+            <Download className="h-4 w-4" /> Esporta CSV
+          </Button>
+        )}
+      </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -181,22 +229,19 @@ export default function InternalVendors() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cerca ragione sociale…"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select
-          value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v === "all" ? "" : v);
-            setPage(1);
-          }}
+          value={statusFilter || "all"}
+          onValueChange={(v) => updateParams({ status: v === "all" ? "" : v })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Tutti gli stati" />
@@ -211,11 +256,8 @@ export default function InternalVendors() {
           </SelectContent>
         </Select>
         <Select
-          value={categoryFilter}
-          onValueChange={(v) => {
-            setCategoryFilter(v === "all" ? "" : v);
-            setPage(1);
-          }}
+          value={categoryFilter || "all"}
+          onValueChange={(v) => updateParams({ category: v === "all" ? "" : v })}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Tutte le categorie" />
@@ -229,6 +271,26 @@ export default function InternalVendors() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-end gap-2">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Da</label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => updateParams({ date_from: e.target.value })}
+              className="w-[150px]"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">A</label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => updateParams({ date_to: e.target.value })}
+              className="w-[150px]"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -293,7 +355,7 @@ export default function InternalVendors() {
               variant="outline"
               size="sm"
               disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => updateParams({ page: String(page - 1) })}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -301,7 +363,7 @@ export default function InternalVendors() {
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => updateParams({ page: String(page + 1) })}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { opportunityService, type OpportunityFilters } from "@/services/opportunityService";
 import { categoryService } from "@/services/categoryService";
+import { exportService } from "@/services/exportService";
 import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, FileText } from "lucide-react";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { Plus, Search, Download } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza",
@@ -40,7 +43,42 @@ const STATUS_COLORS: Record<string, string> = {
 export default function InternalOpportunities() {
   const navigate = useNavigate();
   const { hasGrant } = useGrants();
-  const [filters, setFilters] = useState<OpportunityFilters>({ page: 0, pageSize: 25 });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read from URL
+  const pageParam = Number(searchParams.get("page") || "0");
+  const statusParam = searchParams.get("status") || "";
+  const categoryParam = searchParams.get("category") || "";
+  const searchParam = searchParams.get("q") || "";
+  const refIdParam = searchParams.get("ref_id") || "";
+
+  const [searchInput, setSearchInput] = useState(searchParam);
+
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v) next.set(k, v);
+      else next.delete(k);
+    });
+    if (!("page" in updates)) next.set("page", "0");
+    setSearchParams(next, { replace: true });
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== searchParam) updateParams({ q: searchInput });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const filters: OpportunityFilters = {
+    page: pageParam,
+    pageSize: 25,
+    status: statusParam || undefined,
+    category_id: categoryParam || undefined,
+    search: searchParam || undefined,
+    internal_ref_id: refIdParam || undefined,
+  };
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["opportunities", filters],
@@ -57,9 +95,30 @@ export default function InternalOpportunities() {
     queryFn: () => categoryService.list(),
   });
 
+  const { data: internalProfiles = [] } = useQuery({
+    queryKey: ["internal-profiles"],
+    queryFn: () => opportunityService.getInternalProfiles(),
+  });
+
   const opps = result?.data ?? [];
   const totalCount = result?.count ?? 0;
-  const totalPages = Math.ceil(totalCount / (filters.pageSize ?? 25));
+  const totalPages = Math.ceil(totalCount / 25);
+
+  const handleExportCsv = async () => {
+    try {
+      const all = await opportunityService.list({ pageSize: 1000 });
+      const csv = exportService.generateCsv(all.data as any[], [
+        { key: "code", header: "Codice" },
+        { key: "title", header: "Titolo" },
+        { key: "status", header: "Stato", formatter: (v) => STATUS_LABELS[v as string] || String(v) },
+        { key: "bids_deadline", header: "Scadenza Offerte", formatter: (v) => v ? format(new Date(v as string), "dd/MM/yyyy HH:mm") : "" },
+      ]);
+      exportService.downloadCsv(csv, `opportunita_${new Date().toISOString().slice(0, 10)}.csv`);
+      toast.success("CSV esportato");
+    } catch {
+      toast.error("Errore nell'esportazione");
+    }
+  };
 
   const metricCards = [
     { label: "Bozza", key: "draft", color: "border-gray-300" },
@@ -70,13 +129,22 @@ export default function InternalOpportunities() {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità" }]} />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Opportunità</h1>
-        {hasGrant("create_opportunity") && (
-          <Button onClick={() => navigate("/internal/opportunities/new")}>
-            <Plus className="h-4 w-4 mr-2" /> Nuova Opportunità
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {hasGrant("export_data") && (
+            <Button variant="outline" onClick={handleExportCsv} className="gap-2">
+              <Download className="h-4 w-4" /> Esporta CSV
+            </Button>
+          )}
+          {hasGrant("create_opportunity") && (
+            <Button onClick={() => navigate("/internal/opportunities/new")}>
+              <Plus className="h-4 w-4 mr-2" /> Nuova Opportunità
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Metrics */}
@@ -98,13 +166,13 @@ export default function InternalOpportunities() {
           <Input
             placeholder="Cerca per titolo..."
             className="pl-9"
-            value={filters.search ?? ""}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 0 }))}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         <Select
-          value={filters.status ?? "all"}
-          onValueChange={(v) => setFilters((f) => ({ ...f, status: v === "all" ? undefined : v, page: 0 }))}
+          value={statusParam || "all"}
+          onValueChange={(v) => updateParams({ status: v === "all" ? "" : v })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Stato" />
@@ -117,8 +185,8 @@ export default function InternalOpportunities() {
           </SelectContent>
         </Select>
         <Select
-          value={filters.category_id ?? "all"}
-          onValueChange={(v) => setFilters((f) => ({ ...f, category_id: v === "all" ? undefined : v, page: 0 }))}
+          value={categoryParam || "all"}
+          onValueChange={(v) => updateParams({ category: v === "all" ? "" : v })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Categoria" />
@@ -127,6 +195,20 @@ export default function InternalOpportunities() {
             <SelectItem value="all">Tutte le categorie</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={refIdParam || "all"}
+          onValueChange={(v) => updateParams({ ref_id: v === "all" ? "" : v })}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Referente interno" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tutti i referenti</SelectItem>
+            {internalProfiles.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -180,19 +262,19 @@ export default function InternalOpportunities() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={(filters.page ?? 0) === 0}
-                onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) - 1 }))}
+                disabled={pageParam === 0}
+                onClick={() => updateParams({ page: String(pageParam - 1) })}
               >
                 Precedente
               </Button>
               <span className="text-sm text-muted-foreground">
-                Pag. {(filters.page ?? 0) + 1} di {totalPages}
+                Pag. {pageParam + 1} di {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={(filters.page ?? 0) >= totalPages - 1}
-                onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) + 1 }))}
+                disabled={pageParam >= totalPages - 1}
+                onClick={() => updateParams({ page: String(pageParam + 1) })}
               >
                 Successiva
               </Button>
