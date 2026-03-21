@@ -46,8 +46,7 @@ export const registrationSchema = z.object({
     .string()
     .trim()
     .length(11, "La Partita IVA deve essere di 11 cifre")
-    .regex(/^\d{11}$/, "La Partita IVA deve contenere solo cifre")
-    .refine(isValidItalianVAT, "Partita IVA non valida (check digit errato)"),
+    .regex(/^\d{11}$/, "La Partita IVA deve contenere solo cifre"),
   fiscal_code: z
     .string()
     .trim()
