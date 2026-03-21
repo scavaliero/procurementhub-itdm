@@ -1,5 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Contract, ContractEconomicSummary } from "@/types";
+import type { Contract, ContractEconomicSummary, Order, Supplier } from "@/types";
+
+export type ContractWithRelations = Contract & {
+  orders: Pick<Order, "code" | "subject" | "amount" | "supplier_id" | "status"> | null;
+  suppliers: Pick<Supplier, "company_name"> | null;
+};
+
+export type ContractListItem = Contract & {
+  orders: Pick<Order, "code" | "subject"> | null;
+  suppliers: Pick<Supplier, "company_name"> | null;
+};
 
 export const contractService = {
   /** Get contract by ID with order info */
@@ -10,7 +20,7 @@ export const contractService = {
       .eq("id", contractId)
       .single();
     if (error) throw error;
-    return data as any;
+    return data as ContractWithRelations;
   },
 
   /** Get contract by order ID */
