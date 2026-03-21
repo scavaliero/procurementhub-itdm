@@ -516,12 +516,10 @@ export default function InternalVendorDetail() {
                                   size="sm"
                                   variant="destructive"
                                   disabled={reviewMutation.isPending}
-                                  onClick={() =>
-                                    reviewMutation.mutate({
-                                      doc,
-                                      action: "rejected",
-                                    })
-                                  }
+                                  onClick={() => {
+                                    setRejectDocDialog(doc);
+                                    setRejectDocNotes("");
+                                  }}
                                 >
                                   <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
                                 </Button>
