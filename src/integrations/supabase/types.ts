@@ -219,6 +219,109 @@ export type Database = {
           },
         ]
       }
+      billing_approvals: {
+        Row: {
+          activity_description: string | null
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          code: string | null
+          contract_id: string
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          order_id: string
+          period_end: string
+          period_start: string
+          status: string
+          supplier_id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          activity_description?: string | null
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          code?: string | null
+          contract_id: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          order_id: string
+          period_end: string
+          period_start: string
+          status?: string
+          supplier_id: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          activity_description?: string | null
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          code?: string | null
+          contract_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          order_id?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+          supplier_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_approvals_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_approvals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           code: string
@@ -263,6 +366,73 @@ export type Database = {
           },
           {
             foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          created_at: string | null
+          current_amount: number | null
+          end_date: string
+          id: string
+          order_id: string
+          progress_notes: string | null
+          start_date: string
+          status: string
+          supplier_id: string
+          tenant_id: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_amount?: number | null
+          end_date: string
+          id?: string
+          order_id: string
+          progress_notes?: string | null
+          start_date: string
+          status?: string
+          supplier_id: string
+          tenant_id: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_amount?: number | null
+          end_date?: string
+          id?: string
+          order_id?: string
+          progress_notes?: string | null
+          start_date?: string
+          status?: string
+          supplier_id?: string
+          tenant_id?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -539,6 +709,121 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          award_id: string | null
+          code: string | null
+          contract_conditions: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          issued_by: string | null
+          milestones: Json | null
+          opportunity_id: string | null
+          start_date: string | null
+          status: string
+          subject: string
+          supplier_accepted_at: string | null
+          supplier_id: string
+          supplier_rejected_at: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          approved_by?: string | null
+          award_id?: string | null
+          code?: string | null
+          contract_conditions?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          issued_by?: string | null
+          milestones?: Json | null
+          opportunity_id?: string | null
+          start_date?: string | null
+          status?: string
+          subject: string
+          supplier_accepted_at?: string | null
+          supplier_id: string
+          supplier_rejected_at?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          award_id?: string | null
+          code?: string | null
+          contract_conditions?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          issued_by?: string | null
+          milestones?: Json | null
+          opportunity_id?: string | null
+          start_date?: string | null
+          status?: string
+          subject?: string
+          supplier_accepted_at?: string | null
+          supplier_id?: string
+          supplier_rejected_at?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
