@@ -40,6 +40,7 @@ import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
 import AdminRoles from "@/pages/internal/AdminRoles";
 import AdminUsers from "@/pages/internal/AdminUsers";
+import InternalNotifications from "@/pages/internal/Notifications";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
