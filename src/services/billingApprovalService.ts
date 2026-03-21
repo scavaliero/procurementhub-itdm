@@ -113,8 +113,25 @@ export const billingApprovalService = {
     return data as CheckBillingLimitResult;
   },
 
-  /** Submit for approval (draft -> pending_approval) */
+  /** Submit for approval (draft -> pending_approval) with server-side RB-08 check */
   async submitForApproval(billingId: string, tenantId: string) {
+    // 1. Read the billing to get contract_id and amount
+    const { data: billing, error: readErr } = await supabase
+      .from("billing_approvals")
+      .select("contract_id, amount")
+      .eq("id", billingId)
+      .single();
+    if (readErr) throw readErr;
+
+    // 2. Always call Edge Function check-billing-limit (server-side enforcement)
+    const limitResult = await this.checkLimit(billing.contract_id, billing.amount);
+    if (!limitResult.valid) {
+      throw new Error(
+        limitResult.message || "Importo supera il residuo contrattuale (RB-08)"
+      );
+    }
+
+    // 3. Update status
     const { error } = await supabase
       .from("billing_approvals")
       .update({ status: "pending_approval" })
@@ -129,7 +146,7 @@ export const billingApprovalService = {
       new_state: { status: "pending_approval" },
     });
 
-    // Notify approvers — get users with approve_billing_approval grant
+    // Notify approvers
     const { data: approvers } = await supabase
       .from("user_effective_grants")
       .select("user_id")
