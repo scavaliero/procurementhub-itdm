@@ -90,6 +90,8 @@ export default function InternalVendorDetail() {
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
+  const [rejectDocDialog, setRejectDocDialog] = useState<UploadedDocument | null>(null);
+  const [rejectDocNotes, setRejectDocNotes] = useState("");
 
   // ── Queries ──
   const { data: supplier, isLoading } = useQuery({
