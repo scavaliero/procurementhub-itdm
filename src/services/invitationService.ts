@@ -88,7 +88,7 @@ export const invitationService = {
       .eq("supplier_id", supplierId)
       .order("invited_at", { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return data as (OpportunityInvitation & { opportunities: Record<string, unknown> })[];
   },
 
   async markViewed(invitationId: string) {
