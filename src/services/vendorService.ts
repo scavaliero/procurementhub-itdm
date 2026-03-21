@@ -278,6 +278,44 @@ export const vendorService = {
     return { data: (data || []) as Supplier[], count: count || 0 };
   },
 
+  /**
+   * Fetch ALL suppliers matching filters (no pagination) — for CSV export.
+   */
+  async listSuppliersForExport(params: {
+    status?: string;
+    categoryId?: string;
+    search?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}): Promise<Supplier[]> {
+    let query = supabase
+      .from("suppliers")
+      .select("*")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (params.status) query = query.eq("status", params.status);
+    if (params.search) query = query.ilike("company_name", `%${params.search}%`);
+    if (params.dateFrom) query = query.gte("created_at", params.dateFrom);
+    if (params.dateTo) query = query.lte("created_at", params.dateTo + "T23:59:59");
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let result = (data || []) as Supplier[];
+
+    if (params.categoryId) {
+      const { data: catSuppliers } = await supabase
+        .from("supplier_categories")
+        .select("supplier_id")
+        .eq("category_id", params.categoryId);
+      const ids = new Set((catSuppliers || []).map((c) => c.supplier_id));
+      result = result.filter((s) => ids.has(s.id));
+    }
+
+    return result;
+  },
+
   async listSuppliers(tenantId?: string) {
     let query = supabase
       .from("suppliers")
