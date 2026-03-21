@@ -81,6 +81,15 @@ export default function AdminRoles() {
       } else {
         await grantService.removeRoleGrant(selectedRole!.id, grantId);
       }
+      if (profile) {
+        await auditService.log({
+          tenant_id: profile.tenant_id,
+          entity_type: "role_grants",
+          entity_id: selectedRole!.id,
+          event_type: add ? "grant_assigned" : "grant_removed",
+          new_state: { role_id: selectedRole!.id, grant_id: grantId, action: add ? "add" : "remove" },
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["role-grants", selectedRole?.id] });

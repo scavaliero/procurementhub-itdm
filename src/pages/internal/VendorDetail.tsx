@@ -80,18 +80,13 @@ export default function InternalVendorDetail() {
           old_state: { status: doc.status },
           new_state: { status: action },
         });
-        // Get supplier profile to notify
+        // Notify supplier
         try {
-          const { supabase } = await import("@/integrations/supabase/client");
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("supplier_id", supplier.id)
-            .limit(1);
-          if (profiles?.[0]) {
+          const profileId = await vendorService.getSupplierProfileId(supplier.id);
+          if (profileId) {
             await notificationService.send({
               event_type: `document_${action}`,
-              recipient_id: profiles[0].id,
+              recipient_id: profileId,
               tenant_id: supplier.tenant_id,
               variables: { document_name: docTypes.find((dt) => dt.id === doc.document_type_id)?.name || "" },
             });
