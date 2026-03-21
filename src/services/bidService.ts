@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
 import type { Bid, BidEvaluation } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface BidDraft {
   opportunity_id: string;
@@ -22,6 +23,30 @@ export interface ValidateBidResult {
   code?: string;
   message?: string;
   missing_documents?: { document_type_id: string; document_name: string; reason: string }[];
+}
+
+export interface EvaluationInvitation {
+  id: string;
+  supplier_id: string;
+  status: string;
+  suppliers: { company_name: string } | null;
+  bids: Array<{
+    id: string;
+    status: string;
+    total_amount: number | null;
+    execution_days: number | null;
+    technical_description: string | null;
+    submitted_at: string | null;
+    economic_detail: Json | null;
+    bid_validity_date: string | null;
+    bid_evaluations: Array<{
+      id: string;
+      criteria_scores: Json;
+      total_score: number | null;
+      evaluator_id: string;
+      evaluated_at: string | null;
+    }>;
+  }>;
 }
 
 export const bidService = {
@@ -48,7 +73,7 @@ export const bidService = {
       tenant_id: params.tenant_id,
       invitation_id: params.invitation_id || null,
       total_amount: params.total_amount ?? null,
-      economic_detail: params.economic_detail ? (params.economic_detail as any) : null,
+      economic_detail: params.economic_detail ? (params.economic_detail as unknown as Json) : null,
       technical_description: params.technical_description || null,
       execution_days: params.execution_days ?? null,
       bid_validity_date: params.bid_validity_date || null,
@@ -172,7 +197,7 @@ export const bidService = {
       `)
       .eq("opportunity_id", opportunityId);
     if (error) throw error;
-    return data as any[];
+    return data as EvaluationInvitation[];
   },
 
   /** Save evaluation for a bid */
@@ -195,7 +220,7 @@ export const bidService = {
       const { error } = await supabase
         .from("bid_evaluations")
         .update({
-          criteria_scores: params.criteriaScores as any,
+          criteria_scores: params.criteriaScores as unknown as Json,
           total_score: params.totalScore,
           evaluated_at: new Date().toISOString(),
         })
@@ -207,7 +232,7 @@ export const bidService = {
         .insert({
           bid_id: params.bidId,
           evaluator_id: params.evaluatorId,
-          criteria_scores: params.criteriaScores as any,
+          criteria_scores: params.criteriaScores as unknown as Json,
           total_score: params.totalScore,
         });
       if (error) throw error;

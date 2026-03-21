@@ -1,7 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
-import type { Order } from "@/types";
+import type { Order, Award, Bid, Supplier } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
+
+export interface AwardForOrder extends Award {
+  suppliers: Pick<Supplier, "id" | "company_name"> | null;
+  bids: Pick<Bid, "id" | "total_amount" | "execution_days" | "proposed_conditions"> | null;
+}
+
+export type OrderWithSupplier = Order & { suppliers: { company_name: string } | null };
 
 export interface CreateOrderParams {
   tenantId: string;
@@ -31,7 +39,7 @@ export const orderService = {
       .eq("opportunity_id", opportunityId)
       .single();
     if (error) throw error;
-    return data as any;
+    return data as AwardForOrder;
   },
 
   /** Create order + contract */
@@ -50,7 +58,7 @@ export const orderService = {
         amount: params.amount,
         start_date: params.startDate,
         end_date: params.endDate,
-        milestones: (params.milestones as any) || [],
+        milestones: (params.milestones as unknown as Json) || [],
         contract_conditions: params.contractConditions || null,
         status,
       })
@@ -108,7 +116,7 @@ export const orderService = {
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return data as OrderWithSupplier[];
   },
 
   /** List orders for a supplier */
@@ -120,7 +128,7 @@ export const orderService = {
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return data as OrderWithSupplier[];
   },
 
   /** Supplier accepts order */

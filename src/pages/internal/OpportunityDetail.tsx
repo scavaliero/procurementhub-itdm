@@ -226,7 +226,7 @@ function InviteSuppliers({ opportunityId, categoryId, tenantId }: { opportunityI
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["invitations", opportunityId] });
     },
-    onError: (err: any) => toast.error(err.message || "Errore nell'invio"),
+    onError: (err: Error) => toast.error(err.message || "Errore nell'invio"),
   });
 
   const toggleAll = () => {

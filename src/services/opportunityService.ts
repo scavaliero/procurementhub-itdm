@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
 import type { Opportunity } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface OpportunityFilters {
   status?: string;
@@ -94,7 +95,7 @@ export const opportunityService = {
       .from("opportunities")
       .insert({
         ...opp,
-        evaluation_criteria: opp.evaluation_criteria ? (opp.evaluation_criteria as any) : [],
+        evaluation_criteria: opp.evaluation_criteria ? (opp.evaluation_criteria as unknown as Json) : [],
       })
       .select()
       .single();
@@ -114,7 +115,7 @@ export const opportunityService = {
   async update(id: string, updates: Partial<Opportunity>) {
     const { data, error } = await supabase
       .from("opportunities")
-      .update(updates as any)
+      .update(updates as unknown as Record<string, unknown>)
       .eq("id", id)
       .select()
       .single();

@@ -36,7 +36,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
-    defaultValues: { privacy: false as any },
+    defaultValues: { privacy: false as unknown as true },
   });
 
   const { data: categories = [] } = useQuery({
@@ -183,7 +183,7 @@ export default function RegisterPage() {
                 id="privacy"
                 checked={privacy === true}
                 onCheckedChange={(checked) =>
-                  setValue("privacy", checked === true ? true : (false as any), {
+                  setValue("privacy", checked === true ? true : (false as unknown as true), {
                     shouldValidate: true,
                   })
                 }

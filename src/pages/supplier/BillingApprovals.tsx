@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { billingApprovalService } from "@/services/billingApprovalService";
 import { useAuth } from "@/hooks/useAuth";
+import type { BillingApproval } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +54,7 @@ export default function SupplierBillingApprovals() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {billings.map((b: any) => (
+                {billings.map((b: BillingApproval) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-mono text-sm">{b.code ?? "—"}</TableCell>
                     <TableCell className="text-sm">

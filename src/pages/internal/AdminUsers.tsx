@@ -3,6 +3,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { grantService } from "@/services/grantService";
 import { auditService } from "@/services/auditService";
+import { authService } from "@/services/authService";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,29 +56,11 @@ export default function AdminUsers() {
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
-      // Use edge function for admin invite
-      const { supabase } = await import("@/integrations/supabase/client");
-      // Create profile directly since we can't use admin APIs from client
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
+      await authService.inviteInternalUser({
         email: inviteEmail,
-        password: crypto.randomUUID() + "Aa1!", // Temp password, user resets via email
-        options: {
-          data: { full_name: inviteName },
-          emailRedirectTo: window.location.origin,
-        },
+        fullName: inviteName,
+        tenantId: currentProfile!.tenant_id,
       });
-      if (authErr) throw authErr;
-      if (!authData.user) throw new Error("Utente non creato");
-
-      // Insert profile
-      const { error: profErr } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        email: inviteEmail,
-        full_name: inviteName,
-        user_type: "internal",
-        tenant_id: currentProfile!.tenant_id,
-      });
-      if (profErr) throw profErr;
     },
     onSuccess: () => {
       toast.success("Utente invitato");

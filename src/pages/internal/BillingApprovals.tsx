@@ -124,7 +124,7 @@ export default function InternalBillingApprovals() {
       qc.invalidateQueries({ queryKey: ["billing-approvals"] });
       resetCreateForm();
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
   const submitMutation = useMutation({
@@ -165,7 +165,7 @@ export default function InternalBillingApprovals() {
       qc.invalidateQueries({ queryKey: ["billing-approvals"] });
       resetCreateForm();
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
   const approveMutation = useMutation({
@@ -176,7 +176,7 @@ export default function InternalBillingApprovals() {
       qc.invalidateQueries({ queryKey: ["billing-approvals"] });
       setApproveDialog(null);
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
   const rejectMutation = useMutation({
@@ -188,7 +188,7 @@ export default function InternalBillingApprovals() {
       setRejectDialog(null);
       setRejectReason("");
     },
-    onError: (err: any) => toast.error(err.message || "Errore"),
+    onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
   function resetCreateForm() {
