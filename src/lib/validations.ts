@@ -56,7 +56,7 @@ export const registrationSchema = z.object({
     .or(z.literal(""))
     .refine(
       (val) => !val || val === "" || isValidItalianFC(val),
-      "Codice Fiscale non valido (formato: 16 caratteri alfanumerici)"
+      "Codice Fiscale non valido (formato: 16 caratteri alfanumerici o 11 cifre)"
     ),
   contact_name: z
     .string()
