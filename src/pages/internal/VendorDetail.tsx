@@ -208,6 +208,9 @@ export default function InternalVendorDetail() {
               event_type: `document_${action}`,
               recipient_id: pid,
               tenant_id: supplier.tenant_id,
+              link_url: `/supplier/documents`,
+              related_entity_id: doc.id,
+              related_entity_type: "uploaded_document",
               variables: {
                 document_name: dtMap[doc.document_type_id]?.name || "",
                 ...(notes ? { review_notes: notes } : {}),
