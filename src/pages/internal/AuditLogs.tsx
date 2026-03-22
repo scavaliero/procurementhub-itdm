@@ -99,6 +99,7 @@ export default function AuditLogs() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(0);
   const [detailLog, setDetailLog] = useState<AuditLog | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["audit-logs", search, entityFilter, eventFilter, dateFrom, dateTo, page],
