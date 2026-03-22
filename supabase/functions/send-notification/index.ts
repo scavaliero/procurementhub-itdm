@@ -29,10 +29,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (tplErr) throw tplErr;
+
+    // If no template, still insert in-app notification but skip email
     if (!template) {
+      if (recipient_id) {
+        const fallbackTitle = `Notifica: ${event_type}`;
+        await supabase.from("notifications").insert({
+          tenant_id,
+          recipient_id,
+          event_type,
+          title: fallbackTitle,
+          body: variables?.message || event_type,
+          is_read: false,
+        });
+      }
       return new Response(
-        JSON.stringify({ error: "template_not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, email_sent: false, reason: "template_not_found" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
