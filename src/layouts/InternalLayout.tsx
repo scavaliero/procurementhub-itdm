@@ -50,7 +50,7 @@ function InternalSidebarContent() {
   const { hasGrant } = useGrants();
 
   const showConfig = hasGrant("manage_document_types");
-  const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users");
+  const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users") || hasGrant("view_audit_logs");
 
   const renderItems = (items: typeof mainNav) =>
     items.map((item) => {
