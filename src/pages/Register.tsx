@@ -56,10 +56,12 @@ export default function RegisterPage() {
         password: data.password,
         category_id: data.category_id || undefined,
       }),
-    onSuccess: () => {
-      toast.success(
-        "Registrazione completata. Controlla la tua email per confermare l'account."
-      );
+    onSuccess: (result: any) => {
+      if (result?.resent) {
+        toast.success("Email di conferma re-inviata. Controlla la tua casella di posta.");
+      } else {
+        toast.success("Registrazione completata. Controlla la tua email per confermare l'account.");
+      }
       navigate("/login");
     },
     onError: (err: Error) => {
