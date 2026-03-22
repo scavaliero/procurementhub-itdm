@@ -326,7 +326,7 @@ export default function InternalVendorDetail() {
   }
 
   // ── Dialog submit handler ──
-  const handleDialogSubmit = () => {
+  const handleDialogSubmit = async () => {
     if (!actionDialog) return;
     switch (actionDialog.type) {
       case "enable":
