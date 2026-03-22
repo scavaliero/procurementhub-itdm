@@ -43,7 +43,7 @@ export default function AdminRoles() {
   });
 
   const { data: grants = [] } = useQuery({
-    queryKey: ["grants"],
+    queryKey: ["all-grants"],
     queryFn: () => grantService.listGrants(),
   });
 
