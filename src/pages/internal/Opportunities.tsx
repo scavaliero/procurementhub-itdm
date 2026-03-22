@@ -139,7 +139,7 @@ export default function InternalOpportunities() {
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità" }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
           <span className="text-base">📋</span>
           Opportunità
@@ -147,12 +147,12 @@ export default function InternalOpportunities() {
         <div className="flex gap-2">
           {hasGrant("export_data") && (
             <Button variant="outline" onClick={handleExportCsv} className="gap-2">
-              <Download className="h-4 w-4" /> Esporta CSV
+              <Download className="h-4 w-4" /> <span className="hidden sm:inline">Esporta CSV</span><span className="sm:hidden">CSV</span>
             </Button>
           )}
           {hasGrant("create_opportunity") && (
             <Button onClick={() => navigate("/internal/opportunities/new")}>
-              <Plus className="h-4 w-4 mr-2" /> Nuova Opportunità
+              <Plus className="h-4 w-4 mr-2" /> <span className="hidden sm:inline">Nuova Opportunità</span><span className="sm:hidden">Nuova</span>
             </Button>
           )}
         </div>
