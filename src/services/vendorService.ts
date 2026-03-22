@@ -10,6 +10,7 @@ export const vendorService = {
     contact_name: string;
     email: string;
     phone?: string;
+    pec?: string;
     password: string;
     category_id?: string;
   }) {
@@ -20,6 +21,7 @@ export const vendorService = {
         contact_name: params.contact_name,
         email: params.email,
         phone: params.phone || null,
+        pec: params.pec || null,
         password: params.password,
         category_id: params.category_id || null,
       },

@@ -52,6 +52,7 @@ export default function RegisterPage() {
         contact_name: data.contact_name,
         email: data.email,
         phone: data.phone || undefined,
+        pec: data.pec || undefined,
         password: data.password,
         category_id: data.category_id || undefined,
       }),
@@ -143,6 +144,16 @@ export default function RegisterPage() {
               {errors.email && (
                 <p className="text-xs text-destructive">
                   {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="pec">PEC</Label>
+              <Input id="pec" type="email" {...register("pec")} />
+              {errors.pec && (
+                <p className="text-xs text-destructive">
+                  {errors.pec.message}
                 </p>
               )}
             </div>

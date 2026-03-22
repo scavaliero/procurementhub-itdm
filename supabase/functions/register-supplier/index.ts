@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { company_name, vat_number, contact_name, email, phone, password, category_id } = await req.json();
+    const { company_name, vat_number, contact_name, email, phone, pec, password, category_id } = await req.json();
 
     if (!company_name || !vat_number || !email || !password || !contact_name) {
       return new Response(JSON.stringify({ error: "Campi obbligatori mancanti" }), {
@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
       .insert({
         company_name,
         vat_number_hash: btoa(vat_number),
+        pec: pec || null,
         status: "pre_registered",
         tenant_id: tenantId,
       })
