@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, Trash2, Check, X, CalendarIcon, Send } from "lucide-react";
+import { BillingAttachments } from "@/components/billing/BillingAttachments";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
