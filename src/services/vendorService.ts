@@ -124,6 +124,19 @@ export const vendorService = {
       new_state: { status: params.toStatus, reason: params.reason },
     });
 
+    // Auto-qualify all pending categories when supplier becomes accredited
+    if (params.toStatus === "accredited") {
+      const { error: qualErr } = await supabase
+        .from("supplier_categories")
+        .update({
+          status: "qualified",
+          qualified_at: new Date().toISOString(),
+        })
+        .eq("supplier_id", params.supplierId)
+        .eq("status", "pending");
+      if (qualErr) console.error("Auto-qualify categories error:", qualErr);
+    }
+
     // Notify supplier
     try {
       const profileId = await this.getSupplierProfileId(params.supplierId);

@@ -11,7 +11,7 @@ export const invitationService = {
       .eq("status", "accredited")
       .is("deleted_at", null)
       .eq("supplier_categories.category_id", categoryId)
-      .in("supplier_categories.status", ["qualified", "pending"]);
+      .eq("supplier_categories.status", "qualified");
     if (error) throw error;
     // Filter valid_until client-side (null = no expiry, or > today)
     const today = new Date().toISOString().slice(0, 10);
