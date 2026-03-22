@@ -133,9 +133,9 @@ export default function InternalDashboard() {
   }[] = [
     { key: "_total", title: "Fornitori totali", icon: Building2 },
     { key: "pre_registered", title: "Pre-registrati", icon: Clock },
+    { key: "pending_review", title: "In revisione", icon: Eye },
     { key: "enabled", title: "Abilitati", icon: Unlock },
     { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck },
-    { key: "in_approval", title: "In approvazione", icon: ClipboardCheck },
     { key: "accredited", title: "Accreditati", icon: UserCheck },
     { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true },
     { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni" },
