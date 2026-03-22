@@ -256,7 +256,7 @@ export default function InternalDashboard() {
                         <p className="text-xs text-muted-foreground">{o.code}</p>
                       </div>
                       <Badge variant="outline" className="shrink-0 ml-2 text-[11px]">
-                        {statusLabels[o.status] ?? o.status}
+                        {oppStatusLabels[o.status] ?? o.status}
                       </Badge>
                     </Link>
                   </li>
