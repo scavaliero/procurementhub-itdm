@@ -80,6 +80,13 @@ export const registrationSchema = z.object({
       "Formato telefono non valido (es. +39 02 12345678)"
     ),
   password: passwordSchema,
+  pec: z
+    .string()
+    .trim()
+    .email("Formato PEC non valido")
+    .max(255, "Massimo 255 caratteri")
+    .optional()
+    .or(z.literal("")),
   category_id: z.string().uuid().optional().or(z.literal("")),
   privacy: z.literal(true, {
     errorMap: () => ({ message: "Devi accettare l'informativa privacy" }),
