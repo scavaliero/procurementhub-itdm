@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import type { Supplier } from "@/types";
 
 interface Contact {
