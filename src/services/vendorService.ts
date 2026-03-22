@@ -28,6 +28,7 @@ export const vendorService = {
     });
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
+    if (data?.resent) return { resent: true, message: data.message };
     return { userId: data.userId, supplierId: data.supplierId };
   },
 
