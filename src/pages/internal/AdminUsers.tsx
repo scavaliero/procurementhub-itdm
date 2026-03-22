@@ -272,8 +272,11 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* User info & roles drawer */}
+      {/* User info drawer (click on user) */}
       <UserInfoDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+
+      {/* Manage role dialog (from dropdown) */}
+      <ManageRoleDialog user={roleUser} open={!!roleUser} onClose={() => setRoleUser(null)} />
     </div>
   );
 }
