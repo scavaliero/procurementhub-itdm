@@ -6,6 +6,7 @@ import { categoryService } from "@/services/categoryService";
 import { exportService } from "@/services/exportService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
+import { SUPPLIER_STATUS_CONFIG } from "@/lib/supplierStatusConfig";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,9 @@ import {
   Clock,
   AlertTriangle,
   Download,
+  Eye,
+  Unlock,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
