@@ -26,6 +26,7 @@ import SupplierOpportunityDetail from "@/pages/supplier/OpportunityDetail";
 import SupplierOrders from "@/pages/supplier/Orders";
 import SupplierBillingApprovals from "@/pages/supplier/BillingApprovals";
 import SupplierNotifications from "@/pages/supplier/Notifications";
+import SupplierProfile from "@/pages/supplier/Profile";
 
 import InternalLayout from "@/layouts/InternalLayout";
 import InternalDashboard from "@/pages/internal/Dashboard";
@@ -48,6 +49,7 @@ import AdminUsers from "@/pages/internal/AdminUsers";
 import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
 import InternalProfile from "@/pages/internal/Profile";
+import ChangePassword from "@/pages/ChangePassword";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -88,6 +90,8 @@ const App = () => (
             <Route path="/supplier/orders" element={<SupplierOrders />} />
             <Route path="/supplier/billing-approvals" element={<SupplierBillingApprovals />} />
             <Route path="/supplier/notifications" element={<SupplierNotifications />} />
+            <Route path="/supplier/profile" element={<SupplierProfile />} />
+            <Route path="/supplier/change-password" element={<ChangePassword />} />
           </Route>
 
           {/* Internal routes */}
@@ -118,6 +122,7 @@ const App = () => (
             <Route path="/internal/admin/users" element={<AdminUsers />} />
             <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
             <Route path="/internal/profile" element={<InternalProfile />} />
+            <Route path="/internal/change-password" element={<ChangePassword />} />
           </Route>
 
           {/* Catch-all */}
