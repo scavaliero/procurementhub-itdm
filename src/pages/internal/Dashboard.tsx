@@ -206,6 +206,7 @@ export default function InternalDashboard() {
                   title={oppStatusLabels[r.status] ?? r.status}
                   value={r.count}
                   icon={Briefcase}
+                  cardClass="card-top-procurement"
                 />
               ))}
               {(!oppStats || oppStats.length === 0) && (
