@@ -145,6 +145,9 @@ export const vendorService = {
           event_type: `supplier_${params.toStatus}`,
           recipient_id: profileId,
           tenant_id: sup.tenant_id,
+          link_url: `/supplier/dashboard`,
+          related_entity_id: params.supplierId,
+          related_entity_type: "supplier",
           variables: {
             company_name: sup.company_name || "",
             status: params.toStatus,

@@ -313,6 +313,9 @@ export default function InternalVendorDetail() {
                       event_type: "supplier_enabled",
                       recipient_id: p.id,
                       tenant_id: supplier.tenant_id,
+                      link_url: "/supplier/onboarding",
+                      related_entity_id: supplier.id,
+                      related_entity_type: "supplier",
                       variables: {
                         company_name: supplier.company_name,
                         contact_name: p.full_name,

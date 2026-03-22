@@ -296,6 +296,9 @@ export const orderService = {
           event_type: "order_issued",
           recipient_id: supplierProfiles[0].id,
           tenant_id: tenantId,
+          link_url: `/supplier/orders`,
+          related_entity_id: orderId,
+          related_entity_type: "order",
           variables: {
             order_code: order.code || "",
             subject: order.subject || "",

@@ -168,6 +168,9 @@ export default function SupplierOnboarding() {
           event_type: "onboarding_completed",
           recipient_id: profile.id,
           tenant_id: profile.tenant_id,
+          link_url: `/supplier/dashboard`,
+          related_entity_id: supplier.id,
+          related_entity_type: "supplier",
           variables: { company_name: companyData.company_name || supplier.company_name },
         });
       } catch (e) {
