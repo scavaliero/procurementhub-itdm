@@ -25,6 +25,44 @@ export interface CheckBillingLimitResult {
 }
 
 export const billingApprovalService = {
+  /** Get single billing approval by ID */
+  async getById(id: string) {
+    const { data, error } = await supabase
+      .from("billing_approvals")
+      .select("*, suppliers(company_name)")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single();
+    if (error) throw error;
+    return data as any;
+  },
+
+  /** Update a draft billing approval */
+  async update(id: string, fields: { period_start?: string; period_end?: string; amount?: number; activity_description?: string | null }) {
+    const { error } = await supabase
+      .from("billing_approvals")
+      .update(fields)
+      .eq("id", id);
+    if (error) throw error;
+  },
+
+  /** Soft delete a billing approval */
+  async softDelete(id: string, tenantId: string) {
+    const { error } = await supabase
+      .from("billing_approvals")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "billing_approval",
+      entity_id: id,
+      event_type: "billing_deleted",
+      new_state: { deleted: true },
+    });
+  },
+
   /** List all billing approvals for internal */
   async list() {
     const { data, error } = await supabase

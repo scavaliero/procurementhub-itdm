@@ -40,6 +40,7 @@ import InternalOrderDetail from "@/pages/internal/OrderDetail";
 import InternalCreateOrder from "@/pages/internal/CreateOrder";
 import InternalContractDetail from "@/pages/internal/ContractDetail";
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
+import InternalBillingApprovalDetail from "@/pages/internal/BillingApprovalDetail";
 import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
 import AdminRoles from "@/pages/internal/AdminRoles";
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="/internal/orders/:id" element={<InternalOrderDetail />} />
             <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
+            <Route path="/internal/billing-approvals/:id" element={<InternalBillingApprovalDetail />} />
             <Route path="/internal/notifications" element={<InternalNotifications />} />
             <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
             <Route path="/internal/config/categories" element={<ConfigCategories />} />
