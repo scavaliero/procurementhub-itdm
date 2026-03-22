@@ -41,6 +41,7 @@ import {
   AlertTriangle,
   Send,
   Unlock,
+  RotateCcw,
 } from "lucide-react";
 import type { UploadedDocument, Supplier, SupplierCategory, SupplierStatusHistory } from "@/types";
 
