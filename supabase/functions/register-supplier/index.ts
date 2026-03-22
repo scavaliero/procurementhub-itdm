@@ -53,12 +53,13 @@ Deno.serve(async (req) => {
     if (!tenant?.id) throw new Error("Nessun tenant configurato");
     const tenantId = tenant.id;
 
-    // 2) Create auth user
+    // 2) Create auth user — email_confirm: true so NO confirmation email is sent.
+    //    Supplier is pre_registered; activation email sent when admin enables.
     const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
       password,
       user_metadata: { full_name: contactName },
-      email_confirm: false,
+      email_confirm: true,
     });
 
     if (authErr) {
