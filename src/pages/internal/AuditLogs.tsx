@@ -22,6 +22,8 @@ import { exportService } from "@/services/exportService";
 import { toast } from "sonner";
 
 const EVENT_LABELS: Record<string, string> = {
+  login: "Login",
+  logout: "Logout",
   opportunity_created: "Opportunità creata",
   opportunity_status_changed: "Stato opportunità",
   invitations_sent: "Inviti inviati",
@@ -40,12 +42,15 @@ const EVENT_LABELS: Record<string, string> = {
   document_rejected: "Documento respinto",
   role_assigned: "Ruolo assegnato",
   role_removed: "Ruolo rimosso",
+  grant_assigned: "Permesso assegnato",
+  grant_removed: "Permesso rimosso",
   user_activated: "Utente attivato",
   user_deactivated: "Utente disattivato",
   invite_resent: "Invito reinviato",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
+  auth: "Autenticazione",
   opportunity: "Opportunità",
   order: "Ordine",
   supplier: "Fornitore",
@@ -57,9 +62,11 @@ const ENTITY_LABELS: Record<string, string> = {
   uploaded_documents: "Documento",
   user: "Utente",
   user_roles: "Ruoli utente",
+  role_grants: "Permessi ruolo",
 };
 
 const ENTITY_COLORS: Record<string, string> = {
+  auth: "bg-sky-100 text-sky-700",
   opportunity: "bg-blue-100 text-blue-700",
   order: "bg-emerald-100 text-emerald-700",
   supplier: "bg-amber-100 text-amber-700",
@@ -71,6 +78,7 @@ const ENTITY_COLORS: Record<string, string> = {
   uploaded_documents: "bg-orange-100 text-orange-700",
   user: "bg-rose-100 text-rose-700",
   user_roles: "bg-rose-100 text-rose-700",
+  role_grants: "bg-indigo-100 text-indigo-700",
 };
 
 interface AuditLog {

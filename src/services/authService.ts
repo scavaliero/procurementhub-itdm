@@ -1,10 +1,28 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, UserEffectiveGrant } from "@/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export const authService = {
   async signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+
+    // Log login event asynchronously (don't block login flow)
+    try {
+      const profile = await this.getCurrentProfile();
+      if (profile) {
+        await supabase.from("audit_logs").insert([{
+          tenant_id: profile.tenant_id,
+          entity_type: "auth",
+          entity_id: data.user?.id || null,
+          event_type: "login",
+          user_id: data.user?.id || null,
+          user_email: email,
+          new_state: { method: "password" } as unknown as Json,
+        }]);
+      }
+    } catch { /* don't break login */ }
+
     return data;
   },
 
@@ -22,6 +40,24 @@ export const authService = {
   },
 
   async signOut() {
+    // Log logout event before signing out
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const profile = await this.getCurrentProfile();
+        if (profile) {
+          await supabase.from("audit_logs").insert([{
+            tenant_id: profile.tenant_id,
+            entity_type: "auth",
+            entity_id: user.id,
+            event_type: "logout",
+            user_id: user.id,
+            user_email: user.email || null,
+          }]);
+        }
+      }
+    } catch { /* don't break logout */ }
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
