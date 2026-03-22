@@ -313,4 +313,35 @@ export const billingApprovalService = {
     if (error) throw error;
     return path;
   },
+
+  /** List attachments for a billing approval */
+  async listAttachments(billingId: string) {
+    const { data, error } = await supabase.storage
+      .from("billing-attachments")
+      .list(billingId);
+    if (error) throw error;
+    return (data ?? []).map((f) => ({
+      name: f.name,
+      path: `${billingId}/${f.name}`,
+      size: f.metadata?.size ?? 0,
+      createdAt: f.created_at,
+    }));
+  },
+
+  /** Get signed download URL */
+  async getAttachmentUrl(path: string): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from("billing-attachments")
+      .createSignedUrl(path, 3600);
+    if (error) throw error;
+    return data.signedUrl;
+  },
+
+  /** Delete an attachment */
+  async deleteAttachment(path: string) {
+    const { error } = await supabase.storage
+      .from("billing-attachments")
+      .remove([path]);
+    if (error) throw error;
+  },
 };
