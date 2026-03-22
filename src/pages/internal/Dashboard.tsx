@@ -26,16 +26,17 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle,
+  title, value, icon: Icon, alert, subtitle, cardClass,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   alert?: boolean;
   subtitle?: string;
+  cardClass?: string;
 }) {
   return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
@@ -183,6 +184,7 @@ export default function InternalDashboard() {
                   icon={kpi.icon}
                   alert={kpi.alert && value > 0}
                   subtitle={kpi.subtitle}
+                  cardClass="card-top-suppliers"
                 />
               );
             })}
@@ -204,6 +206,7 @@ export default function InternalDashboard() {
                   title={oppStatusLabels[r.status] ?? r.status}
                   value={r.count}
                   icon={Briefcase}
+                  cardClass="card-top-procurement"
                 />
               ))}
               {(!oppStats || oppStats.length === 0) && (
@@ -221,12 +224,13 @@ export default function InternalDashboard() {
         <section className="space-y-4">
           <SectionHeader icon="💰" title="Indicatori Economici" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} />
+            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" />
             <KpiCard
               title="Benestare in approvazione"
               value={pendingBillings}
               icon={FileText}
               alert={pendingBillings > 0}
+              cardClass="card-top-economic"
             />
             <KpiCard
               title="Contratti budget < 10%"
@@ -234,6 +238,7 @@ export default function InternalDashboard() {
               icon={AlertTriangle}
               alert={lowBudget > 0}
               subtitle="Residuo quasi esaurito"
+              cardClass="card-top-economic"
             />
           </div>
         </section>
@@ -243,7 +248,7 @@ export default function InternalDashboard() {
       <section className="space-y-4">
         <SectionHeader icon="📌" title="Attività Recenti" variant="green" />
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-sm">
+          <Card className="shadow-sm card-top-activity">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
               <CardTitle className="text-sm font-semibold">Ultime opportunità</CardTitle>
               <Link
@@ -280,7 +285,7 @@ export default function InternalDashboard() {
           </Card>
 
           {hasGrant("approve_billing_approval") && (
-            <Card className="shadow-sm">
+            <Card className="shadow-sm card-top-activity">
               <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
                 <CardTitle className="text-sm font-semibold">Benestare da approvare</CardTitle>
                 <Link

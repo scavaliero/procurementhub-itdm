@@ -431,7 +431,7 @@ export default function InternalVendorDetail() {
 
         {/* ── Tab Anagrafica ── */}
         <TabsContent value="info" className="mt-4 space-y-4">
-          <Card>
+          <Card className="card-top-suppliers">
             <CardHeader><CardTitle className="text-base">Dati Azienda</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
@@ -455,7 +455,7 @@ export default function InternalVendorDetail() {
           </Card>
 
           {profiles.length > 0 && (
-            <Card>
+            <Card className="card-top-suppliers">
               <CardHeader><CardTitle className="text-base">Referenti</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -473,7 +473,7 @@ export default function InternalVendorDetail() {
 
           {/* ── Action buttons — always visible here after Referenti ── */}
           {actions.length > 0 && (
-            <Card>
+            <Card className="card-top-suppliers">
               <CardHeader><CardTitle className="text-base">Azioni disponibili</CardTitle></CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-3">
@@ -505,7 +505,7 @@ export default function InternalVendorDetail() {
               const dt = dtMap[doc.document_type_id];
               const db = DOC_LABELS[doc.status] || { label: doc.status, variant: "outline" as const };
               return (
-                <Card key={doc.id}>
+                <Card key={doc.id} className="card-top-docs">
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="min-w-0">
@@ -555,7 +555,7 @@ export default function InternalVendorDetail() {
             <EmptyState title="Nessuna categoria" description="Il fornitore non ha selezionato categorie." />
           ) : (
             categories.map((sc: SupplierCategory) => (
-              <Card key={sc.id}>
+              <Card key={sc.id} className="card-top-suppliers">
                 <CardContent className="pt-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">{sc.categories?.name || sc.category_id}</p>

@@ -221,7 +221,7 @@ export default function InternalBillingApprovals() {
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(["draft", "pending_approval", "approved", "rejected"] as const).map((s) => (
-          <Card key={s} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStatusFilter(s)}>
+          <Card key={s} className="cursor-pointer hover:shadow-md transition-shadow card-top-billing" onClick={() => setStatusFilter(s)}>
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">{STATUS_LABELS[s]}</p>
               <p className="text-2xl font-bold">{metrics[s] ?? 0}</p>
@@ -249,7 +249,7 @@ export default function InternalBillingApprovals() {
       {filtered.length === 0 ? (
         <EmptyState title="Nessun benestare" description="Non ci sono benestare corrispondenti ai filtri." />
       ) : (
-        <Card>
+        <Card className="card-top-billing">
           <CardContent className="p-0">
             <Table>
               <TableHeader>

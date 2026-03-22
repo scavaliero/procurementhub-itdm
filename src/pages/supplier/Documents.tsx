@@ -93,7 +93,7 @@ function DocumentCard({
   const StatusIcon = cfg.icon;
 
   return (
-    <Card className={locked ? "opacity-80" : ""}>
+    <Card className={`card-top-docs ${locked ? "opacity-80" : ""}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">

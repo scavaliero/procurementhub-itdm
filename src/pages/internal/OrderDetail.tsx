@@ -184,7 +184,7 @@ export default function InternalOrderDetail() {
       {/* Details grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column — Order info */}
-        <Card>
+        <Card className="card-top-orders">
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <FileText className="h-4 w-4" /> Dettagli ordine
@@ -236,7 +236,7 @@ export default function InternalOrderDetail() {
 
         {/* Right column — Supplier & links */}
         <div className="space-y-6">
-          <Card>
+          <Card className="card-top-orders">
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <Building2 className="h-4 w-4" /> Fornitore
@@ -256,7 +256,7 @@ export default function InternalOrderDetail() {
           </Card>
 
           {order.opportunities && (
-            <Card>
+            <Card className="card-top-orders">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
                   <MapPin className="h-4 w-4" /> Opportunità collegata
@@ -276,7 +276,7 @@ export default function InternalOrderDetail() {
           )}
 
           {contract && (
-            <Card>
+            <Card className="card-top-orders">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Calendar className="h-4 w-4" /> Contratto
@@ -308,7 +308,7 @@ export default function InternalOrderDetail() {
 
       {/* Contract conditions */}
       {order.contract_conditions && (
-        <Card>
+        <Card className="card-top-orders">
           <CardHeader>
             <CardTitle className="text-sm">Condizioni contrattuali</CardTitle>
           </CardHeader>
@@ -320,7 +320,7 @@ export default function InternalOrderDetail() {
 
       {/* Milestones */}
       {milestones.length > 0 && (
-        <Card>
+        <Card className="card-top-orders">
           <CardHeader>
             <CardTitle className="text-sm">Milestones</CardTitle>
           </CardHeader>

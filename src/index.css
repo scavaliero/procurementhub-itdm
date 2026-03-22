@@ -72,4 +72,54 @@
     @apply border-l-[3px] pl-3;
     border-left-color: hsl(var(--section-accent-green));
   }
+
+  /* Colored top border for cards by section */
+  .card-top-suppliers {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(214 85% 34%);
+  }
+  .card-top-procurement {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(168 100% 25%);
+  }
+  .card-top-economic {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(25 95% 53%);
+  }
+  .card-top-activity {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(262 60% 50%);
+  }
+  .card-top-docs {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(45 93% 47%);
+  }
+  .card-top-status {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(214 85% 34%);
+  }
+  .card-top-quick {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(168 100% 25%);
+  }
+  .card-top-orders {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(152 60% 40%);
+  }
+  .card-top-billing {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(262 60% 50%);
+  }
+  .card-top-config {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(220 12% 46%);
+  }
+  .card-top-admin {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(0 72% 51%);
+  }
+  .card-top-opportunities {
+    @apply border-t-[3px] overflow-hidden;
+    border-top-color: hsl(214 85% 50%);
+  }
 }

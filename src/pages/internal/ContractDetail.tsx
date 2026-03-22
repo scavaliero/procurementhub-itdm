@@ -142,7 +142,7 @@ export default function InternalContractDetail() {
 
       {/* Metrics cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="card-top-economic">
           <CardHeader className="pb-1">
             <CardTitle className="text-xs text-muted-foreground font-normal">Importo autorizzato</CardTitle>
           </CardHeader>
@@ -150,7 +150,7 @@ export default function InternalContractDetail() {
             <p className="text-xl font-bold">{formatCurrency(summary?.current_authorized_amount)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-top-economic">
           <CardHeader className="pb-1">
             <CardTitle className="text-xs text-muted-foreground font-normal">Fatturato approvato</CardTitle>
           </CardHeader>
@@ -158,7 +158,7 @@ export default function InternalContractDetail() {
             <p className="text-xl font-bold">{formatCurrency(summary?.approved_billing_total)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-top-economic">
           <CardHeader className="pb-1">
             <CardTitle className="text-xs text-muted-foreground font-normal">Residuo</CardTitle>
           </CardHeader>
@@ -166,7 +166,7 @@ export default function InternalContractDetail() {
             <p className="text-xl font-bold">{formatCurrency(summary?.residual_amount)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-top-economic">
           <CardHeader className="pb-1">
             <CardTitle className="text-xs text-muted-foreground font-normal">In approvazione</CardTitle>
           </CardHeader>
@@ -184,7 +184,7 @@ export default function InternalContractDetail() {
       </div>
 
       {/* Usage bar */}
-      <Card>
+      <Card className="card-top-economic">
         <CardHeader><CardTitle className="text-sm">Utilizzo budget</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           <div className="flex justify-between text-sm">
@@ -201,7 +201,7 @@ export default function InternalContractDetail() {
       </Card>
 
       {/* Contract details */}
-      <Card>
+      <Card className="card-top-economic">
         <CardHeader><CardTitle className="text-sm">Dettagli</CardTitle></CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">

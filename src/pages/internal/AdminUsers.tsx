@@ -192,7 +192,7 @@ export default function AdminUsers() {
           {(profiles as Profile[]).map((p) => {
             const isSelf = p.id === currentProfile?.id;
             return (
-              <Card key={p.id} className="hover:shadow-sm transition-shadow">
+              <Card key={p.id} className="hover:shadow-sm transition-shadow card-top-admin">
                 <CardContent className="py-3 flex items-center justify-between">
                   <div
                     className="flex items-center gap-3 flex-1 cursor-pointer"

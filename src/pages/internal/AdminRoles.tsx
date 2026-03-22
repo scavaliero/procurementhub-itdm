@@ -172,7 +172,7 @@ export default function AdminRoles() {
           {roles.map((role) => (
             <Card
               key={role.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer hover:shadow-md transition-shadow card-top-admin"
               onClick={() => setSelectedRole(role)}
             >
               <CardHeader className="pb-2">

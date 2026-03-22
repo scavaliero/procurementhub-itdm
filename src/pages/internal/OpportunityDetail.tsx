@@ -163,7 +163,7 @@ export default function InternalOpportunityDetail() {
         </TabsList>
 
         <TabsContent value="details">
-          <Card>
+          <Card className="card-top-opportunities">
             <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Detail label="Categoria" value={opp.categories?.name} />
               <Detail label="Unità richiedente" value={opp.requesting_unit} />
@@ -190,7 +190,7 @@ export default function InternalOpportunityDetail() {
         </TabsContent>
 
         <TabsContent value="criteria">
-          <Card>
+          <Card className="card-top-opportunities">
             <CardContent className="p-6">
               {criteria.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nessun criterio definito.</p>
@@ -221,7 +221,7 @@ export default function InternalOpportunityDetail() {
         </TabsContent>
 
         <TabsContent value="invitations">
-          <Card>
+          <Card className="card-top-opportunities">
             <CardContent className="p-6">
               {invitations.length === 0 ? (
                 <EmptyState title="Nessun invito" description="Non sono stati ancora inviati inviti per questa opportunità." />
@@ -321,7 +321,7 @@ function InviteSuppliers({ opportunityId, categoryId, tenantId }: { opportunityI
   if (!categoryId) return <p className="p-4 text-muted-foreground">Nessuna categoria associata all'opportunità.</p>;
 
   return (
-    <Card>
+    <Card className="card-top-opportunities">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Seleziona fornitori da invitare</CardTitle>

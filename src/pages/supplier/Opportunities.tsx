@@ -62,7 +62,7 @@ export default function SupplierOpportunities() {
             return (
               <Card
                 key={inv.id}
-                className={`cursor-pointer transition-shadow hover:shadow-md ${!inv.viewed_at ? "border-l-4 border-l-primary" : ""}`}
+                className={`cursor-pointer transition-shadow hover:shadow-md card-top-opportunities ${!inv.viewed_at ? "border-l-4 border-l-primary" : ""}`}
                 onClick={() => handleClick(inv)}
               >
                 <CardContent className="p-4 flex items-center justify-between">

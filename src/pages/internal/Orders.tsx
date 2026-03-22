@@ -82,7 +82,7 @@ export default function InternalOrders() {
       {orders.length === 0 ? (
         <EmptyState title="Nessun ordine" description="Non ci sono ordini registrati." />
       ) : (
-        <Card>
+        <Card className="card-top-orders">
           <CardContent className="p-0">
             <Table>
               <TableHeader>

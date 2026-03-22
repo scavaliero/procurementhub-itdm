@@ -247,7 +247,7 @@ export default function SupplierOnboarding() {
           <Badge variant="default" className="text-sm">Stato: Abilitato</Badge>
         </div>
 
-        <Card>
+        <Card className="card-top-suppliers">
           <CardHeader>
             <CardTitle className="text-base">Riepilogo Anagrafica</CardTitle>
           </CardHeader>
@@ -341,7 +341,7 @@ export default function SupplierOnboarding() {
 
       {/* Step 1 */}
       {step === 0 && (
-        <Card>
+        <Card className="card-top-suppliers">
           <CardHeader>
             <CardTitle>Dati Azienda</CardTitle>
           </CardHeader>
@@ -454,7 +454,7 @@ export default function SupplierOnboarding() {
 
       {/* Step 2: Contacts */}
       {step === 1 && (
-        <Card>
+        <Card className="card-top-suppliers">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Referenti
@@ -515,7 +515,7 @@ export default function SupplierOnboarding() {
 
       {/* Step 3: Categories */}
       {step === 2 && (
-        <Card>
+        <Card className="card-top-suppliers">
           <CardHeader>
             <CardTitle>Categorie Merceologiche</CardTitle>
           </CardHeader>
@@ -563,7 +563,7 @@ export default function SupplierOnboarding() {
 
       {/* Step 4: Summary */}
       {step === 3 && (
-        <Card>
+        <Card className="card-top-suppliers">
           <CardHeader>
             <CardTitle>Riepilogo</CardTitle>
           </CardHeader>

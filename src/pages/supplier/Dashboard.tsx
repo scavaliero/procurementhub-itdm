@@ -14,16 +14,17 @@ import {
 const REFETCH_MS = 5 * 60 * 1000;
 
 function KpiCard({
-  title, value, icon: Icon, subtitle, to,
+  title, value, icon: Icon, subtitle, to, cardClass,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   subtitle?: string;
   to?: string;
+  cardClass?: string;
 }) {
   const content = (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${to ? "cursor-pointer" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
@@ -139,7 +140,7 @@ export default function SupplierDashboard() {
         {loadingStatus ? (
           <Skeleton className="h-14 w-48" />
         ) : (
-          <Card className="shadow-sm inline-flex">
+          <Card className="shadow-sm inline-flex card-top-status">
             <CardContent className="py-4 px-6 flex items-center gap-3">
               <span className="text-sm text-muted-foreground">Il tuo stato:</span>
               <Badge variant={statusInfo.variant} className="text-base px-3 py-1">
@@ -163,6 +164,7 @@ export default function SupplierDashboard() {
               icon={FileText}
               to="/supplier/documents"
               subtitle={pendingDocs > 0 ? "Da completare" : "Tutto in ordine"}
+              cardClass="card-top-docs"
             />
             <KpiCard
               title="Opportunità da visionare"
@@ -170,12 +172,14 @@ export default function SupplierDashboard() {
               icon={Eye}
               to="/supplier/opportunities"
               subtitle={unseenInvites > 0 ? "Nuovi inviti ricevuti" : "Nessun invito in attesa"}
+              cardClass="card-top-opportunities"
             />
             <KpiCard
               title="Offerte inviate questo mese"
               value={bidsMonth}
               icon={Briefcase}
               to="/supplier/opportunities"
+              cardClass="card-top-procurement"
             />
             <KpiCard
               title="Benestare"
@@ -183,6 +187,7 @@ export default function SupplierDashboard() {
               icon={FileCheck}
               to="/supplier/billing-approvals"
               subtitle="Visualizza benestare approvati"
+              cardClass="card-top-billing"
             />
           </div>
         )}
@@ -200,7 +205,7 @@ export default function SupplierDashboard() {
             { title: "Benestare", to: "/supplier/billing-approvals", icon: FileCheck },
           ].map((link) => (
             <Link key={link.to} to={link.to}>
-              <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3">
+              <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3 card-top-quick">
                 <CardContent className="p-0 flex flex-col items-center gap-2.5">
                   <div className="h-12 w-12 rounded-xl bg-primary/8 flex items-center justify-center">
                     <link.icon className="h-6 w-6 text-primary" />
