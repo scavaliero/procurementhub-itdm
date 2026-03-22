@@ -89,7 +89,7 @@ export default function InternalVendorDetail() {
 
   // Dialog state
   const [actionDialog, setActionDialog] = useState<{
-    type: "enable" | "approve" | "integrate" | "suspend" | "revoke";
+    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate";
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
