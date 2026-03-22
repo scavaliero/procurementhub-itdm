@@ -150,11 +150,11 @@ export const bidService = {
       .single();
 
     // Get supplier name
-    const { data: supplierProfile } = await supabase
-      .from("profiles")
-      .select("full_name, suppliers(company_name)")
-      .eq("id", data.supplier_id ? data.supplier_id : "")
-      .maybeSingle();
+    const { data: supplierData } = await supabase
+      .from("suppliers")
+      .select("company_name")
+      .eq("id", data.supplier_id)
+      .single();
 
     if (opp?.created_by) {
       await notificationService.send({
@@ -164,7 +164,7 @@ export const bidService = {
         variables: {
           opportunity_title: opp.title || "",
           opportunity_code: opp.code || "",
-          company_name: (supplierProfile?.suppliers as any)?.company_name || "",
+          company_name: supplierData?.company_name || "",
           amount: data.total_amount ? String(data.total_amount) : "",
         },
       });

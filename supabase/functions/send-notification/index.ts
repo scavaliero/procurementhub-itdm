@@ -33,13 +33,29 @@ Deno.serve(async (req) => {
     // If no template, still insert in-app notification but skip email
     if (!template) {
       if (recipient_id) {
-        const fallbackTitle = `Notifica: ${event_type}`;
+        // Build a readable fallback title from event_type and variables
+        const eventLabels: Record<string, string> = {
+          order_issued: "Nuovo ordine",
+          order_accepted: "Ordine accettato",
+          order_rejected: "Ordine rifiutato",
+          billing_pending_approval: "Benestare in attesa",
+          billing_approved: "Benestare approvato",
+          billing_rejected: "Benestare rifiutato",
+          opportunity_invited: "Invito opportunità",
+          opportunity_awarded: "Esito opportunità",
+          bid_submitted: "Nuova offerta ricevuta",
+          onboarding_completed: "Onboarding completato",
+          document_approved: "Documento approvato",
+          document_rejected: "Documento respinto",
+        };
+        const fallbackTitle = eventLabels[event_type] || `Notifica: ${event_type}`;
+        const fallbackBody = variables?.message || variables?.subject || variables?.opportunity_title || variables?.billing_code || event_type;
         await supabase.from("notifications").insert({
           tenant_id,
           recipient_id,
           event_type,
           title: fallbackTitle,
-          body: variables?.message || event_type,
+          body: fallbackBody,
           is_read: false,
         });
       }

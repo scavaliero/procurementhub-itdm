@@ -83,7 +83,7 @@ export const vendorService = {
     } = await supabase.auth.getUser();
     const { data: sup } = await supabase
       .from("suppliers")
-      .select("tenant_id")
+      .select("tenant_id, company_name")
       .eq("id", params.supplierId)
       .single();
     if (!sup) throw new Error("Fornitore non trovato");
@@ -145,7 +145,11 @@ export const vendorService = {
           event_type: `supplier_${params.toStatus}`,
           recipient_id: profileId,
           tenant_id: sup.tenant_id,
-          variables: { status: params.toStatus, reason: params.reason || "" },
+          variables: {
+            company_name: sup.company_name || "",
+            status: params.toStatus,
+            reason: params.reason || "",
+          },
         });
       }
     } catch (e) {
