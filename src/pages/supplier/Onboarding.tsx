@@ -147,6 +147,42 @@ export default function SupplierOnboarding() {
     );
   }
 
+  // ── After submission: read-only waiting screen ──
+  if (supplier.status === "pending_review") {
+    const submittedDate = supplier.updated_at
+      ? new Date(supplier.updated_at).toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
+    return (
+      <div className="p-6 max-w-lg mx-auto flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+          <Check className="h-7 w-7 text-primary" />
+        </div>
+        <div className="text-center space-y-2">
+          <h1 className="text-xl font-semibold">Richiesta inviata</h1>
+          <p className="text-muted-foreground text-sm">
+            La tua richiesta di registrazione è stata inviata
+            {submittedDate && <> in data <strong>{submittedDate}</strong></>} ed
+            è attualmente in fase di valutazione da parte dell'amministratore.
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Riceverai una notifica via email quando la tua richiesta sarà elaborata.
+            Non è necessaria alcuna ulteriore azione da parte tua.
+          </p>
+        </div>
+        <Badge variant="secondary" className="text-sm">
+          Stato: In valutazione
+        </Badge>
+      </div>
+    );
+  }
+
   const steps = ["Dati Azienda", "Referenti", "Categorie", "Riepilogo"];
   const progress = ((step + 1) / steps.length) * 100;
 
