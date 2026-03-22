@@ -281,13 +281,23 @@ export default function InternalVendorDetail() {
       },
     });
   }
-  if (supplier.status === "in_approval" && canApproveAccreditation) {
+  if ((supplier.status === "in_approval" || supplier.status === "in_accreditation") && canApproveAccreditation) {
     actions.push({
       key: "approve",
       label: "Approva accreditamento",
       icon: ShieldCheck,
       variant: "default",
       onClick: () => setActionDialog({ type: "approve" }),
+    });
+    actions.push({
+      key: "reject",
+      label: "Rifiuta qualifica",
+      icon: XCircle,
+      variant: "destructive",
+      onClick: () => {
+        setBanUser(false);
+        setActionDialog({ type: "reject" });
+      },
     });
   }
   if (
@@ -691,18 +701,6 @@ export default function InternalVendorDetail() {
                         >
                           {sc.status === "qualified" ? "Qualificato" : "In attesa"}
                         </Badge>
-                        {canApproveAccreditation && sc.status !== "qualified" && (
-                          <Button
-                            size="sm"
-                            disabled={approveCategoryMutation.isPending}
-                            onClick={() =>
-                              approveCategoryMutation.mutate(sc.id)
-                            }
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />{" "}
-                            Approva qualifica
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
