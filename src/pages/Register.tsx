@@ -52,6 +52,7 @@ export default function RegisterPage() {
         contact_name: data.contact_name,
         email: data.email,
         phone: data.phone || undefined,
+        pec: data.pec || undefined,
         password: data.password,
         category_id: data.category_id || undefined,
       }),
