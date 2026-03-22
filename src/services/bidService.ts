@@ -145,15 +145,28 @@ export const bidService = {
     // Notify buyer (created_by on opportunity)
     const { data: opp } = await supabase
       .from("opportunities")
-      .select("created_by")
+      .select("created_by, title, code")
       .eq("id", opportunityId)
       .single();
+
+    // Get supplier name
+    const { data: supplierProfile } = await supabase
+      .from("profiles")
+      .select("full_name, suppliers(company_name)")
+      .eq("id", data.supplier_id ? data.supplier_id : "")
+      .maybeSingle();
 
     if (opp?.created_by) {
       await notificationService.send({
         event_type: "bid_submitted",
         recipient_id: opp.created_by,
         tenant_id: tenantId,
+        variables: {
+          opportunity_title: opp.title || "",
+          opportunity_code: opp.code || "",
+          company_name: (supplierProfile?.suppliers as any)?.company_name || "",
+          amount: data.total_amount ? String(data.total_amount) : "",
+        },
       });
     }
 
