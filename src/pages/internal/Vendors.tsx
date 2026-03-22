@@ -332,7 +332,7 @@ export default function InternalVendors() {
               <TableBody>
                 {suppliers.map((s) => {
                   const cfg =
-                    STATUS_CONFIG[s.status] || STATUS_CONFIG.pre_registered;
+                    SUPPLIER_STATUS_CONFIG[s.status] || SUPPLIER_STATUS_CONFIG.pre_registered;
                   return (
                     <TableRow
                       key={s.id}
