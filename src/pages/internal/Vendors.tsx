@@ -182,7 +182,7 @@ export default function InternalVendors() {
       });
       const csv = exportService.generateCsv(allData as unknown as Record<string, unknown>[], [
         { key: "company_name", header: "Ragione Sociale" },
-        { key: "status", header: "Stato", formatter: (v) => STATUS_CONFIG[v as string]?.label || String(v) },
+        { key: "status", header: "Stato", formatter: (v) => SUPPLIER_STATUS_CONFIG[v as string]?.label || String(v) },
         { key: "created_at", header: "Data Registrazione", formatter: (v) => v ? new Date(v as string).toLocaleDateString("it-IT") : "" },
       ]);
       exportService.downloadCsv(csv, `fornitori_${new Date().toISOString().slice(0, 10)}.csv`);
