@@ -232,6 +232,7 @@ export default function InternalOpportunities() {
         <EmptyState title="Nessuna opportunità" description="Non ci sono opportunità con i filtri selezionati." />
       ) : (
         <>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
