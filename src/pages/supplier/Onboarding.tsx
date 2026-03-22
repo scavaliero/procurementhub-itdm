@@ -301,7 +301,8 @@ export default function SupplierOnboarding() {
   };
 
   const handleNext = () => {
-    saveDraft();
+    // Save contacts to DB only when leaving step 1 (Referenti)
+    saveDraft(step === 1);
     setStep((s) => Math.min(s + 1, steps.length - 1));
   };
 
