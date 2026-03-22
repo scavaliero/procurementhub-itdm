@@ -86,7 +86,7 @@ export default function PostLoginRedirect() {
   }
 
   if (profile.user_type === "supplier") {
-    return <Navigate to="/supplier/onboarding" replace />;
+    return <Navigate to="/supplier/dashboard" replace />;
   }
   return <Navigate to="/internal/dashboard" replace />;
 }
