@@ -69,6 +69,8 @@ Deno.serve(async (req) => {
             event_type: "document_expiry_warning",
             recipient_id: profile.id,
             tenant_id: tenantId,
+            link_url: "/supplier/documents",
+            related_entity_type: "uploaded_document",
             variables: { count: String(count), full_name: profile.full_name },
           },
         });
@@ -170,6 +172,9 @@ Deno.serve(async (req) => {
                 event_type: "supplier_suspended_expired_docs",
                 recipient_id: profile.id,
                 tenant_id: tenantId,
+                link_url: "/supplier/documents",
+                related_entity_id: supplierId,
+                related_entity_type: "supplier",
                 variables: { full_name: profile.full_name },
               },
             });

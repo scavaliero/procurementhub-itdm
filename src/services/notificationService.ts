@@ -7,6 +7,9 @@ export const notificationService = {
     recipient_id: string;
     tenant_id: string;
     variables?: Record<string, string>;
+    link_url?: string;
+    related_entity_id?: string;
+    related_entity_type?: string;
   }) {
     const { data, error } = await supabase.functions.invoke("send-notification", {
       body: params,

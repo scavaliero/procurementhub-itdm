@@ -136,6 +136,9 @@ Deno.serve(async (req) => {
       recipient_email,
       tenant_id,
       variables,
+      link_url,
+      related_entity_id,
+      related_entity_type,
     } = payload;
 
     const rawVars =
@@ -198,6 +201,9 @@ Deno.serve(async (req) => {
           event_type,
           title: fallbackTitle,
           body: fallbackBody,
+          link_url: link_url || null,
+          related_entity_id: related_entity_id || null,
+          related_entity_type: related_entity_type || null,
           is_read: false,
         });
       }
@@ -295,6 +301,9 @@ Deno.serve(async (req) => {
         event_type,
         title: subject,
         body: plainBody,
+        link_url: link_url || null,
+        related_entity_id: related_entity_id || null,
+        related_entity_type: related_entity_type || null,
         is_read: false,
       });
 

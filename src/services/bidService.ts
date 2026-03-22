@@ -161,6 +161,9 @@ export const bidService = {
         event_type: "bid_submitted",
         recipient_id: opp.created_by,
         tenant_id: tenantId,
+        link_url: `/internal/opportunities/${opportunityId}`,
+        related_entity_id: opportunityId,
+        related_entity_type: "opportunity",
         variables: {
           opportunity_title: opp.title || "",
           opportunity_code: opp.code || "",
@@ -398,6 +401,9 @@ export const bidService = {
                 event_type: "opportunity_awarded",
                 recipient_id: sp.id,
                 tenant_id: params.tenantId,
+                link_url: `/supplier/opportunities/${params.opportunityId}`,
+                related_entity_id: params.opportunityId,
+                related_entity_type: "opportunity",
                 variables: {
                   opportunity_title: oppData?.title || "",
                   opportunity_code: oppData?.code || "",

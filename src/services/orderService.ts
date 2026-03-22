@@ -126,6 +126,9 @@ export const orderService = {
           event_type: "order_issued",
           recipient_id: supplierProfiles[0].id,
           tenant_id: params.tenantId,
+          link_url: `/supplier/orders`,
+          related_entity_id: order.id,
+          related_entity_type: "order",
           variables: {
             order_code: order.code || "",
             subject: params.subject,
@@ -195,6 +198,9 @@ export const orderService = {
         event_type: "order_accepted",
         recipient_id: opp.issued_by,
         tenant_id: tenantId,
+        link_url: `/internal/orders/${orderId}`,
+        related_entity_id: orderId,
+        related_entity_type: "order",
         variables: {
           order_code: opp.code || "",
           subject: opp.subject || "",
@@ -238,6 +244,9 @@ export const orderService = {
         event_type: "order_rejected",
         recipient_id: opp.issued_by,
         tenant_id: tenantId,
+        link_url: `/internal/orders/${orderId}`,
+        related_entity_id: orderId,
+        related_entity_type: "order",
         variables: {
           order_code: opp.code || "",
           subject: opp.subject || "",
@@ -287,6 +296,9 @@ export const orderService = {
           event_type: "order_issued",
           recipient_id: supplierProfiles[0].id,
           tenant_id: tenantId,
+          link_url: `/supplier/orders`,
+          related_entity_id: orderId,
+          related_entity_type: "order",
           variables: {
             order_code: order.code || "",
             subject: order.subject || "",

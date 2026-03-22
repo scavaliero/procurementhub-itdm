@@ -155,6 +155,9 @@ Deno.serve(async (req) => {
           event_type: "pre_registration",
           recipient_id: createdUserId,
           tenant_id: tenantId,
+          link_url: "/supplier/onboarding",
+          related_entity_id: createdSupplierId,
+          related_entity_type: "supplier",
           variables: { company_name: companyName },
         },
       });
