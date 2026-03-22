@@ -260,6 +260,16 @@ export default function InternalVendorDetail() {
       variant: "default",
       onClick: () => setActionDialog({ type: "enable" }),
     });
+    actions.push({
+      key: "reject",
+      label: "Rifiuta registrazione",
+      icon: XCircle,
+      variant: "destructive",
+      onClick: () => {
+        setBanUser(false);
+        setActionDialog({ type: "reject" });
+      },
+    });
   }
   if (supplier.status === "in_approval" && canApproveAccreditation) {
     actions.push({
