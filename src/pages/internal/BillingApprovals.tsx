@@ -264,7 +264,7 @@ export default function InternalBillingApprovals() {
               </TableHeader>
               <TableBody>
                 {filtered.map((b: any) => (
-                  <TableRow key={b.id}>
+                  <TableRow key={b.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/internal/billing-approvals/${b.id}`)}>
                     <TableCell className="font-mono text-sm">{b.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{b.suppliers?.company_name ?? "—"}</TableCell>
                     <TableCell className="text-sm">
