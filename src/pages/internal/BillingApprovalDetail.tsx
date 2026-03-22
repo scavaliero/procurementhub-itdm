@@ -215,7 +215,7 @@ export default function BillingApprovalDetail() {
           )}
           {canApprove && isPending && (
             <>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setApproveDialog(true)}>
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => setApproveDialog(true)}>
                 <Check className="h-4 w-4 mr-1.5" /> Approva
               </Button>
               <Button size="sm" variant="destructive" onClick={() => setRejectDialog(true)}>
