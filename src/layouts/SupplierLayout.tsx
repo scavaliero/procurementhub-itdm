@@ -114,16 +114,7 @@ export default function SupplierLayout() {
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={signOut}
-              title="Esci"
-              className="text-primary-foreground hover:bg-primary-foreground/10 gap-1.5"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Logout</span>
-            </Button>
+            <UserMenu basePath="/supplier" />
           </div>
         </header>
         <main className="flex-1 overflow-auto">
