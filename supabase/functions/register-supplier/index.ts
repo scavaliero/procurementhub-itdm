@@ -32,7 +32,12 @@ Deno.serve(async (req) => {
       user_metadata: { full_name: contact_name },
       email_confirm: false,
     });
-    if (authErr) throw authErr;
+    if (authErr) {
+      if (authErr.message?.includes("already been registered") || authErr.message?.includes("already exists")) {
+        throw new Error("Questa email è già registrata. Prova ad accedere o usa un'altra email.");
+      }
+      throw authErr;
+    }
     const userId = authData.user?.id;
     if (!userId) throw new Error("Utente non creato");
 
