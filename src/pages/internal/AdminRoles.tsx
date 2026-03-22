@@ -22,11 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Plus, Settings, Users } from "lucide-react";
+import { Plus, Settings, Users, Pencil, Trash2 } from "lucide-react";
 import type { Role, Grant } from "@/types";
 
 export default function AdminRoles() {
@@ -36,6 +37,14 @@ export default function AdminRoles() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDesc, setNewRoleDesc] = useState("");
+
+  // Edit state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+
+  // Delete confirmation state
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ["roles"],
@@ -75,6 +84,33 @@ export default function AdminRoles() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      grantService.updateRole(selectedRole!.id, {
+        name: editName,
+        description: editDesc || undefined,
+      }),
+    onSuccess: (updated) => {
+      toast.success("Ruolo aggiornato");
+      qc.invalidateQueries({ queryKey: ["roles"] });
+      setSelectedRole(updated);
+      setEditOpen(false);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => grantService.deleteRole(selectedRole!.id),
+    onSuccess: () => {
+      toast.success("Ruolo eliminato");
+      qc.invalidateQueries({ queryKey: ["roles"] });
+      qc.invalidateQueries({ queryKey: ["user-roles-count"] });
+      setDeleteOpen(false);
+      setSelectedRole(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const toggleGrantMutation = useMutation({
     mutationFn: async ({ grantId, add }: { grantId: string; add: boolean }) => {
       if (add) {
@@ -98,6 +134,13 @@ export default function AdminRoles() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const openEdit = () => {
+    if (!selectedRole) return;
+    setEditName(selectedRole.name);
+    setEditDesc(selectedRole.description || "");
+    setEditOpen(true);
+  };
+
   if (isLoading) return <PageSkeleton />;
 
   // Group grants by module
@@ -106,6 +149,8 @@ export default function AdminRoles() {
     if (!grantsByModule[g.module]) grantsByModule[g.module] = [];
     grantsByModule[g.module].push(g);
   });
+
+  const canModifySelected = selectedRole && !selectedRole.is_system;
 
   return (
     <div className="p-6 space-y-6">
@@ -171,14 +216,73 @@ export default function AdminRoles() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica Ruolo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Nome *</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Descrizione</Label>
+              <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Annulla</Button>
+            <Button disabled={!editName || updateMutation.isPending} onClick={() => updateMutation.mutate()}>
+              Salva
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina Ruolo</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare il ruolo <strong>{selectedRole?.name}</strong>?
+              Verranno rimossi anche tutti i permessi e le assegnazioni utente associate.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annulla</Button>
+            <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()}>
+              Elimina
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Grants drawer */}
       <Sheet open={!!selectedRole} onOpenChange={(open) => !open && setSelectedRole(null)}>
         <SheetContent className="w-[400px] sm:w-[500px] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Permessi: {selectedRole?.name}
-            </SheetTitle>
+            <div className="flex items-center justify-between pr-2">
+              <SheetTitle className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Permessi: {selectedRole?.name}
+              </SheetTitle>
+              {canModifySelected && (
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openEdit}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            {selectedRole?.is_system && (
+              <p className="text-xs text-muted-foreground">Ruolo di sistema — non modificabile nome/eliminazione</p>
+            )}
           </SheetHeader>
           <div className="mt-6 space-y-6">
             {Object.entries(grantsByModule).map(([module, moduleGrants]) => (
