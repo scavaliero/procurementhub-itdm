@@ -180,6 +180,7 @@ export default function AuditLogs() {
     setSearch("");
     setEntityFilter("all");
     setEventFilter("all");
+    setUserTypeFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
     setPage(0);
