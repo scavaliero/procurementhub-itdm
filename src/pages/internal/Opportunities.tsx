@@ -171,8 +171,8 @@ export default function InternalOpportunities() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="relative sm:col-span-2 lg:col-span-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cerca per titolo..."
@@ -185,7 +185,7 @@ export default function InternalOpportunities() {
           value={statusParam || "all"}
           onValueChange={(v) => updateParams({ status: v === "all" ? "" : v })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger>
             <SelectValue placeholder="Stato" />
           </SelectTrigger>
           <SelectContent>
@@ -199,7 +199,7 @@ export default function InternalOpportunities() {
           value={categoryParam || "all"}
           onValueChange={(v) => updateParams({ category: v === "all" ? "" : v })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger>
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -213,7 +213,7 @@ export default function InternalOpportunities() {
           value={refIdParam || "all"}
           onValueChange={(v) => updateParams({ ref_id: v === "all" ? "" : v })}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger>
             <SelectValue placeholder="Referente interno" />
           </SelectTrigger>
           <SelectContent>
