@@ -27,21 +27,51 @@ const eventLabels: Record<string, string> = {
 };
 
 /**
- * Replace {{variable}} placeholders, then remove lines/segments
- * where the variable was empty, so we don't get orphan labels
- * like "Fornitore: " or "Importo: €".
+ * User-friendly fallback labels for common template variables.
+ * When a variable is missing, these provide readable placeholder text
+ * instead of leaving orphan labels or blank spaces.
+ */
+const varFallbacks: Record<string, string> = {
+  order_code: "codice non disponibile",
+  billing_code: "codice non disponibile",
+  opportunity_title: "opportunità",
+  opportunity_code: "codice non disponibile",
+  company_name: "fornitore",
+  supplier_name: "fornitore",
+  contact_name: "utente",
+  full_name: "utente",
+  amount: "importo da definire",
+  total_amount: "importo da definire",
+  subject: "–",
+  deadline: "scadenza da definire",
+  bids_deadline: "scadenza da definire",
+  start_date: "data da definire",
+  end_date: "data da definire",
+  period_start: "data da definire",
+  period_end: "data da definire",
+  document_name: "documento",
+  category_name: "categoria",
+  reason: "–",
+  review_notes: "nessuna nota",
+};
+
+/**
+ * Replace {{variable}} placeholders with values or user-friendly fallbacks.
+ * Lines containing only fallback text for cosmetic-only fields are removed
+ * to avoid clutter (e.g. "Fornitore: fornitore").
  */
 function renderTemplate(
   htmlTemplate: string,
   vars: Record<string, string>,
 ): string {
-  // Step 1: replace placeholders — mark empty ones with a sentinel
   const EMPTY = "\x00EMPTY\x00";
   const rendered = htmlTemplate.replace(
     /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g,
     (_match, key: string) => {
       const val = vars[key];
-      return val && val.trim() ? val : EMPTY;
+      if (val && val.trim()) return val;
+      // Use friendly fallback if available, otherwise sentinel for removal
+      return varFallbacks[key] || EMPTY;
     },
   );
 
