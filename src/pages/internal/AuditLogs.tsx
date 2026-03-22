@@ -92,6 +92,7 @@ interface AuditLog {
   entity_id: string | null;
   user_email: string | null;
   user_id: string | null;
+  user_role: string | null;
   old_state: Record<string, unknown> | null;
   new_state: Record<string, unknown> | null;
 }
@@ -150,6 +151,28 @@ export default function AuditLogs() {
     enabled: canView && !!profile,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Fetch user types from profiles for display
+  const { data: userTypesMap } = useQuery({
+    queryKey: ["audit-user-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_type");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      data.forEach((p) => { map[p.id] = p.user_type; });
+      return map;
+    },
+    enabled: canView && !!profile,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  function getUserType(log: AuditLog): string | null {
+    if (log.user_role) return log.user_role;
+    if (log.user_id && userTypesMap?.[log.user_id]) return userTypesMap[log.user_id];
+    return null;
+  }
 
   function resetFilters() {
     setSearch("");
@@ -335,7 +358,15 @@ export default function AuditLogs() {
                         {log.created_at ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: it }) : "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium">{log.user_email || "Sistema"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{log.user_email || "Sistema"}</span>
+                          {log.user_email && (() => {
+                            const uType = getUserType(log);
+                            if (uType === "internal") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-300 text-blue-700 bg-blue-50">Interno</Badge>;
+                            if (uType === "supplier") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Fornitore</Badge>;
+                            return null;
+                          })()}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant="secondary" className={cn("text-xs", ENTITY_COLORS[log.entity_type] ?? "bg-gray-100 text-gray-700")}>
@@ -393,7 +424,15 @@ export default function AuditLogs() {
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Utente</span>
-                  <span className="font-medium">{detailLog.user_email || "Sistema"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{detailLog.user_email || "Sistema"}</span>
+                    {detailLog.user_email && (() => {
+                      const uType = getUserType(detailLog);
+                      if (uType === "internal") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-300 text-blue-700 bg-blue-50">Interno</Badge>;
+                      if (uType === "supplier") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Fornitore</Badge>;
+                      return null;
+                    })()}
+                  </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Entità</span>
