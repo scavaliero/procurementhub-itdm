@@ -89,10 +89,11 @@ export default function InternalVendorDetail() {
 
   // Dialog state
   const [actionDialog, setActionDialog] = useState<{
-    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate";
+    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate" | "reject";
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
+  const [banUser, setBanUser] = useState(false);
   const [rejectDocDialog, setRejectDocDialog] = useState<UploadedDocument | null>(null);
   const [rejectDocNotes, setRejectDocNotes] = useState("");
 
