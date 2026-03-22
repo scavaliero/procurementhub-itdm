@@ -267,7 +267,7 @@ export default function InternalVendors() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tutti gli stati</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+            {Object.entries(SUPPLIER_STATUS_CONFIG).map(([key, cfg]) => (
               <SelectItem key={key} value={key}>
                 {cfg.label}
               </SelectItem>
