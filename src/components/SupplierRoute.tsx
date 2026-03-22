@@ -5,7 +5,7 @@ import { vendorService } from "@/services/vendorService";
 import { useRealtimeNotifications } from "@/hooks/useRealtime";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { PageSkeleton } from "@/components/PageSkeleton";
-import { AlertCircle, FileText } from "lucide-react";
+import { AlertCircle, FileText, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,49 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
   if (!user) return <Navigate to="/login" replace />;
   if (profile && profile.user_type !== "supplier") {
     return <Navigate to="/internal/dashboard" replace />;
+  }
+
+  const status = supplier?.status;
+
+  // ── pre_registered: ONLY onboarding page, nothing else ──
+  if (status === "pre_registered") {
+    if (!location.pathname.startsWith("/supplier/onboarding")) {
+      return <Navigate to="/supplier/onboarding" replace />;
+    }
+  }
+
+  // ── pending_review: waiting screen, no access ──
+  if (status === "pending_review") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <Card className="max-w-lg w-full">
+          <CardContent className="pt-6 space-y-4 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Clock className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold">Richiesta in revisione</h2>
+            <p className="text-muted-foreground text-sm">
+              I tuoi dati aziendali sono stati inviati e sono in fase di revisione
+              da parte dell'amministratore. Riceverai una notifica quando la tua
+              richiesta sarà elaborata.
+            </p>
+            <Badge variant="secondary" className="text-sm">
+              Stato: In attesa di revisione
+            </Badge>
+          </CardContent>
+        </Card>
+        <SessionTimeoutModal />
+      </div>
+    );
+  }
+
+  // ── enabled: onboarding complete, now documents + limited menu ──
+  if (status === "enabled") {
+    const allowedPaths = ["/supplier/onboarding", "/supplier/documents", "/supplier/notifications"];
+    const isAllowed = allowedPaths.some((p) => location.pathname.startsWith(p));
+    if (!isAllowed) {
+      return <Navigate to="/supplier/documents" replace />;
+    }
   }
 
   // Allow access to onboarding and documents pages even when blocked
