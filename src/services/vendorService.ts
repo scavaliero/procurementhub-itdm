@@ -83,7 +83,7 @@ export const vendorService = {
     } = await supabase.auth.getUser();
     const { data: sup } = await supabase
       .from("suppliers")
-      .select("tenant_id")
+      .select("tenant_id, company_name")
       .eq("id", params.supplierId)
       .single();
     if (!sup) throw new Error("Fornitore non trovato");
