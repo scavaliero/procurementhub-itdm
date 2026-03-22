@@ -47,6 +47,7 @@ import AdminRoles from "@/pages/internal/AdminRoles";
 import AdminUsers from "@/pages/internal/AdminUsers";
 import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
+import InternalProfile from "@/pages/internal/Profile";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
