@@ -163,11 +163,11 @@ export default function SupplierDashboard() {
             to="/supplier/opportunities"
           />
           <KpiCard
-            title="Benestari"
+            title="Benestare"
             value="→"
             icon={FileCheck}
             to="/supplier/billing-approvals"
-            subtitle="Visualizza benestari approvati"
+            subtitle="Visualizza benestare approvati"
           />
         </div>
       )}
@@ -181,7 +181,7 @@ export default function SupplierDashboard() {
             { title: "Documenti", to: "/supplier/documents", icon: FileText },
             { title: "Opportunità", to: "/supplier/opportunities", icon: Briefcase },
             { title: "Ordini", to: "/supplier/orders", icon: ShoppingCart },
-            { title: "Benestari", to: "/supplier/billing-approvals", icon: FileCheck },
+            { title: "Benestare", to: "/supplier/billing-approvals", icon: FileCheck },
           ].map((link) => (
             <Link key={link.to} to={link.to}>
               <Card className="hover:shadow-md transition-shadow">

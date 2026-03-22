@@ -210,7 +210,7 @@ export default function InternalDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} />
             <KpiCard
-              title="Benestari in approvazione"
+              title="Benestare in approvazione"
               value={pendingBillings}
               icon={FileText}
               alert={pendingBillings > 0}
@@ -267,7 +267,7 @@ export default function InternalDashboard() {
         {hasGrant("approve_billing_approval") && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Benestari da approvare</CardTitle>
+              <CardTitle className="text-base">Benestare da approvare</CardTitle>
               <Link
                 to="/internal/billing-approvals"
                 className="text-xs text-primary flex items-center gap-1 hover:underline"

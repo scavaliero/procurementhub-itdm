@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const residualAfterPending = residualAmount - pendingAmount;
     const warning =
       amount > residualAfterPending
-        ? "Attenzione: l'importo supera il residuo al netto dei benestari in attesa di approvazione"
+        ? "Attenzione: l'importo supera il residuo al netto dei benestare in attesa di approvazione"
         : null;
 
     return new Response(

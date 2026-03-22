@@ -207,9 +207,9 @@ export default function InternalBillingApprovals() {
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Benestari" }]} />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Benestare" }]} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Benestari di Fatturazione</h1>
+        <h1 className="text-2xl font-bold">Benestare di Fatturazione</h1>
         {canCreate && (
           <Button onClick={() => setShowCreate(true)} className="gap-2">
             <Plus className="h-4 w-4" /> Nuovo benestare
@@ -246,7 +246,7 @@ export default function InternalBillingApprovals() {
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <EmptyState title="Nessun benestare" description="Non ci sono benestari corrispondenti ai filtri." />
+        <EmptyState title="Nessun benestare" description="Non ci sono benestare corrispondenti ai filtri." />
       ) : (
         <Card>
           <CardContent className="p-0">
@@ -353,7 +353,7 @@ export default function InternalBillingApprovals() {
                 <p className="text-sm text-destructive font-medium">Supera il residuo contrattuale (RB-08) — invio bloccato</p>
               )}
               {exceedsPending && (
-                <p className="text-sm text-amber-600">Attenzione: ci sono benestari in attesa di approvazione che potrebbero ridurre il residuo</p>
+                <p className="text-sm text-amber-600">Attenzione: ci sono benestare in attesa di approvazione che potrebbero ridurre il residuo</p>
               )}
             </div>
 
