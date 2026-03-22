@@ -8,21 +8,7 @@ export const authService = {
     if (error) throw error;
 
     // Log login event asynchronously (don't block login flow)
-    try {
-      const profile = await this.getCurrentProfile();
-      if (profile) {
-        const { error: auditErr } = await supabase.from("audit_logs").insert([{
-          tenant_id: profile.tenant_id,
-          entity_type: "auth",
-          entity_id: data.user?.id ?? null,
-          event_type: "login",
-          user_id: data.user?.id ?? null,
-          user_email: email,
-          new_state: { method: "password" } as unknown as Json,
-        }]);
-        if (auditErr) console.error("Audit login error:", auditErr);
-      }
-    } catch (e) { console.error("Audit login exception:", e); }
+    this.logAuthEvent(data.user?.id ?? null, email, "login").catch(() => {});
 
     return data;
   },
@@ -45,23 +31,49 @@ export const authService = {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const profile = await this.getCurrentProfile();
-        if (profile) {
-          const { error: auditErr } = await supabase.from("audit_logs").insert([{
-            tenant_id: profile.tenant_id,
-            entity_type: "auth",
-            entity_id: user.id,
-            event_type: "logout",
-            user_id: user.id,
-            user_email: user.email || null,
-          }]);
-          if (auditErr) console.error("Audit logout error:", auditErr);
-        }
+        await this.logAuthEvent(user.id, user.email || "", "logout");
       }
     } catch (e) { console.error("Audit logout exception:", e); }
 
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+  },
+
+  async logAuthEvent(userId: string | null, email: string, eventType: "login" | "logout") {
+    try {
+      const profile = await this.getCurrentProfile();
+      if (!profile) {
+        console.warn(`Audit ${eventType}: no profile found`);
+        return;
+      }
+      const insertData: {
+        tenant_id: string;
+        entity_type: string;
+        entity_id: string | null;
+        event_type: string;
+        user_id: string | null;
+        user_email: string;
+        new_state?: Json;
+      } = {
+        tenant_id: profile.tenant_id,
+        entity_type: "auth",
+        entity_id: userId,
+        event_type: eventType,
+        user_id: userId,
+        user_email: email,
+      };
+      if (eventType === "login") {
+        insertData.new_state = { method: "password" } as unknown as Json;
+      }
+      const { error: auditErr } = await supabase.from("audit_logs").insert([insertData]);
+      if (auditErr) {
+        console.error(`Audit ${eventType} insert error:`, auditErr);
+      } else {
+        console.info(`Audit ${eventType} logged for ${email}`);
+      }
+    } catch (e) {
+      console.error(`Audit ${eventType} exception:`, e);
+    }
   },
 
   async getCurrentProfile(): Promise<Profile | null> {
