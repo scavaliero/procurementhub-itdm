@@ -299,6 +299,27 @@ export default function AuditLogs() {
               </SelectContent>
             </Select>
 
+            <Select value={userTypeFilter} onValueChange={(v) => { setUserTypeFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Tipo utente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti gli utenti</SelectItem>
+                <SelectItem value="internal">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+                    Interno
+                  </span>
+                </SelectItem>
+                <SelectItem value="supplier">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                    Fornitore
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
