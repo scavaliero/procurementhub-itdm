@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { auditService } from "@/services/auditService";
 import type { DocumentType, UploadedDocument } from "@/types";
 
 export const documentService = {
