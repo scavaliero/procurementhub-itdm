@@ -27,6 +27,7 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { UserStatusBadge } from "@/components/admin/UserStatusBadge";
 import { UserInfoDrawer } from "@/components/admin/UserInfoDrawer";
+import { ManageRoleDialog } from "@/components/admin/ManageRoleDialog";
 import { toast } from "sonner";
 import {
   Plus,
@@ -45,6 +46,7 @@ export default function AdminUsers() {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [roleUser, setRoleUser] = useState<Profile | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [confirmAction, setConfirmAction] = useState<{
@@ -168,9 +170,9 @@ export default function AdminUsers() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedUser(p)}>
+                        <DropdownMenuItem onClick={() => setRoleUser(p)}>
                           <ShieldCheck className="h-4 w-4 mr-2" />
-                          Dettagli & Ruoli
+                          Gestisci Ruolo
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleAction("resend_invite", p)}>
                           <Mail className="h-4 w-4 mr-2" />
@@ -270,8 +272,11 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* User info & roles drawer */}
+      {/* User info drawer (click on user) */}
       <UserInfoDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+
+      {/* Manage role dialog (from dropdown) */}
+      <ManageRoleDialog user={roleUser} open={!!roleUser} onClose={() => setRoleUser(null)} />
     </div>
   );
 }
