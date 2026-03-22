@@ -30,10 +30,11 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [qc]);
 
-  const { data: profile, isLoading: profileLoading } = useQuery<Profile | null>({
+  const { data: profile, isLoading: profileLoading, isError: profileError } = useQuery<Profile | null>({
     queryKey: ["profile"],
     queryFn: () => authService.getCurrentProfile(),
     enabled: !!user,
+    retry: 1,
   });
 
   const signOut = useCallback(async () => {
@@ -44,7 +45,7 @@ export function useAuth() {
   return {
     user,
     profile: profile ?? null,
-    isLoading: isLoading || (!!user && profileLoading),
+    isLoading: isLoading || (!!user && profileLoading && !profileError),
     signOut,
   };
 }
