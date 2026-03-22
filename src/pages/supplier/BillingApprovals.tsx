@@ -41,7 +41,7 @@ export default function SupplierBillingApprovals() {
       {billings.length === 0 ? (
         <EmptyState title="Nessun benestare" description="Non ci sono benestare visibili." />
       ) : (
-        <Card>
+        <Card className="card-top-billing">
           <CardContent className="p-0">
             <Table>
               <TableHeader>

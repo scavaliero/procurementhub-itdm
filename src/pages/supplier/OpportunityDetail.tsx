@@ -232,7 +232,7 @@ export default function SupplierOpportunityDetail() {
       </div>
 
       {/* Opportunity details */}
-      <Card>
+      <Card className="card-top-opportunities">
         <CardHeader><CardTitle className="text-lg">Dettagli Opportunità</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -301,7 +301,7 @@ export default function SupplierOpportunityDetail() {
       )}
 
       {/* Bid form */}
-      <Card>
+      <Card className="card-top-opportunities">
         <CardHeader>
           <CardTitle className="text-lg">
             {isSubmitted ? "Offerta inviata" : existingBid ? "Modifica offerta" : "Presenta offerta"}

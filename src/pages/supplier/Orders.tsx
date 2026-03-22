@@ -78,7 +78,7 @@ export default function SupplierOrders() {
       {orders.length === 0 ? (
         <EmptyState title="Nessun ordine" description="Non hai ancora ricevuto ordini." />
       ) : (
-        <Card>
+        <Card className="card-top-orders">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
