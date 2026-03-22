@@ -47,6 +47,7 @@ import AdminRoles from "@/pages/internal/AdminRoles";
 import AdminUsers from "@/pages/internal/AdminUsers";
 import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
+import InternalProfile from "@/pages/internal/Profile";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/internal/admin/roles" element={<AdminRoles />} />
             <Route path="/internal/admin/users" element={<AdminUsers />} />
             <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
+            <Route path="/internal/profile" element={<InternalProfile />} />
           </Route>
 
           {/* Catch-all */}
