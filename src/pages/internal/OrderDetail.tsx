@@ -292,11 +292,13 @@ export default function InternalOrderDetail() {
                       {fmtDate(contract.start_date)} — {fmtDate(contract.end_date)}
                     </p>
                   </div>
-                  <Link to={`/internal/contracts/${contract.id}`}>
-                    <Button variant="outline" size="sm">
-                      Dettaglio <ExternalLink className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link to={`/internal/contracts/${contract.id}`}>
+                      <Button variant="outline" size="sm">
+                        Dettaglio <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
