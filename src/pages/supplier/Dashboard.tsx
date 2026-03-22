@@ -164,6 +164,7 @@ export default function SupplierDashboard() {
               icon={FileText}
               to="/supplier/documents"
               subtitle={pendingDocs > 0 ? "Da completare" : "Tutto in ordine"}
+              cardClass="card-top-docs"
             />
             <KpiCard
               title="Opportunità da visionare"
@@ -171,12 +172,14 @@ export default function SupplierDashboard() {
               icon={Eye}
               to="/supplier/opportunities"
               subtitle={unseenInvites > 0 ? "Nuovi inviti ricevuti" : "Nessun invito in attesa"}
+              cardClass="card-top-opportunities"
             />
             <KpiCard
               title="Offerte inviate questo mese"
               value={bidsMonth}
               icon={Briefcase}
               to="/supplier/opportunities"
+              cardClass="card-top-procurement"
             />
             <KpiCard
               title="Benestare"
@@ -184,6 +187,7 @@ export default function SupplierDashboard() {
               icon={FileCheck}
               to="/supplier/billing-approvals"
               subtitle="Visualizza benestare approvati"
+              cardClass="card-top-billing"
             />
           </div>
         )}
