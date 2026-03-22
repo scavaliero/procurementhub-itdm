@@ -121,7 +121,7 @@ export default function InternalOpportunityDetail() {
       </div>
 
       {/* Action buttons */}
-      {canChangeStatus && transitions.length > 0 && (
+      {canChangeStatus && (
         <div className="flex flex-wrap gap-2">
           {transitions.map((t) => {
             const Icon = t.icon;
