@@ -5,24 +5,16 @@ import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SUPPLIER_STATUS_LABELS_PLURAL } from "@/lib/supplierStatusConfig";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
   AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
+  Eye,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
 
-const statusLabels: Record<string, string> = {
-  pre_registered: "Pre-registrati",
-  enabled: "Abilitati",
-  in_accreditation: "In accreditamento",
-  in_approval: "In approvazione",
-  pending_review: "In revisione",
-  accredited: "Accreditati",
-  suspended: "Sospesi",
-  rejected: "Respinti",
-  revoked: "Revocati",
-  blacklisted: "Blacklist",
+const oppStatusLabels: Record<string, string> = {
   draft: "Bozza",
   pending_approval: "In approvazione",
   open: "Aperte",
@@ -141,9 +133,9 @@ export default function InternalDashboard() {
   }[] = [
     { key: "_total", title: "Fornitori totali", icon: Building2 },
     { key: "pre_registered", title: "Pre-registrati", icon: Clock },
+    { key: "pending_review", title: "In revisione", icon: Eye },
     { key: "enabled", title: "Abilitati", icon: Unlock },
     { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck },
-    { key: "in_approval", title: "In approvazione", icon: ClipboardCheck },
     { key: "accredited", title: "Accreditati", icon: UserCheck },
     { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true },
     { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni" },
@@ -196,7 +188,7 @@ export default function InternalDashboard() {
               {(oppStats ?? []).map((r) => (
                 <KpiCard
                   key={r.status}
-                  title={statusLabels[r.status] ?? r.status}
+                  title={oppStatusLabels[r.status] ?? r.status}
                   value={r.count}
                   icon={Briefcase}
                 />
@@ -264,7 +256,7 @@ export default function InternalDashboard() {
                         <p className="text-xs text-muted-foreground">{o.code}</p>
                       </div>
                       <Badge variant="outline" className="shrink-0 ml-2 text-[11px]">
-                        {statusLabels[o.status] ?? o.status}
+                        {oppStatusLabels[o.status] ?? o.status}
                       </Badge>
                     </Link>
                   </li>

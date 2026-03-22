@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { dashboardService } from "@/services/dashboardService";
 import { useAuth } from "@/hooks/useAuth";
+import { SUPPLIER_STATUS_CONFIG } from "@/lib/supplierStatusConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,18 +12,6 @@ import {
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
-
-const supplierStatusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pre_registered: { label: "Pre-registrato", variant: "outline" },
-  enabled: { label: "Abilitato", variant: "secondary" },
-  in_accreditation: { label: "In accreditamento", variant: "secondary" },
-  in_approval: { label: "In approvazione", variant: "secondary" },
-  pending_review: { label: "In revisione", variant: "secondary" },
-  accredited: { label: "Accreditato", variant: "default" },
-  suspended: { label: "Sospeso", variant: "destructive" },
-  rejected: { label: "Respinto", variant: "destructive" },
-  revoked: { label: "Revocato", variant: "destructive" },
-};
 
 function KpiCard({
   title, value, icon: Icon, subtitle, to,
@@ -104,7 +93,7 @@ export default function SupplierDashboard() {
   });
 
   const isLoading = loadingStatus || loadingDocs || loadingInvites || loadingBids;
-  const statusInfo = supplierStatusLabels[supplierInfo?.status ?? ""] ?? {
+  const statusInfo = SUPPLIER_STATUS_CONFIG[supplierInfo?.status ?? ""] ?? {
     label: supplierInfo?.status ?? "—",
     variant: "outline" as const,
   };

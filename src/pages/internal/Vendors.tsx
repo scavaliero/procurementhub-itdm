@@ -6,6 +6,7 @@ import { categoryService } from "@/services/categoryService";
 import { exportService } from "@/services/exportService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
+import { SUPPLIER_STATUS_CONFIG } from "@/lib/supplierStatusConfig";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,9 @@ import {
   Clock,
   AlertTriangle,
   Download,
+  Eye,
+  Unlock,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -178,7 +182,7 @@ export default function InternalVendors() {
       });
       const csv = exportService.generateCsv(allData as unknown as Record<string, unknown>[], [
         { key: "company_name", header: "Ragione Sociale" },
-        { key: "status", header: "Stato", formatter: (v) => STATUS_CONFIG[v as string]?.label || String(v) },
+        { key: "status", header: "Stato", formatter: (v) => SUPPLIER_STATUS_CONFIG[v as string]?.label || String(v) },
         { key: "created_at", header: "Data Registrazione", formatter: (v) => v ? new Date(v as string).toLocaleDateString("it-IT") : "" },
       ]);
       exportService.downloadCsv(csv, `fornitori_${new Date().toISOString().slice(0, 10)}.csv`);
@@ -204,7 +208,7 @@ export default function InternalVendors() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <MetricCard
           label="Pre-registrati"
           count={statusCounts["pre_registered"] || 0}
@@ -212,12 +216,21 @@ export default function InternalVendors() {
           color="bg-slate-500"
         />
         <MetricCard
-          label="In approvazione"
-          count={
-            (statusCounts["in_accreditation"] || 0) +
-            (statusCounts["in_approval"] || 0)
-          }
-          icon={Users}
+          label="In revisione"
+          count={statusCounts["pending_review"] || 0}
+          icon={Eye}
+          color="bg-blue-500"
+        />
+        <MetricCard
+          label="Abilitati"
+          count={statusCounts["enabled"] || 0}
+          icon={Unlock}
+          color="bg-sky-500"
+        />
+        <MetricCard
+          label="In accreditamento"
+          count={statusCounts["in_accreditation"] || 0}
+          icon={ClipboardCheck}
           color="bg-amber-500"
         />
         <MetricCard
@@ -254,7 +267,7 @@ export default function InternalVendors() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tutti gli stati</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+            {Object.entries(SUPPLIER_STATUS_CONFIG).map(([key, cfg]) => (
               <SelectItem key={key} value={key}>
                 {cfg.label}
               </SelectItem>
@@ -319,7 +332,7 @@ export default function InternalVendors() {
               <TableBody>
                 {suppliers.map((s) => {
                   const cfg =
-                    STATUS_CONFIG[s.status] || STATUS_CONFIG.pre_registered;
+                    SUPPLIER_STATUS_CONFIG[s.status] || SUPPLIER_STATUS_CONFIG.pre_registered;
                   return (
                     <TableRow
                       key={s.id}
