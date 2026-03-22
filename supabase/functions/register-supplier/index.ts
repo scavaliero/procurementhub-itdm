@@ -53,59 +53,32 @@ Deno.serve(async (req) => {
     if (!tenant?.id) throw new Error("Nessun tenant configurato");
     const tenantId = tenant.id;
 
-    // 2) Create auth user — email_confirm: false so confirmation email IS sent.
-    //    Supplier is pre_registered; after confirming email they can login to complete onboarding.
-    const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+    // 2) Create auth user with standard signup flow so confirmation email is sent reliably
+    const redirectToRaw = payload.redirect_to ? String(payload.redirect_to).trim() : "";
+    const emailRedirectTo = redirectToRaw || undefined;
+
+    const { data: signupData, error: signupErr } = await anonClient.auth.signUp({
       email: normalizedEmail,
       password,
-      user_metadata: { full_name: contactName },
-      email_confirm: false,
+      options: {
+        data: { full_name: contactName },
+        emailRedirectTo,
+      },
     });
 
-    if (authErr) {
-      const isDuplicateEmail =
-        authErr.message?.includes("already been registered") ||
-        authErr.message?.includes("already exists");
-
-      if (!isDuplicateEmail) throw authErr;
-
-      // Check if this is an orphan user (no profile) — clean up and retry
-      const { data: listed, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      });
-      if (listErr) throw listErr;
-
-      const existingUser = listed.users.find(
-        (u) => (u.email ?? "").toLowerCase() === normalizedEmail,
-      );
-
-      if (existingUser) {
-        const { data: existingProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .eq("id", existingUser.id)
-          .maybeSingle();
-
-        if (existingProfile) {
-          throw new Error("Questa email è già registrata. Usa la funzione 'Password dimenticata' per recuperare l'accesso.");
-        }
-        // Orphan user without profile — delete and retry
-        await supabaseAdmin.auth.admin.deleteUser(existingUser.id);
-        const { data: retryAuth, error: retryErr } = await supabaseAdmin.auth.admin.createUser({
-          email: normalizedEmail,
-          password,
-          user_metadata: { full_name: contactName },
-          email_confirm: false,
-        });
-        if (retryErr) throw retryErr;
-        createdUserId = retryAuth.user?.id ?? null;
-      } else {
-        throw authErr;
-      }
-    } else {
-      createdUserId = authData.user?.id ?? null;
+    if (signupErr) {
+      throw signupErr;
     }
+
+    const signedUpUser = signupData.user;
+    const isExistingUser =
+      !!signedUpUser && Array.isArray(signedUpUser.identities) && signedUpUser.identities.length === 0;
+
+    if (!signedUpUser || isExistingUser) {
+      throw new Error("Questa email è già registrata. Usa la funzione 'Password dimenticata' per recuperare l'accesso.");
+    }
+
+    createdUserId = signedUpUser.id;
 
     if (!createdUserId) throw new Error("Utente non creato");
 
