@@ -322,7 +322,7 @@ export default function InternalVendors() {
           description="Prova a modificare i filtri di ricerca."
         />
       ) : (
-        <Card>
+        <Card className="card-top-suppliers">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

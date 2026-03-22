@@ -249,7 +249,7 @@ export default function InternalBillingApprovals() {
       {filtered.length === 0 ? (
         <EmptyState title="Nessun benestare" description="Non ci sono benestare corrispondenti ai filtri." />
       ) : (
-        <Card>
+        <Card className="card-top-billing">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
