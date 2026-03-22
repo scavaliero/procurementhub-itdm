@@ -107,7 +107,6 @@ Deno.serve(async (req) => {
       createdUserId = authData.user?.id ?? null;
     }
 
-    createdUserId = authData.user?.id ?? null;
     if (!createdUserId) throw new Error("Utente non creato");
 
     // 3) Create supplier
