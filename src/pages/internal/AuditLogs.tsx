@@ -80,6 +80,7 @@ const ENTITY_COLORS: Record<string, string> = {
   uploaded_documents: "bg-orange-100 text-orange-700",
   user: "bg-rose-100 text-rose-700",
   user_roles: "bg-rose-100 text-rose-700",
+  profile: "bg-indigo-100 text-indigo-700",
   role_grants: "bg-indigo-100 text-indigo-700",
 };
 
