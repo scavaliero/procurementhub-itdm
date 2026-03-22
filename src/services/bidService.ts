@@ -351,27 +351,35 @@ export const bidService = {
       },
     });
 
-    // 6. Notify all invited suppliers
-    const { data: invitations } = await supabase
-      .from("opportunity_invitations")
-      .select("supplier_id, suppliers(id)")
-      .eq("opportunity_id", params.opportunityId);
+    // 6. Notify all invited suppliers (non-blocking — don't let notification failures break award)
+    try {
+      const { data: invitations } = await supabase
+        .from("opportunity_invitations")
+        .select("supplier_id, suppliers(id)")
+        .eq("opportunity_id", params.opportunityId);
 
-    if (invitations) {
-      const { data: supplierProfiles } = await supabase
-        .from("profiles")
-        .select("id, supplier_id")
-        .in("supplier_id", invitations.map((i: any) => i.supplier_id));
+      if (invitations) {
+        const { data: supplierProfiles } = await supabase
+          .from("profiles")
+          .select("id, supplier_id")
+          .in("supplier_id", invitations.map((i: any) => i.supplier_id));
 
-      if (supplierProfiles) {
-        for (const sp of supplierProfiles) {
-          await notificationService.send({
-            event_type: "opportunity_awarded",
-            recipient_id: sp.id,
-            tenant_id: params.tenantId,
-          });
+        if (supplierProfiles) {
+          for (const sp of supplierProfiles) {
+            try {
+              await notificationService.send({
+                event_type: "opportunity_awarded",
+                recipient_id: sp.id,
+                tenant_id: params.tenantId,
+              });
+            } catch (notifErr) {
+              console.warn("Non-blocking notification error:", notifErr);
+            }
+          }
         }
       }
+    } catch (notifErr) {
+      console.warn("Non-blocking notification error:", notifErr);
     }
 
     return award;
