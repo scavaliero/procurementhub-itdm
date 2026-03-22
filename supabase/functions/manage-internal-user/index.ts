@@ -144,13 +144,7 @@ Deno.serve(async (req) => {
           if (!emailRes.ok) {
             const errBody = await emailRes.text();
             console.error("Resend error:", errBody);
-            return new Response(
-              JSON.stringify({ error: "Errore nell'invio email: " + errBody }),
-              {
-                status: 500,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              }
-            );
+            // Don't fail the whole operation - link was generated successfully
           }
         } else {
           console.warn("RESEND_API_KEY non configurata, link generato ma email non inviata");
