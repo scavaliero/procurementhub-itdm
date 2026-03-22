@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
-  AlertTriangle, ArrowRight,
+  AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
@@ -134,7 +134,20 @@ export default function InternalDashboard() {
   });
 
   const totalSuppliers = supplierStats?.reduce((s, r) => s + r.count, 0) ?? 0;
-  const accreditedCount = supplierStats?.find((r) => r.status === "accredited")?.count ?? 0;
+  const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
+
+  const supplierKpis: {
+    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string;
+  }[] = [
+    { key: "_total", title: "Fornitori totali", icon: Building2 },
+    { key: "pre_registered", title: "Pre-registrati", icon: Clock },
+    { key: "enabled", title: "Abilitati", icon: Unlock },
+    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck },
+    { key: "in_approval", title: "In approvazione", icon: ClipboardCheck },
+    { key: "accredited", title: "Accreditati", icon: UserCheck },
+    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni" },
+  ];
 
   return (
     <div className="p-6 space-y-8">
@@ -146,29 +159,26 @@ export default function InternalDashboard() {
           <Building2 className="h-5 w-5" /> Albo Fornitori
         </h2>
         {loadingSuppliers || loadingDocs ? (
-          <SkeletonCards count={3} />
+          <SkeletonCards count={6} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard title="Fornitori totali" value={totalSuppliers} icon={Building2} />
-            <KpiCard title="Accreditati" value={accreditedCount} icon={Building2} />
-            <KpiCard
-              title="Documenti in scadenza"
-              value={expiringDocs}
-              icon={FileWarning}
-              alert={expiringDocs > 0}
-              subtitle="Prossimi 30 giorni"
-            />
-            {supplierStats
-              ?.filter((r) => !["accredited"].includes(r.status) && r.count > 0)
-              .slice(0, 1)
-              .map((r) => (
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            {supplierKpis.map((kpi) => {
+              const value = kpi.key === "_total"
+                ? totalSuppliers
+                : kpi.key === "_docs"
+                ? expiringDocs
+                : getCount(kpi.key);
+              return (
                 <KpiCard
-                  key={r.status}
-                  title={statusLabels[r.status] ?? r.status}
-                  value={r.count}
-                  icon={Building2}
+                  key={kpi.key}
+                  title={kpi.title}
+                  value={value}
+                  icon={kpi.icon}
+                  alert={kpi.alert && value > 0}
+                  subtitle={kpi.subtitle}
                 />
-              ))}
+              );
+            })}
           </div>
         )}
       </section>
