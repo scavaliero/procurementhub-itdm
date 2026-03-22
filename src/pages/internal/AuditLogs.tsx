@@ -210,9 +210,15 @@ export default function AuditLogs() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Audit Log</h1>
-        <span className="text-sm text-muted-foreground">
-          {data?.total ?? 0} eventi registrati
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {data?.total ?? 0} eventi registrati
+          </span>
+          <Button variant="outline" size="sm" disabled={exporting} onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            {exporting ? "Esportazione..." : "Esporta CSV"}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
