@@ -14,16 +14,17 @@ import {
 const REFETCH_MS = 5 * 60 * 1000;
 
 function KpiCard({
-  title, value, icon: Icon, subtitle, to,
+  title, value, icon: Icon, subtitle, to, cardClass,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   subtitle?: string;
   to?: string;
+  cardClass?: string;
 }) {
   const content = (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${to ? "cursor-pointer" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
