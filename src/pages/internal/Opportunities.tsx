@@ -161,7 +161,7 @@ export default function InternalOpportunities() {
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metricCards.map((m) => (
-          <Card key={m.key} className={`border-l-4 ${m.color} card-top-opportunities`}>
+          <Card key={m.key} className={`border-l-4 ${m.color}`}>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">{m.label}</p>
               <p className="text-2xl font-bold">{statusCounts?.[m.key] ?? 0}</p>
