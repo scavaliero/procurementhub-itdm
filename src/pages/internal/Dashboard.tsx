@@ -26,16 +26,17 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle,
+  title, value, icon: Icon, alert, subtitle, cardClass,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   alert?: boolean;
   subtitle?: string;
+  cardClass?: string;
 }) {
   return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
