@@ -11,17 +11,18 @@ export const authService = {
     try {
       const profile = await this.getCurrentProfile();
       if (profile) {
-        await supabase.from("audit_logs").insert([{
+        const { error: auditErr } = await supabase.from("audit_logs").insert([{
           tenant_id: profile.tenant_id,
           entity_type: "auth",
-          entity_id: data.user?.id || null,
+          entity_id: data.user?.id ?? null,
           event_type: "login",
-          user_id: data.user?.id || null,
+          user_id: data.user?.id ?? null,
           user_email: email,
           new_state: { method: "password" } as unknown as Json,
         }]);
+        if (auditErr) console.error("Audit login error:", auditErr);
       }
-    } catch { /* don't break login */ }
+    } catch (e) { console.error("Audit login exception:", e); }
 
     return data;
   },
