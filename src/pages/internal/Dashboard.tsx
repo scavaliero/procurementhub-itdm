@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
-  AlertTriangle, ArrowRight,
+  AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
