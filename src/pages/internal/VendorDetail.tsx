@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { supabase } from "@/integrations/supabase/client";
 import { maskIBAN } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,10 +91,11 @@ export default function InternalVendorDetail() {
 
   // Dialog state
   const [actionDialog, setActionDialog] = useState<{
-    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate";
+    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate" | "reject";
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
+  const [banUser, setBanUser] = useState(false);
   const [rejectDocDialog, setRejectDocDialog] = useState<UploadedDocument | null>(null);
   const [rejectDocNotes, setRejectDocNotes] = useState("");
 
@@ -259,6 +262,16 @@ export default function InternalVendorDetail() {
       variant: "default",
       onClick: () => setActionDialog({ type: "enable" }),
     });
+    actions.push({
+      key: "reject",
+      label: "Rifiuta registrazione",
+      icon: XCircle,
+      variant: "destructive",
+      onClick: () => {
+        setBanUser(false);
+        setActionDialog({ type: "reject" });
+      },
+    });
   }
   if (supplier.status === "in_approval" && canApproveAccreditation) {
     actions.push({
@@ -314,7 +327,7 @@ export default function InternalVendorDetail() {
   }
 
   // ── Dialog submit handler ──
-  const handleDialogSubmit = () => {
+  const handleDialogSubmit = async () => {
     if (!actionDialog) return;
     switch (actionDialog.type) {
       case "enable":
@@ -387,6 +400,26 @@ export default function InternalVendorDetail() {
           },
         });
         break;
+      case "reject":
+        if (!dialogMessage.trim()) {
+          toast.error("Inserisci il motivo del rifiuto");
+          return;
+        }
+        // Ban user if checkbox is checked
+        if (banUser) {
+          try {
+            await supabase.functions.invoke("ban-supplier-user", {
+              body: { supplier_id: id, ban: true },
+            });
+          } catch (e) {
+            console.error("Ban error:", e);
+          }
+        }
+        statusMutation.mutate({
+          toStatus: "rejected",
+          reason: dialogMessage,
+        });
+        break;
     }
   };
 
@@ -397,6 +430,7 @@ export default function InternalVendorDetail() {
     suspend: "Sospendi fornitore",
     revoke: "Revoca fornitore",
     reactivate: "Riattiva fornitore",
+    reject: "Rifiuta registrazione",
   };
 
   return (
@@ -710,6 +744,7 @@ export default function InternalVendorDetail() {
             setActionDialog(null);
             setDialogMessage("");
             setRevokeConfirm("");
+            setBanUser(false);
           }
         }}
       >
@@ -734,17 +769,25 @@ export default function InternalVendorDetail() {
                 Il fornitore verrà accreditato e potrà partecipare alle gare.
               </DialogDescription>
             )}
+            {actionDialog?.type === "reject" && (
+              <DialogDescription>
+                La registrazione verrà rifiutata. Puoi anche bloccare l'utente per impedire future registrazioni.
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           {(actionDialog?.type === "integrate" ||
             actionDialog?.type === "suspend" ||
-            actionDialog?.type === "reactivate") && (
+            actionDialog?.type === "reactivate" ||
+            actionDialog?.type === "reject") && (
             <div className="space-y-2">
               <Label>
                 {actionDialog.type === "suspend"
                   ? "Motivo sospensione *"
                   : actionDialog.type === "reactivate"
                   ? "Motivo riattivazione *"
+                  : actionDialog.type === "reject"
+                  ? "Motivo del rifiuto *"
                   : "Messaggio *"}
               </Label>
               <Textarea
@@ -752,6 +795,19 @@ export default function InternalVendorDetail() {
                 onChange={(e) => setDialogMessage(e.target.value)}
                 rows={3}
               />
+            </div>
+          )}
+
+          {actionDialog?.type === "reject" && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ban-user"
+                checked={banUser}
+                onCheckedChange={(checked) => setBanUser(!!checked)}
+              />
+              <Label htmlFor="ban-user" className="text-sm font-normal cursor-pointer">
+                Blocca l'utente (impedisce future registrazioni con questa email)
+              </Label>
             </div>
           )}
 
@@ -775,6 +831,7 @@ export default function InternalVendorDetail() {
                 setActionDialog(null);
                 setDialogMessage("");
                 setRevokeConfirm("");
+                setBanUser(false);
               }}
             >
               Annulla
@@ -782,7 +839,8 @@ export default function InternalVendorDetail() {
             <Button
               variant={
                 actionDialog?.type === "suspend" ||
-                actionDialog?.type === "revoke"
+                actionDialog?.type === "revoke" ||
+                actionDialog?.type === "reject"
                   ? "destructive"
                   : "default"
               }
