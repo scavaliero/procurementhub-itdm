@@ -60,26 +60,16 @@ export const authService = {
     fullName: string;
     tenantId: string;
   }): Promise<string> {
-    const { data: authData, error: authErr } = await supabase.auth.signUp({
-      email: params.email,
-      password: crypto.randomUUID() + "Aa1!",
-      options: {
-        data: { full_name: params.fullName },
-        emailRedirectTo: window.location.origin,
+    const { data, error } = await supabase.functions.invoke("invite-user", {
+      body: {
+        email: params.email,
+        full_name: params.fullName,
+        tenant_id: params.tenantId,
+        redirect_to: `${window.location.origin}/reset-password`,
       },
     });
-    if (authErr) throw authErr;
-    if (!authData.user) throw new Error("Utente non creato");
-
-    const { error: profErr } = await supabase.from("profiles").insert({
-      id: authData.user.id,
-      email: params.email,
-      full_name: params.fullName,
-      user_type: "internal",
-      tenant_id: params.tenantId,
-    });
-    if (profErr) throw profErr;
-
-    return authData.user.id;
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data.userId;
   },
 };
