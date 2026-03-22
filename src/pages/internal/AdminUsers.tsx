@@ -63,7 +63,7 @@ export default function AdminUsers() {
       });
     },
     onSuccess: () => {
-      toast.success("Utente invitato");
+      toast.success("Utente invitato — email con link per impostare la password inviata");
       qc.invalidateQueries({ queryKey: ["internal-profiles"] });
       setInviteOpen(false);
       setInviteEmail("");
