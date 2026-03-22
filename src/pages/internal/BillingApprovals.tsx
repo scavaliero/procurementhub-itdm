@@ -353,7 +353,7 @@ export default function InternalBillingApprovals() {
                 <p className="text-sm text-destructive font-medium">Supera il residuo contrattuale (RB-08) — invio bloccato</p>
               )}
               {exceedsPending && (
-                <p className="text-sm text-amber-600">Attenzione: ci sono benestari in attesa di approvazione che potrebbero ridurre il residuo</p>
+                <p className="text-sm text-amber-600">Attenzione: ci sono benestare in attesa di approvazione che potrebbero ridurre il residuo</p>
               )}
             </div>
 

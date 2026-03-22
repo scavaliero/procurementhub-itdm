@@ -36,10 +36,10 @@ export default function SupplierBillingApprovals() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Benestari di Fatturazione</h1>
+      <h1 className="text-2xl font-bold">Benestare di Fatturazione</h1>
 
       {billings.length === 0 ? (
-        <EmptyState title="Nessun benestare" description="Non ci sono benestari visibili." />
+        <EmptyState title="Nessun benestare" description="Non ci sono benestare visibili." />
       ) : (
         <Card>
           <CardContent className="p-0">
