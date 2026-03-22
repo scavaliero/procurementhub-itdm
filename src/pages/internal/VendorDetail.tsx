@@ -281,13 +281,23 @@ export default function InternalVendorDetail() {
       },
     });
   }
-  if (supplier.status === "in_approval" && canApproveAccreditation) {
+  if ((supplier.status === "in_approval" || supplier.status === "in_accreditation") && canApproveAccreditation) {
     actions.push({
       key: "approve",
       label: "Approva accreditamento",
       icon: ShieldCheck,
       variant: "default",
       onClick: () => setActionDialog({ type: "approve" }),
+    });
+    actions.push({
+      key: "reject",
+      label: "Rifiuta qualifica",
+      icon: XCircle,
+      variant: "destructive",
+      onClick: () => {
+        setBanUser(false);
+        setActionDialog({ type: "reject" });
+      },
     });
   }
   if (
