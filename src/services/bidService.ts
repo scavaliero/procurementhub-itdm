@@ -145,15 +145,28 @@ export const bidService = {
     // Notify buyer (created_by on opportunity)
     const { data: opp } = await supabase
       .from("opportunities")
-      .select("created_by")
+      .select("created_by, title, code")
       .eq("id", opportunityId)
       .single();
+
+    // Get supplier name
+    const { data: supplierProfile } = await supabase
+      .from("profiles")
+      .select("full_name, suppliers(company_name)")
+      .eq("id", data.supplier_id ? data.supplier_id : "")
+      .maybeSingle();
 
     if (opp?.created_by) {
       await notificationService.send({
         event_type: "bid_submitted",
         recipient_id: opp.created_by,
         tenant_id: tenantId,
+        variables: {
+          opportunity_title: opp.title || "",
+          opportunity_code: opp.code || "",
+          company_name: (supplierProfile?.suppliers as any)?.company_name || "",
+          amount: data.total_amount ? String(data.total_amount) : "",
+        },
       });
     }
 
@@ -353,6 +366,20 @@ export const bidService = {
 
     // 6. Notify all invited suppliers (non-blocking — don't let notification failures break award)
     try {
+      // Get opportunity details for variables
+      const { data: oppData } = await supabase
+        .from("opportunities")
+        .select("title, code")
+        .eq("id", params.opportunityId)
+        .single();
+
+      // Get winning supplier name
+      const { data: winnerSup } = await supabase
+        .from("suppliers")
+        .select("company_name")
+        .eq("id", params.supplierId)
+        .single();
+
       const { data: invitations } = await supabase
         .from("opportunity_invitations")
         .select("supplier_id, suppliers(id)")
@@ -371,6 +398,12 @@ export const bidService = {
                 event_type: "opportunity_awarded",
                 recipient_id: sp.id,
                 tenant_id: params.tenantId,
+                variables: {
+                  opportunity_title: oppData?.title || "",
+                  opportunity_code: oppData?.code || "",
+                  company_name: winnerSup?.company_name || "",
+                  is_winner: sp.supplier_id === params.supplierId ? "true" : "false",
+                },
               });
             } catch (notifErr) {
               console.warn("Non-blocking notification error:", notifErr);

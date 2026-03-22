@@ -52,6 +52,13 @@ export const invitationService = {
       .select();
     if (error) throw error;
 
+    // Get opportunity details for notification variables
+    const { data: oppData } = await supabase
+      .from("opportunities")
+      .select("title, code, bids_deadline")
+      .eq("id", params.opportunityId)
+      .single();
+
     // Send notification to each supplier's profile
     for (const sid of params.supplierIds) {
       const { data: profile } = await supabase
@@ -65,6 +72,11 @@ export const invitationService = {
           event_type: "opportunity_invited",
           recipient_id: profile.id,
           tenant_id: params.tenantId,
+          variables: {
+            opportunity_title: oppData?.title || "",
+            opportunity_code: oppData?.code || "",
+            bids_deadline: oppData?.bids_deadline || "",
+          },
         });
       }
     }
