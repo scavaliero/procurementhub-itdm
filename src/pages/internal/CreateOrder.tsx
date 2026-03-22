@@ -58,7 +58,7 @@ export default function InternalCreateOrder() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!profile || !award) throw new Error("Dati mancanti");
+      if (!profile || !award || !award.supplier_id) throw new Error("Dati mancanti");
 
       const order = await orderService.createOrder({
         tenantId: profile.tenant_id,

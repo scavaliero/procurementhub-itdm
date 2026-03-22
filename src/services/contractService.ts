@@ -54,4 +54,40 @@ export const contractService = {
     if (error) throw error;
     return data as ContractListItem[];
   },
+
+  /** Complete a contract */
+  async completeContract(contractId: string, tenantId: string) {
+    const { error } = await supabase
+      .from("contracts")
+      .update({ status: "completed" })
+      .eq("id", contractId);
+    if (error) throw error;
+
+    const { default: auditService } = await import("@/services/auditService");
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "contract",
+      entity_id: contractId,
+      event_type: "contract_completed",
+      new_state: { status: "completed" },
+    });
+  },
+
+  /** Terminate a contract early */
+  async terminateContract(contractId: string, tenantId: string, reason: string) {
+    const { error } = await supabase
+      .from("contracts")
+      .update({ status: "terminated", progress_notes: reason })
+      .eq("id", contractId);
+    if (error) throw error;
+
+    const { default: auditService } = await import("@/services/auditService");
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "contract",
+      entity_id: contractId,
+      event_type: "contract_terminated",
+      new_state: { status: "terminated", reason },
+    });
+  },
 };
