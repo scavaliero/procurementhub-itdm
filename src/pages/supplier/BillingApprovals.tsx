@@ -35,7 +35,7 @@ export default function SupplierBillingApprovals() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 min-w-0 overflow-hidden">
       <h1 className="text-2xl font-bold">Benestare di Fatturazione</h1>
 
       {billings.length === 0 ? (
@@ -43,7 +43,8 @@ export default function SupplierBillingApprovals() {
       ) : (
         <Card className="card-top-billing">
           <CardContent className="p-0">
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[500px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Codice</TableHead>
