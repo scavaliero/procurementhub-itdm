@@ -36,6 +36,7 @@ import InternalOpportunityNew from "@/pages/internal/OpportunityNew";
 import InternalOpportunityDetail from "@/pages/internal/OpportunityDetail";
 import InternalOpportunityEvaluation from "@/pages/internal/OpportunityEvaluation";
 import InternalOrders from "@/pages/internal/Orders";
+import InternalOrderDetail from "@/pages/internal/OrderDetail";
 import InternalCreateOrder from "@/pages/internal/CreateOrder";
 import InternalContractDetail from "@/pages/internal/ContractDetail";
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
