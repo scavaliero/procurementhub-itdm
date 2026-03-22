@@ -56,8 +56,8 @@ export default function InternalBillingApprovals() {
 
   // Create form state
   const [selectedContract, setSelectedContract] = useState("");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
+  const [periodStart, setPeriodStart] = useState<Date | undefined>();
+  const [periodEnd, setPeriodEnd] = useState<Date | undefined>();
   const [amount, setAmount] = useState<number>(0);
   const [activityDesc, setActivityDesc] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
