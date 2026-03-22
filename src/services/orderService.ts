@@ -222,7 +222,7 @@ export const orderService = {
 
     const { data: opp } = await supabase
       .from("orders")
-      .select("issued_by")
+      .select("issued_by, code, subject, suppliers(company_name)")
       .eq("id", orderId)
       .single();
 
@@ -231,6 +231,12 @@ export const orderService = {
         event_type: "order_rejected",
         recipient_id: opp.issued_by,
         tenant_id: tenantId,
+        variables: {
+          order_code: opp.code || "",
+          subject: opp.subject || "",
+          company_name: (opp.suppliers as any)?.company_name || "",
+          reason,
+        },
       });
     }
 
