@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -45,18 +44,23 @@ import {
   Unlock,
   RotateCcw,
 } from "lucide-react";
-import type { UploadedDocument, Supplier, SupplierCategory, SupplierStatusHistory } from "@/types";
+import type {
+  UploadedDocument,
+  Supplier,
+  SupplierCategory,
+  SupplierStatusHistory,
+} from "@/types";
 
-// ── Config ──
-const STATUS_CONFIG: Record<
+/* ── Status display config ── */
+const STATUS_LABELS: Record<
   string,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
 > = {
   pre_registered: { label: "Pre-registrato", variant: "outline" },
+  pending_review: { label: "In revisione", variant: "secondary" },
   enabled: { label: "Abilitato", variant: "secondary" },
   in_accreditation: { label: "In accreditamento", variant: "secondary" },
   in_approval: { label: "In approvazione", variant: "secondary" },
-  pending_review: { label: "In revisione", variant: "secondary" },
   accredited: { label: "Accreditato", variant: "default" },
   suspended: { label: "Sospeso", variant: "destructive" },
   rejected: { label: "Rifiutato", variant: "destructive" },
@@ -64,7 +68,7 @@ const STATUS_CONFIG: Record<
   blacklisted: { label: "Blacklist", variant: "destructive" },
 };
 
-const DOC_STATUS: Record<
+const DOC_LABELS: Record<
   string,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
 > = {
@@ -73,40 +77,58 @@ const DOC_STATUS: Record<
   rejected: { label: "Respinto", variant: "destructive" },
 };
 
-// ── Helper to display legal_address ──
-function formatAddress(addr: unknown): string {
+/* ── Helpers ── */
+function fmtAddress(addr: unknown): string {
   if (!addr || typeof addr !== "object") return "—";
   const a = addr as Record<string, string>;
-  return [a.street, a.city, a.province, a.zip, a.country]
-    .filter(Boolean)
-    .join(", ") || "—";
+  return [a.street, a.city, a.province, a.zip, a.country].filter(Boolean).join(", ") || "—";
 }
 
-// ── Main Component ──
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("it-IT");
+}
+
+function fmtDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("it-IT");
+}
+
+/* ── Action type union ── */
+type ActionType =
+  | "enable"
+  | "approve"
+  | "integrate"
+  | "suspend"
+  | "revoke"
+  | "reactivate"
+  | "reject";
+
+/* ════════════════════════════════════════════
+   Main Component
+   ════════════════════════════════════════════ */
 export default function InternalVendorDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { hasGrant } = useGrants();
 
-  // Dialog state
-  const [actionDialog, setActionDialog] = useState<{
-    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate" | "reject";
-  } | null>(null);
-  const [dialogMessage, setDialogMessage] = useState("");
-  const [revokeConfirm, setRevokeConfirm] = useState("");
+  /* state */
+  const [activeDialog, setActiveDialog] = useState<ActionType | null>(null);
+  const [dialogMsg, setDialogMsg] = useState("");
+  const [revokeText, setRevokeText] = useState("");
   const [banUser, setBanUser] = useState(false);
-  const [rejectDocDialog, setRejectDocDialog] = useState<UploadedDocument | null>(null);
+  const [rejectDoc, setRejectDoc] = useState<UploadedDocument | null>(null);
   const [rejectDocNotes, setRejectDocNotes] = useState("");
 
-  // ── Queries ──
+  /* ── Queries ── */
   const { data: supplier, isLoading } = useQuery({
     queryKey: ["supplier", id],
     queryFn: () => vendorService.getSupplier(id!),
     enabled: !!id,
   });
 
-  const { data: supplierProfiles = [] } = useQuery({
+  const { data: profiles = [] } = useQuery({
     queryKey: ["supplier-profiles", id],
     queryFn: () => vendorService.getSupplierProfiles(id!),
     enabled: !!id,
@@ -135,7 +157,7 @@ export default function InternalVendorDetail() {
     enabled: !!id,
   });
 
-  // ── Mutations ──
+  /* ── Invalidation helper ── */
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["supplier", id] });
     qc.invalidateQueries({ queryKey: ["supplier-history", id] });
@@ -145,41 +167,43 @@ export default function InternalVendorDetail() {
     qc.invalidateQueries({ queryKey: ["suppliers-paginated"] });
   };
 
-  const statusMutation = useMutation({
-    mutationFn: async (params: {
-      toStatus: string;
-      reason?: string;
-      extraUpdate?: Partial<Supplier>;
-    }) => {
-      await vendorService.changeStatus({
+  const closeDialog = () => {
+    setActiveDialog(null);
+    setDialogMsg("");
+    setRevokeText("");
+    setBanUser(false);
+  };
+
+  /* ── Status mutation ── */
+  const statusMut = useMutation({
+    mutationFn: (p: { toStatus: string; reason?: string; extraUpdate?: Partial<Supplier> }) =>
+      vendorService.changeStatus({
         supplierId: id!,
         fromStatus: supplier!.status,
-        toStatus: params.toStatus,
-        reason: params.reason,
-        extraUpdate: params.extraUpdate,
-      });
-    },
+        toStatus: p.toStatus,
+        reason: p.reason,
+        extraUpdate: p.extraUpdate,
+      }),
     onSuccess: () => {
       toast.success("Stato aggiornato");
       invalidateAll();
-      setActionDialog(null);
-      setDialogMessage("");
-      setRevokeConfirm("");
+      closeDialog();
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const reviewMutation = useMutation({
+  /* ── Document review mutation ── */
+  const reviewMut = useMutation({
     mutationFn: async ({
       doc,
       action,
-      reviewNotes,
+      notes,
     }: {
       doc: UploadedDocument;
       action: "approved" | "rejected";
-      reviewNotes?: string;
+      notes?: string;
     }) => {
-      const result = await documentService.reviewDocument(doc.id, action, reviewNotes);
+      const result = await documentService.reviewDocument(doc.id, action, notes);
       if (supplier) {
         await auditService.log({
           tenant_id: supplier.tenant_id,
@@ -187,19 +211,19 @@ export default function InternalVendorDetail() {
           entity_id: doc.id,
           event_type: `document_${action}`,
           old_state: { status: doc.status },
-          new_state: { status: action, review_notes: reviewNotes || null },
+          new_state: { status: action, review_notes: notes || null },
         });
         try {
-          const profileId = await vendorService.getSupplierProfileId(supplier.id);
-          if (profileId) {
+          const pid = await vendorService.getSupplierProfileId(supplier.id);
+          if (pid) {
+            const dtMap = Object.fromEntries(docTypes.map((dt) => [dt.id, dt]));
             await notificationService.send({
               event_type: `document_${action}`,
-              recipient_id: profileId,
+              recipient_id: pid,
               tenant_id: supplier.tenant_id,
               variables: {
-                document_name:
-                  docTypes.find((dt) => dt.id === doc.document_type_id)?.name || "",
-                ...(reviewNotes ? { review_notes: reviewNotes } : {}),
+                document_name: dtMap[doc.document_type_id]?.name || "",
+                ...(notes ? { review_notes: notes } : {}),
               },
             });
           }
@@ -212,30 +236,22 @@ export default function InternalVendorDetail() {
     onSuccess: () => {
       toast.success("Documento aggiornato");
       invalidateAll();
-      setRejectDocDialog(null);
+      setRejectDoc(null);
       setRejectDocNotes("");
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const downloadMutation = useMutation({
-    mutationFn: async (storagePath: string) => {
-      const url = await documentService.getSignedUrl(storagePath);
+  /* ── Download ── */
+  const downloadMut = useMutation({
+    mutationFn: async (path: string) => {
+      const url = await documentService.getSignedUrl(path);
       window.open(url, "_blank");
     },
     onError: () => toast.error("Errore nel download"),
   });
 
-  const approveCategoryMutation = useMutation({
-    mutationFn: (catId: string) => vendorService.approveCategory(catId),
-    onSuccess: () => {
-      toast.success("Categoria qualificata");
-      invalidateAll();
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
-  // ── Loading / not found ──
+  /* ── Loading / not found ── */
   if (isLoading) return <PageSkeleton />;
   if (!supplier) {
     return (
@@ -245,228 +261,139 @@ export default function InternalVendorDetail() {
     );
   }
 
-  const sBadge = STATUS_CONFIG[supplier.status] || STATUS_CONFIG.pre_registered;
+  const badge = STATUS_LABELS[supplier.status] || STATUS_LABELS.pre_registered;
   const dtMap = Object.fromEntries(docTypes.map((dt) => [dt.id, dt]));
   const canReview = hasGrant("review_documents");
-  const canApproveAccreditation = hasGrant("approve_accreditation");
+  const canApprove = hasGrant("approve_accreditation");
   const canSuspend = hasGrant("suspend_supplier");
 
-  // ── Compute available actions ──
+  /* ── Build action buttons based on status ── */
   const actions: {
     key: string;
     label: string;
     icon: React.ElementType;
     variant: "default" | "destructive" | "outline";
-    onClick: () => void;
+    type: ActionType;
   }[] = [];
 
-  // pre_registered: waiting for onboarding completion — no admin actions yet
-  // pending_review: admin reviews onboarding data
-  if (supplier.status === "pending_review" && canReview) {
-    actions.push({
-      key: "enable",
-      label: "Abilita fase documenti",
-      icon: Unlock,
-      variant: "default",
-      onClick: () => setActionDialog({ type: "enable" }),
-    });
-    actions.push({
-      key: "reject",
-      label: "Rifiuta registrazione",
-      icon: XCircle,
-      variant: "destructive",
-      onClick: () => {
-        setBanUser(false);
-        setActionDialog({ type: "reject" });
-      },
-    });
-  }
-  if ((supplier.status === "in_approval" || supplier.status === "in_accreditation") && canApproveAccreditation) {
-    actions.push({
-      key: "approve",
-      label: "Approva accreditamento",
-      icon: ShieldCheck,
-      variant: "default",
-      onClick: () => setActionDialog({ type: "approve" }),
-    });
-    actions.push({
-      key: "reject",
-      label: "Rifiuta qualifica",
-      icon: XCircle,
-      variant: "destructive",
-      onClick: () => {
-        setBanUser(false);
-        setActionDialog({ type: "reject" });
-      },
-    });
-  }
-  if (
-    (supplier.status === "in_accreditation" ||
-      supplier.status === "in_approval") &&
-    canReview
-  ) {
-    actions.push({
-      key: "integrate",
-      label: "Richiedi integrazione",
-      icon: Send,
-      variant: "outline",
-      onClick: () => setActionDialog({ type: "integrate" }),
-    });
-  }
-  if (supplier.status === "accredited" && canSuspend) {
-    actions.push({
-      key: "suspend",
-      label: "Sospendi",
-      icon: AlertTriangle,
-      variant: "destructive",
-      onClick: () => setActionDialog({ type: "suspend" }),
-    });
-  }
-  if (supplier.status === "suspended" && canSuspend) {
-    actions.push({
-      key: "reactivate",
-      label: "Riattiva",
-      icon: RotateCcw,
-      variant: "default",
-      onClick: () => setActionDialog({ type: "reactivate" }),
-    });
-  }
-  if (
-    (supplier.status === "accredited" || supplier.status === "suspended") &&
-    canSuspend
-  ) {
-    actions.push({
-      key: "revoke",
-      label: "Revoca",
-      icon: Ban,
-      variant: "destructive",
-      onClick: () => setActionDialog({ type: "revoke" }),
-    });
+  const s = supplier.status;
+
+  // pending_review → Abilita / Rifiuta
+  if (s === "pending_review" && canReview) {
+    actions.push({ key: "enable", label: "Abilita processo qualifica", icon: Unlock, variant: "default", type: "enable" });
+    actions.push({ key: "reject-reg", label: "Rifiuta registrazione", icon: XCircle, variant: "destructive", type: "reject" });
   }
 
-  // ── Dialog submit handler ──
+  // in_approval / in_accreditation → Approva / Rifiuta / Integrazione
+  if ((s === "in_approval" || s === "in_accreditation") && canApprove) {
+    actions.push({ key: "approve", label: "Approva accreditamento", icon: ShieldCheck, variant: "default", type: "approve" });
+    actions.push({ key: "reject-qual", label: "Rifiuta qualifica", icon: XCircle, variant: "destructive", type: "reject" });
+  }
+  if ((s === "in_accreditation" || s === "in_approval") && canReview) {
+    actions.push({ key: "integrate", label: "Richiedi integrazione", icon: Send, variant: "outline", type: "integrate" });
+  }
+
+  // accredited → Sospendi / Revoca
+  if (s === "accredited" && canSuspend) {
+    actions.push({ key: "suspend", label: "Sospendi", icon: AlertTriangle, variant: "destructive", type: "suspend" });
+    actions.push({ key: "revoke", label: "Revoca", icon: Ban, variant: "destructive", type: "revoke" });
+  }
+
+  // suspended → Riattiva / Revoca
+  if (s === "suspended" && canSuspend) {
+    actions.push({ key: "reactivate", label: "Riattiva", icon: RotateCcw, variant: "default", type: "reactivate" });
+    actions.push({ key: "revoke", label: "Revoca", icon: Ban, variant: "destructive", type: "revoke" });
+  }
+
+  /* ── Dialog submit ── */
   const handleDialogSubmit = async () => {
-    if (!actionDialog) return;
-    switch (actionDialog.type) {
+    if (!activeDialog) return;
+
+    switch (activeDialog) {
       case "enable":
-        statusMutation.mutate({ toStatus: "enabled" }, {
-          onSuccess: async () => {
-            // Send activation email to supplier user
-            try {
-              const profile = supplierProfiles[0];
-              if (profile) {
-                const loginUrl = `${window.location.origin}/login`;
-                await supabase.functions.invoke("send-notification", {
-                  body: {
-                    event_type: "supplier_enabled",
-                    recipient_id: profile.id,
-                    tenant_id: supplier!.tenant_id,
-                    variables: {
-                      company_name: supplier!.company_name,
-                      contact_name: profile.full_name,
-                      login_url: loginUrl,
+        statusMut.mutate(
+          { toStatus: "enabled" },
+          {
+            onSuccess: async () => {
+              try {
+                const p = profiles[0];
+                if (p) {
+                  await supabase.functions.invoke("send-notification", {
+                    body: {
+                      event_type: "supplier_enabled",
+                      recipient_id: p.id,
+                      tenant_id: supplier.tenant_id,
+                      variables: {
+                        company_name: supplier.company_name,
+                        contact_name: p.full_name,
+                        login_url: `${window.location.origin}/login`,
+                      },
                     },
-                  },
-                });
+                  });
+                }
+              } catch (e) {
+                console.error("Email error:", e);
               }
-            } catch (e) {
-              console.error("Activation email error:", e);
-            }
-          },
-        });
-        break;
-      case "approve": {
-        // Check all uploaded documents are approved
-        const pendingDocs = docs.filter(
-          (d) => d.status !== "approved"
+            },
+          }
         );
-        if (pendingDocs.length > 0) {
-          const rejectedCount = pendingDocs.filter((d) => d.status === "rejected").length;
-          const uploadedCount = pendingDocs.filter((d) => d.status === "uploaded").length;
-          const parts: string[] = [];
-          if (rejectedCount > 0) parts.push(`${rejectedCount} respinti`);
-          if (uploadedCount > 0) parts.push(`${uploadedCount} in revisione`);
-          toast.error(
-            `Impossibile approvare: ${parts.join(", ")}. Tutti i documenti devono essere approvati.`
-          );
+        break;
+
+      case "approve": {
+        const pending = docs.filter((d) => d.status !== "approved");
+        if (pending.length > 0) {
+          toast.error(`Impossibile approvare: ${pending.length} documenti non ancora approvati.`);
           return;
         }
-        statusMutation.mutate({
+        statusMut.mutate({
           toStatus: "accredited",
           extraUpdate: { accredited_at: new Date().toISOString() },
         });
         break;
       }
+
       case "integrate":
-        if (!dialogMessage.trim()) {
-          toast.error("Inserisci un messaggio");
-          return;
-        }
-        statusMutation.mutate({
-          toStatus: supplier.status, // same status, just adds history entry
-          reason: dialogMessage,
-        });
+        if (!dialogMsg.trim()) { toast.error("Inserisci un messaggio"); return; }
+        statusMut.mutate({ toStatus: supplier.status, reason: dialogMsg });
         break;
+
       case "suspend":
-        if (!dialogMessage.trim()) {
-          toast.error("Inserisci il motivo della sospensione");
-          return;
-        }
-        statusMutation.mutate({
+        if (!dialogMsg.trim()) { toast.error("Inserisci il motivo della sospensione"); return; }
+        statusMut.mutate({
           toStatus: "suspended",
-          reason: dialogMessage,
-          extraUpdate: {
-            suspension_reason: dialogMessage,
-            suspended_at: new Date().toISOString(),
-          },
+          reason: dialogMsg,
+          extraUpdate: { suspension_reason: dialogMsg, suspended_at: new Date().toISOString() },
         });
         break;
+
       case "revoke":
-        if (revokeConfirm !== "REVOCA") {
-          toast.error("Digita REVOCA per confermare");
-          return;
-        }
-        statusMutation.mutate({ toStatus: "revoked" });
+        if (revokeText !== "REVOCA") { toast.error("Digita REVOCA per confermare"); return; }
+        statusMut.mutate({ toStatus: "revoked" });
         break;
+
       case "reactivate":
-        if (!dialogMessage.trim()) {
-          toast.error("Inserisci il motivo della riattivazione");
-          return;
-        }
-        statusMutation.mutate({
+        if (!dialogMsg.trim()) { toast.error("Inserisci il motivo della riattivazione"); return; }
+        statusMut.mutate({
           toStatus: "accredited",
-          reason: dialogMessage,
-          extraUpdate: {
-            suspension_reason: null,
-            suspended_at: null,
-          },
+          reason: dialogMsg,
+          extraUpdate: { suspension_reason: null, suspended_at: null },
         });
         break;
+
       case "reject":
-        if (!dialogMessage.trim()) {
-          toast.error("Inserisci il motivo del rifiuto");
-          return;
-        }
-        // Ban user if checkbox is checked
+        if (!dialogMsg.trim()) { toast.error("Inserisci il motivo del rifiuto"); return; }
         if (banUser) {
           try {
-            await supabase.functions.invoke("ban-supplier-user", {
-              body: { supplier_id: id, ban: true },
-            });
-          } catch (e) {
-            console.error("Ban error:", e);
-          }
+            await supabase.functions.invoke("ban-supplier-user", { body: { supplier_id: id, ban: true } });
+          } catch (e) { console.error("Ban error:", e); }
         }
-        statusMutation.mutate({
-          toStatus: "rejected",
-          reason: dialogMessage,
-        });
+        statusMut.mutate({ toStatus: "rejected", reason: dialogMsg });
         break;
     }
   };
 
-  const dialogTitle: Record<string, string> = {
-    enable: "Abilita fase documenti",
+  const dialogTitles: Record<ActionType, string> = {
+    enable: "Abilita processo qualifica",
     approve: "Approva accreditamento",
     integrate: "Richiedi integrazione",
     suspend: "Sospendi fornitore",
@@ -475,18 +402,23 @@ export default function InternalVendorDetail() {
     reject: "Rifiuta registrazione",
   };
 
+  /* ════════════════════════════════════════════
+     Render
+     ════════════════════════════════════════════ */
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Fornitori", href: "/internal/vendors" }, { label: supplier.company_name }]} />
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/internal" },
+          { label: "Fornitori", href: "/internal/vendors" },
+          { label: supplier.company_name },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={() => navigate("/internal/vendors")}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/internal/vendors")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -496,454 +428,283 @@ export default function InternalVendorDetail() {
             </p>
           </div>
         </div>
-        <Badge variant={sBadge.variant} className="text-sm shrink-0">
-          {sBadge.label}
+        <Badge variant={badge.variant} className="text-sm shrink-0">
+          {badge.label}
         </Badge>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Main content */}
-        <div className="flex-1 min-w-0">
-          <Tabs defaultValue="info">
-            <TabsList>
-              <TabsTrigger value="info">
-                <Building2 className="h-4 w-4 mr-1" /> Anagrafica
-              </TabsTrigger>
-              <TabsTrigger value="documents">
-                <FileText className="h-4 w-4 mr-1" /> Documenti
-              </TabsTrigger>
-              <TabsTrigger value="categories">
-                <FolderTree className="h-4 w-4 mr-1" /> Categorie
-              </TabsTrigger>
-              <TabsTrigger value="history">
-                <History className="h-4 w-4 mr-1" /> Storico
-              </TabsTrigger>
-            </TabsList>
+      {/* Tabs */}
+      <Tabs defaultValue="info">
+        <TabsList>
+          <TabsTrigger value="info"><Building2 className="h-4 w-4 mr-1" /> Anagrafica</TabsTrigger>
+          <TabsTrigger value="documents"><FileText className="h-4 w-4 mr-1" /> Documenti</TabsTrigger>
+          <TabsTrigger value="categories"><FolderTree className="h-4 w-4 mr-1" /> Categorie</TabsTrigger>
+          <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> Storico</TabsTrigger>
+        </TabsList>
 
-            {/* ── Tab Anagrafica ── */}
-            <TabsContent value="info" className="mt-4 space-y-4">
-              <Card>
-                <CardHeader><CardTitle className="text-base">Dati Azienda</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    <InfoRow label="Ragione Sociale" value={supplier.company_name} />
-                    <InfoRow label="Tipo Società" value={supplier.company_type} />
-                    <InfoRow label="PEC" value={supplier.pec} />
-                    <InfoRow label="Website" value={supplier.website} />
-                    <InfoRow
-                      label="Indirizzo Legale"
-                      value={formatAddress(supplier.legal_address)}
-                    />
-                    <InfoRow
-                      label="P.IVA"
-                      value={supplier.vat_number_hash ? "•••••••••••" : "—"}
-                    />
-                    <InfoRow label="IBAN (mascherato)" value={maskIBAN(supplier.iban_masked)} />
-                    <InfoRow
-                      label="Rating"
-                      value={
-                        supplier.rating_score != null
-                          ? `${supplier.rating_score} (${supplier.rating_count || 0} val.)`
-                          : null
-                      }
-                    />
-                    <InfoRow
-                      label="Accreditato il"
-                      value={
-                        supplier.accredited_at
-                          ? new Date(supplier.accredited_at).toLocaleDateString("it-IT")
-                          : null
-                      }
-                    />
-                    <InfoRow label="Motivo sospensione" value={supplier.suspension_reason} />
-                    <InfoRow label="Note" value={supplier.notes} />
-                    <InfoRow
-                      label="Registrato il"
-                      value={
-                        supplier.created_at
-                          ? new Date(supplier.created_at).toLocaleDateString("it-IT")
-                          : null
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+        {/* ── Tab Anagrafica ── */}
+        <TabsContent value="info" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Dati Azienda</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                <Field label="Ragione Sociale" value={supplier.company_name} />
+                <Field label="Tipo Società" value={supplier.company_type} />
+                <Field label="PEC" value={supplier.pec} />
+                <Field label="Website" value={supplier.website} />
+                <Field label="Indirizzo Legale" value={fmtAddress(supplier.legal_address)} />
+                <Field label="P.IVA" value={supplier.vat_number_hash ? "•••••••••••" : null} />
+                <Field label="IBAN (mascherato)" value={maskIBAN(supplier.iban_masked)} />
+                <Field
+                  label="Rating"
+                  value={supplier.rating_score != null ? `${supplier.rating_score} (${supplier.rating_count || 0} val.)` : null}
+                />
+                <Field label="Accreditato il" value={supplier.accredited_at ? fmtDate(supplier.accredited_at) : null} />
+                <Field label="Motivo sospensione" value={supplier.suspension_reason} />
+                <Field label="Note" value={supplier.notes} />
+                <Field label="Registrato il" value={fmtDate(supplier.created_at)} />
+              </div>
+            </CardContent>
+          </Card>
 
-              {supplierProfiles.length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Referenti</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {supplierProfiles.map((p) => (
-                        <div key={p.id} className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1 text-sm border-b last:border-0 pb-3 last:pb-0">
-                          <InfoRow label="Nome" value={p.full_name} />
-                          <InfoRow label="Email" value={p.email} />
-                          <InfoRow label="Telefono" value={p.phone} />
-                        </div>
-                      ))}
+          {profiles.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Referenti</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {profiles.map((p) => (
+                    <div key={p.id} className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1 text-sm border-b last:border-0 pb-3 last:pb-0">
+                      <Field label="Nome" value={p.full_name} />
+                      <Field label="Email" value={p.email} />
+                      <Field label="Telefono" value={p.phone} />
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Action buttons inline */}
-              {actions.length > 0 && (
-                <div className="flex flex-wrap gap-3 pt-2">
+          {/* ── Action buttons — always visible here after Referenti ── */}
+          {actions.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Azioni disponibili</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
                   {actions.map((a) => (
                     <Button
                       key={a.key}
                       variant={a.variant}
-                      onClick={a.onClick}
+                      onClick={() => {
+                        if (a.type === "reject") setBanUser(false);
+                        setActiveDialog(a.type);
+                      }}
                     >
                       <a.icon className="h-4 w-4 mr-2" />
                       {a.label}
                     </Button>
                   ))}
                 </div>
-              )}
-            </TabsContent>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-            {/* ── Tab Documenti ── */}
-            <TabsContent value="documents" className="mt-4 space-y-3">
-              {docs.length === 0 ? (
-                <EmptyState
-                  title="Nessun documento caricato"
-                  description="Il fornitore non ha ancora caricato documenti."
-                />
-              ) : (
-                docs.map((doc) => {
-                  const dt = dtMap[doc.document_type_id];
-                  const dBadge = DOC_STATUS[doc.status] || {
-                    label: doc.status,
-                    variant: "outline" as const,
-                  };
-                  return (
-                    <Card key={doc.id}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium">
-                              {dt?.name || doc.document_type_id}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.original_filename} · v{doc.version}
-                              {doc.expiry_date &&
-                                ` · Scade: ${new Date(doc.expiry_date).toLocaleDateString("it-IT")}`}
-                            </p>
-                            {doc.review_notes && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Note: {doc.review_notes}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={dBadge.variant}>{dBadge.label}</Badge>
-                            {doc.storage_path && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  downloadMutation.mutate(doc.storage_path!)
-                                }
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canReview && doc.status === "uploaded" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  disabled={reviewMutation.isPending}
-                                  onClick={() =>
-                                    reviewMutation.mutate({
-                                      doc,
-                                      action: "approved",
-                                    })
-                                  }
-                                >
-                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />{" "}
-                                  Approva
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  disabled={reviewMutation.isPending}
-                                  onClick={() => {
-                                    setRejectDocDialog(doc);
-                                    setRejectDocNotes("");
-                                  }}
-                                >
-                                  <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })
-              )}
-            </TabsContent>
-
-            {/* ── Tab Categorie ── */}
-            <TabsContent value="categories" className="mt-4 space-y-3">
-              {categories.length === 0 ? (
-                <EmptyState
-                  title="Nessuna categoria"
-                  description="Il fornitore non ha selezionato categorie."
-                />
-              ) : (
-                categories.map((sc: SupplierCategory) => (
-                  <Card key={sc.id}>
-                    <CardContent className="pt-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {sc.categories?.name || sc.category_id}
-                        </p>
+        {/* ── Tab Documenti ── */}
+        <TabsContent value="documents" className="mt-4 space-y-3">
+          {docs.length === 0 ? (
+            <EmptyState title="Nessun documento caricato" description="Il fornitore non ha ancora caricato documenti." />
+          ) : (
+            docs.map((doc) => {
+              const dt = dtMap[doc.document_type_id];
+              const db = DOC_LABELS[doc.status] || { label: doc.status, variant: "outline" as const };
+              return (
+                <Card key={doc.id}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{dt?.name || doc.document_type_id}</p>
                         <p className="text-xs text-muted-foreground">
-                          Codice: {sc.categories?.code || "—"}
-                          {sc.qualified_at &&
-                            ` · Qualificato: ${new Date(sc.qualified_at).toLocaleDateString("it-IT")}`}
+                          {doc.original_filename} · v{doc.version}
+                          {doc.expiry_date && ` · Scade: ${fmtDate(doc.expiry_date)}`}
                         </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            sc.status === "qualified" ? "default" : "secondary"
-                          }
-                        >
-                          {sc.status === "qualified" ? "Qualificato" : "In attesa"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </TabsContent>
-
-            {/* ── Tab Storico ── */}
-            <TabsContent value="history" className="mt-4">
-              {history.length === 0 ? (
-                <EmptyState title="Nessun evento" />
-              ) : (
-                <div className="space-y-0">
-                  {history.map((h: SupplierStatusHistory, idx: number) => (
-                    <div key={h.id} className="flex gap-4">
-                      {/* Timeline line */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                        {idx < history.length - 1 && (
-                          <div className="w-px flex-1 bg-border" />
+                        {doc.review_notes && (
+                          <p className="text-xs text-muted-foreground mt-1">Note: {doc.review_notes}</p>
                         )}
                       </div>
-                      {/* Content */}
-                      <div className="pb-6 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {h.from_status && (
-                            <>
-                              <Badge variant="outline" className="text-xs">
-                                {STATUS_CONFIG[h.from_status]?.label || h.from_status}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">→</span>
-                            </>
-                          )}
-                          <Badge
-                            variant={
-                              STATUS_CONFIG[h.to_status]?.variant || "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {STATUS_CONFIG[h.to_status]?.label || h.to_status}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {h.changer?.full_name || "Sistema"} ·{" "}
-                          {h.created_at
-                            ? new Date(h.created_at).toLocaleString("it-IT")
-                            : "—"}
-                        </p>
-                        {h.reason && (
-                          <p className="text-xs mt-1 text-muted-foreground italic">
-                            {h.reason}
-                          </p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={db.variant}>{db.label}</Badge>
+                        {doc.storage_path && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadMut.mutate(doc.storage_path!)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canReview && doc.status === "uploaded" && (
+                          <>
+                            <Button size="sm" disabled={reviewMut.isPending} onClick={() => reviewMut.mutate({ doc, action: "approved" })}>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approva
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={reviewMut.isPending}
+                              onClick={() => { setRejectDoc(doc); setRejectDocNotes(""); }}
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </TabsContent>
 
-      </div>
+        {/* ── Tab Categorie ── */}
+        <TabsContent value="categories" className="mt-4 space-y-3">
+          {categories.length === 0 ? (
+            <EmptyState title="Nessuna categoria" description="Il fornitore non ha selezionato categorie." />
+          ) : (
+            categories.map((sc: SupplierCategory) => (
+              <Card key={sc.id}>
+                <CardContent className="pt-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{sc.categories?.name || sc.category_id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Codice: {sc.categories?.code || "—"}
+                      {sc.qualified_at && ` · Qualificato: ${fmtDate(sc.qualified_at)}`}
+                    </p>
+                  </div>
+                  <Badge variant={sc.status === "qualified" ? "default" : "secondary"}>
+                    {sc.status === "qualified" ? "Qualificato" : "In attesa"}
+                  </Badge>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        {/* ── Tab Storico ── */}
+        <TabsContent value="history" className="mt-4">
+          {history.length === 0 ? (
+            <EmptyState title="Nessun evento" />
+          ) : (
+            <div className="space-y-0">
+              {history.map((h: SupplierStatusHistory, idx: number) => (
+                <div key={h.id} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                    {idx < history.length - 1 && <div className="w-px flex-1 bg-border" />}
+                  </div>
+                  <div className="pb-6 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {h.from_status && (
+                        <>
+                          <Badge variant="outline" className="text-xs">
+                            {STATUS_LABELS[h.from_status]?.label || h.from_status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">→</span>
+                        </>
+                      )}
+                      <Badge variant={STATUS_LABELS[h.to_status]?.variant || "outline"} className="text-xs">
+                        {STATUS_LABELS[h.to_status]?.label || h.to_status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {h.changer?.full_name || "Sistema"} · {fmtDateTime(h.created_at)}
+                    </p>
+                    {h.reason && <p className="text-xs mt-1 text-muted-foreground italic">{h.reason}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* ── Action Dialog ── */}
-      <Dialog
-        open={!!actionDialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setActionDialog(null);
-            setDialogMessage("");
-            setRevokeConfirm("");
-            setBanUser(false);
-          }
-        }}
-      >
+      <Dialog open={!!activeDialog} onOpenChange={(o) => !o && closeDialog()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {actionDialog ? dialogTitle[actionDialog.type] : ""}
-            </DialogTitle>
-            {actionDialog?.type === "revoke" && (
-              <DialogDescription>
-                Questa azione è irreversibile. Digita{" "}
-                <strong>REVOCA</strong> per confermare.
-              </DialogDescription>
+            <DialogTitle>{activeDialog ? dialogTitles[activeDialog] : ""}</DialogTitle>
+            {activeDialog === "enable" && (
+              <DialogDescription>Il fornitore potrà procedere con il caricamento documenti e la qualifica.</DialogDescription>
             )}
-            {actionDialog?.type === "enable" && (
-              <DialogDescription>
-                Il fornitore potrà accedere al wizard di onboarding.
-              </DialogDescription>
+            {activeDialog === "approve" && (
+              <DialogDescription>Il fornitore verrà accreditato e potrà partecipare alle gare.</DialogDescription>
             )}
-            {actionDialog?.type === "approve" && (
-              <DialogDescription>
-                Il fornitore verrà accreditato e potrà partecipare alle gare.
-              </DialogDescription>
+            {activeDialog === "reject" && (
+              <DialogDescription>La registrazione verrà rifiutata. Puoi anche bloccare l'utente.</DialogDescription>
             )}
-            {actionDialog?.type === "reject" && (
-              <DialogDescription>
-                La registrazione verrà rifiutata. Puoi anche bloccare l'utente per impedire future registrazioni.
-              </DialogDescription>
+            {activeDialog === "revoke" && (
+              <DialogDescription>Questa azione è irreversibile. Digita <strong>REVOCA</strong> per confermare.</DialogDescription>
             )}
           </DialogHeader>
 
-          {(actionDialog?.type === "integrate" ||
-            actionDialog?.type === "suspend" ||
-            actionDialog?.type === "reactivate" ||
-            actionDialog?.type === "reject") && (
+          {(activeDialog === "integrate" || activeDialog === "suspend" || activeDialog === "reactivate" || activeDialog === "reject") && (
             <div className="space-y-2">
               <Label>
-                {actionDialog.type === "suspend"
-                  ? "Motivo sospensione *"
-                  : actionDialog.type === "reactivate"
-                  ? "Motivo riattivazione *"
-                  : actionDialog.type === "reject"
-                  ? "Motivo del rifiuto *"
+                {activeDialog === "suspend" ? "Motivo sospensione *"
+                  : activeDialog === "reactivate" ? "Motivo riattivazione *"
+                  : activeDialog === "reject" ? "Motivo del rifiuto *"
                   : "Messaggio *"}
               </Label>
-              <Textarea
-                value={dialogMessage}
-                onChange={(e) => setDialogMessage(e.target.value)}
-                rows={3}
-              />
+              <Textarea value={dialogMsg} onChange={(e) => setDialogMsg(e.target.value)} rows={3} />
             </div>
           )}
 
-          {actionDialog?.type === "reject" && (
+          {activeDialog === "reject" && (
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="ban-user"
-                checked={banUser}
-                onCheckedChange={(checked) => setBanUser(!!checked)}
-              />
+              <Checkbox id="ban-user" checked={banUser} onCheckedChange={(c) => setBanUser(!!c)} />
               <Label htmlFor="ban-user" className="text-sm font-normal cursor-pointer">
-                Blocca l'utente (impedisce future registrazioni con questa email)
+                Blocca l'utente (impedisce future registrazioni)
               </Label>
             </div>
           )}
 
-          {actionDialog?.type === "revoke" && (
+          {activeDialog === "revoke" && (
             <div className="space-y-2">
-              <Label>
-                Digita <strong>REVOCA</strong> per confermare
-              </Label>
-              <Input
-                value={revokeConfirm}
-                onChange={(e) => setRevokeConfirm(e.target.value)}
-                placeholder="REVOCA"
-              />
+              <Label>Digita <strong>REVOCA</strong> per confermare</Label>
+              <Input value={revokeText} onChange={(e) => setRevokeText(e.target.value)} placeholder="REVOCA" />
             </div>
           )}
 
           <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Annulla</Button>
             <Button
-              variant="outline"
-              onClick={() => {
-                setActionDialog(null);
-                setDialogMessage("");
-                setRevokeConfirm("");
-                setBanUser(false);
-              }}
-            >
-              Annulla
-            </Button>
-            <Button
-              variant={
-                actionDialog?.type === "suspend" ||
-                actionDialog?.type === "revoke" ||
-                actionDialog?.type === "reject"
-                  ? "destructive"
-                  : "default"
-              }
-              disabled={statusMutation.isPending}
+              variant={activeDialog === "suspend" || activeDialog === "revoke" || activeDialog === "reject" ? "destructive" : "default"}
+              disabled={statusMut.isPending}
               onClick={handleDialogSubmit}
             >
-              {statusMutation.isPending ? "Salvataggio…" : "Conferma"}
+              {statusMut.isPending ? "Salvataggio…" : "Conferma"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* ── Dialog rifiuto documento ── */}
-      <Dialog
-        open={!!rejectDocDialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setRejectDocDialog(null);
-            setRejectDocNotes("");
-          }
-        }}
-      >
+
+      {/* ── Reject document dialog ── */}
+      <Dialog open={!!rejectDoc} onOpenChange={(o) => { if (!o) { setRejectDoc(null); setRejectDocNotes(""); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Respingi documento</DialogTitle>
             <DialogDescription>
-              Documento: {rejectDocDialog ? (dtMap[rejectDocDialog.document_type_id]?.name ?? rejectDocDialog.original_filename) : ""}
+              {rejectDoc ? (dtMap[rejectDoc.document_type_id]?.name ?? rejectDoc.original_filename) : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label>Motivo del rifiuto <span className="text-destructive">*</span></Label>
-              <Textarea
-                value={rejectDocNotes}
-                onChange={(e) => setRejectDocNotes(e.target.value)}
-                placeholder="Specifica il motivo del rifiuto…"
-                rows={3}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Motivo del rifiuto <span className="text-destructive">*</span></Label>
+            <Textarea value={rejectDocNotes} onChange={(e) => setRejectDocNotes(e.target.value)} placeholder="Specifica il motivo…" rows={3} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDocDialog(null)}>
-              Annulla
-            </Button>
+            <Button variant="outline" onClick={() => setRejectDoc(null)}>Annulla</Button>
             <Button
               variant="destructive"
-              disabled={!rejectDocNotes.trim() || reviewMutation.isPending}
-              onClick={() => {
-                if (rejectDocDialog) {
-                  reviewMutation.mutate({
-                    doc: rejectDocDialog,
-                    action: "rejected",
-                    reviewNotes: rejectDocNotes.trim(),
-                  });
-                }
-              }}
+              disabled={!rejectDocNotes.trim() || reviewMut.isPending}
+              onClick={() => { if (rejectDoc) reviewMut.mutate({ doc: rejectDoc, action: "rejected", notes: rejectDocNotes.trim() }); }}
             >
-              <XCircle className="h-3.5 w-3.5 mr-1" />
-              Conferma rifiuto
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Conferma rifiuto
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -952,14 +713,8 @@ export default function InternalVendorDetail() {
   );
 }
 
-// ── Subcomponent ──
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
+/* ── Field subcomponent ── */
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
