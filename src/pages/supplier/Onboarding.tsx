@@ -189,8 +189,8 @@ export default function SupplierOnboarding() {
     return (
       <div className="p-6 max-w-2xl mx-auto space-y-6">
         <div className="flex flex-col items-center space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
-            <Check className="h-7 w-7 text-green-600" />
+          <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <Check className="h-7 w-7 text-primary" />
           </div>
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold">Account abilitato</h1>
