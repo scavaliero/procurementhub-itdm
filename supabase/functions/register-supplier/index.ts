@@ -69,35 +69,42 @@ Deno.serve(async (req) => {
 
       if (!isDuplicateEmail) throw authErr;
 
-      // Existing account: if not confirmed, resend confirmation mail
+      // Check if this is an orphan user (no profile) — clean up and retry
       const { data: listed, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
         perPage: 1000,
       });
-
       if (listErr) throw listErr;
 
       const existingUser = listed.users.find(
         (u) => (u.email ?? "").toLowerCase() === normalizedEmail,
       );
 
-      if (existingUser && !existingUser.email_confirmed_at) {
-        const { error: resendErr } = await anonClient.auth.resend({
-          type: "signup",
+      if (existingUser) {
+        const { data: existingProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("id", existingUser.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          throw new Error("Questa email è già registrata. Usa la funzione 'Password dimenticata' per recuperare l'accesso.");
+        }
+        // Orphan user without profile — delete and retry
+        await supabaseAdmin.auth.admin.deleteUser(existingUser.id);
+        const { data: retryAuth, error: retryErr } = await supabaseAdmin.auth.admin.createUser({
           email: normalizedEmail,
+          password,
+          user_metadata: { full_name: contactName },
+          email_confirm: true,
         });
-        if (resendErr) throw resendErr;
-
-        return new Response(
-          JSON.stringify({
-            resent: true,
-            message: "Email di conferma re-inviata. Controlla la tua casella di posta.",
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+        if (retryErr) throw retryErr;
+        createdUserId = retryAuth.user?.id ?? null;
+      } else {
+        throw authErr;
       }
-
-      throw new Error("Questa email è già registrata e confermata. Usa la funzione 'Password dimenticata' per recuperare l'accesso.");
+    } else {
+      createdUserId = authData.user?.id ?? null;
     }
 
     createdUserId = authData.user?.id ?? null;
