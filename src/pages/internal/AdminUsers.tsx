@@ -2,15 +2,12 @@ import { useState } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { grantService } from "@/services/grantService";
-import { auditService } from "@/services/auditService";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -20,12 +17,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -34,6 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { UserStatusBadge } from "@/components/admin/UserStatusBadge";
+import { UserInfoDrawer } from "@/components/admin/UserInfoDrawer";
 import { toast } from "sonner";
 import {
   Plus,
@@ -45,7 +38,7 @@ import {
   UserX,
   Trash2,
 } from "lucide-react";
-import type { Profile, Role } from "@/types";
+import type { Profile } from "@/types";
 
 export default function AdminUsers() {
   const { profile: currentProfile } = useAuth();
@@ -67,17 +60,6 @@ export default function AdminUsers() {
     queryFn: () => grantService.listProfiles("internal"),
   });
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => grantService.listRoles(),
-  });
-
-  const { data: userRoles = [] } = useQuery({
-    queryKey: ["user-roles", selectedUser?.id],
-    queryFn: () => grantService.getUserRoles(selectedUser!.id),
-    enabled: !!selectedUser,
-  });
-
   const inviteMutation = useMutation({
     mutationFn: async () => {
       await authService.inviteInternalUser({
@@ -92,29 +74,6 @@ export default function AdminUsers() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteName("");
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
-  const toggleRoleMutation = useMutation({
-    mutationFn: async ({ roleId, assign }: { roleId: string; assign: boolean }) => {
-      if (assign) {
-        await grantService.assignRole(selectedUser!.id, roleId);
-      } else {
-        await grantService.unassignRole(selectedUser!.id, roleId);
-      }
-      if (currentProfile) {
-        await auditService.log({
-          tenant_id: currentProfile.tenant_id,
-          entity_type: "user_roles",
-          entity_id: selectedUser!.id,
-          event_type: assign ? "role_assigned" : "role_removed",
-          new_state: { user_id: selectedUser!.id, role_id: roleId, action: assign ? "assign" : "remove" },
-        });
-      }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["user-roles", selectedUser?.id] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -135,45 +94,36 @@ export default function AdminUsers() {
   });
 
   const handleAction = (action: string, user: Profile) => {
-    if (action === "resend_invite") {
-      setConfirmAction({
-        action,
-        user,
+    const actions: Record<string, { label: string; description: string; variant: "default" | "destructive" }> = {
+      resend_invite: {
         label: "Re-invia Invito",
         description: `Verrà inviata una nuova email a ${user.email} con il link per impostare la password.`,
         variant: "default",
-      });
-    } else if (action === "activate") {
-      setConfirmAction({
-        action,
-        user,
+      },
+      activate: {
         label: "Attiva Utente",
         description: `L'utente ${user.full_name} verrà riattivato e potrà accedere nuovamente alla piattaforma.`,
         variant: "default",
-      });
-    } else if (action === "deactivate") {
-      setConfirmAction({
-        action,
-        user,
+      },
+      deactivate: {
         label: "Disattiva Utente",
         description: `L'utente ${user.full_name} verrà disattivato e non potrà più accedere alla piattaforma.`,
         variant: "destructive",
-      });
-    } else if (action === "delete") {
-      setConfirmAction({
-        action,
-        user,
+      },
+      delete: {
         label: "Elimina Utente",
         description: `L'utente ${user.full_name} (${user.email}) verrà eliminato definitivamente. Questa azione è irreversibile.`,
         variant: "destructive",
-      });
-    }
+      },
+    };
+    const cfg = actions[action];
+    if (cfg) setConfirmAction({ action, user, ...cfg });
   };
 
   if (isLoading) return <PageSkeleton />;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 min-w-0">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Gestione Utenti" }]} />
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar">
@@ -193,26 +143,24 @@ export default function AdminUsers() {
             const isSelf = p.id === currentProfile?.id;
             return (
               <Card key={p.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="py-3 flex items-center justify-between">
+                <CardContent className="py-3 flex items-center justify-between gap-2">
                   <div
-                    className="flex items-center gap-3 flex-1 cursor-pointer"
+                    className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                     onClick={() => setSelectedUser(p)}
                   >
-                    <UserCircle className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">
+                    <UserCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
                         {p.full_name}
                         {isSelf && (
                           <span className="text-xs text-muted-foreground ml-2">(tu)</span>
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground">{p.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{p.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={p.is_active ? "default" : "outline"}>
-                      {p.is_active ? "Attivo" : "Disattivato"}
-                    </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <UserStatusBadge profile={p} />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -222,7 +170,7 @@ export default function AdminUsers() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setSelectedUser(p)}>
                           <ShieldCheck className="h-4 w-4 mr-2" />
-                          Gestisci Ruoli
+                          Dettagli & Ruoli
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleAction("resend_invite", p)}>
                           <Mail className="h-4 w-4 mr-2" />
@@ -322,43 +270,8 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* User roles drawer */}
-      <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
-        <SheetContent className="w-[400px]">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" />
-              Ruoli: {selectedUser?.full_name}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-3">
-            {roles.map((role) => {
-              const isAssigned = userRoles.includes(role.id);
-              return (
-                <label
-                  key={role.id}
-                  className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${
-                    isAssigned ? "border-primary bg-primary/5" : "hover:border-muted-foreground/30"
-                  }`}
-                >
-                  <Checkbox
-                    checked={isAssigned}
-                    onCheckedChange={(checked) =>
-                      toggleRoleMutation.mutate({ roleId: role.id, assign: !!checked })
-                    }
-                  />
-                  <div>
-                    <p className="text-sm font-medium">{role.name}</p>
-                    {role.description && (
-                      <p className="text-xs text-muted-foreground">{role.description}</p>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* User info & roles drawer */}
+      <UserInfoDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
     </div>
   );
 }
