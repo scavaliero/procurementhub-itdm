@@ -58,8 +58,8 @@ export default function AuthCallback() {
 
           {status === "success" && (
             <>
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
               </div>
               <h2 className="text-lg font-semibold">Email confermata!</h2>
               <p className="text-sm text-muted-foreground">
