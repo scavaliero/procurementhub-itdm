@@ -106,6 +106,12 @@ export default function InternalVendorDetail() {
     enabled: !!id,
   });
 
+  const { data: supplierProfiles = [] } = useQuery({
+    queryKey: ["supplier-profiles", id],
+    queryFn: () => vendorService.getSupplierProfiles(id!),
+    enabled: !!id,
+  });
+
   const { data: docs = [] } = useQuery({
     queryKey: ["supplier-documents", id],
     queryFn: () => documentService.getSupplierDocuments(id!),
