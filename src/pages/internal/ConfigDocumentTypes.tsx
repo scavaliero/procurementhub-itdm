@@ -157,7 +157,7 @@ export default function ConfigDocumentTypes() {
       ) : (
         <div className="space-y-2">
           {docTypes.map((dt) => (
-            <Card key={dt.id} className="card-top-config">
+            <Card key={dt.id} >
               <CardContent className="py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileText className="h-4 w-4 text-muted-foreground" />
