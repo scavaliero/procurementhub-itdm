@@ -64,7 +64,8 @@ export default function SupplierOpportunityDetail() {
   });
 
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
-  const isSubmitted = existingBid?.status === "submitted";
+  const bidEditable = !existingBid || existingBid.status === "draft";
+  const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const formDisabled = isSubmitted || deadlinePassed;
 
   const {
