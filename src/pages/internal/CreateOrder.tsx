@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ export default function InternalCreateOrder() {
   const { id: opportunityId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const prefilled = useRef(false);
 
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -39,15 +40,15 @@ export default function InternalCreateOrder() {
     enabled: !!opportunityId,
   });
 
-  // Pre-fill from award data
-  const prefilled = award && !subject;
-  if (prefilled && award.bids) {
-    const bid = award.bids;
-    setTimeout(() => {
+  // Pre-fill from award data — runs once
+  useEffect(() => {
+    if (award?.bids && !prefilled.current) {
+      prefilled.current = true;
+      const bid = award.bids;
       setAmount(Number(bid.total_amount ?? 0));
       setSubject(award.justification ? `Ordine - ${award.justification.substring(0, 60)}` : "");
-    }, 0);
-  }
+    }
+  }, [award]);
 
   const addMilestone = () => setMilestones((m) => [...m, { date: "", description: "" }]);
   const removeMilestone = (i: number) => setMilestones((m) => m.filter((_, idx) => idx !== i));
@@ -59,12 +60,7 @@ export default function InternalCreateOrder() {
     mutationFn: async () => {
       if (!profile || !award) throw new Error("Dati mancanti");
 
-      // Upload attachments
-      for (const file of attachments) {
-        await orderService.uploadAttachment(opportunityId!, file);
-      }
-
-      return orderService.createOrder({
+      const order = await orderService.createOrder({
         tenantId: profile.tenant_id,
         supplierId: award.supplier_id,
         opportunityId: opportunityId!,
@@ -78,12 +74,16 @@ export default function InternalCreateOrder() {
         contractConditions,
         issuedBy: profile.id,
       });
+
+      // Upload attachments after order creation
+      for (const file of attachments) {
+        await orderService.uploadAttachment(order.id, file);
+      }
+
+      return order;
     },
-    onSuccess: (order) => {
-      const msg = order.status === "issued"
-        ? "Ordine emesso con successo"
-        : "Ordine creato — in attesa di approvazione";
-      toast.success(msg);
+    onSuccess: () => {
+      toast.success("Ordine creato — in attesa di approvazione");
       navigate("/internal/orders");
     },
     onError: (err: Error) => toast.error(err.message || "Errore"),
@@ -169,18 +169,8 @@ export default function InternalCreateOrder() {
           )}
           {milestones.map((ms, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <Input
-                type="date"
-                className="w-40"
-                value={ms.date}
-                onChange={(e) => updateMilestone(i, "date", e.target.value)}
-              />
-              <Input
-                className="flex-1"
-                placeholder="Descrizione milestone"
-                value={ms.description}
-                onChange={(e) => updateMilestone(i, "description", e.target.value)}
-              />
+              <Input type="date" className="w-40" value={ms.date} onChange={(e) => updateMilestone(i, "date", e.target.value)} />
+              <Input className="flex-1" placeholder="Descrizione milestone" value={ms.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} />
               <Button variant="ghost" size="icon" onClick={() => removeMilestone(i)}>
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
@@ -192,11 +182,7 @@ export default function InternalCreateOrder() {
       <Card>
         <CardHeader><CardTitle>Allegati</CardTitle></CardHeader>
         <CardContent>
-          <Input
-            type="file"
-            multiple
-            onChange={(e) => setAttachments(Array.from(e.target.files || []))}
-          />
+          <Input type="file" multiple onChange={(e) => setAttachments(Array.from(e.target.files || []))} />
           {attachments.length > 0 && (
             <p className="text-xs text-muted-foreground mt-2">{attachments.length} file selezionati</p>
           )}

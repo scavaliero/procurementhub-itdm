@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { opportunityService } from "@/services/opportunityService";
 import { invitationService } from "@/services/invitationService";
+import { auditService } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,6 +31,29 @@ const STATUS_COLORS: Record<string, string> = {
   open: "bg-emerald-100 text-emerald-700", collecting_bids: "bg-blue-100 text-blue-700",
   evaluating: "bg-purple-100 text-purple-700", awarded: "bg-green-100 text-green-800",
   closed: "bg-gray-200 text-gray-600", cancelled: "bg-red-100 text-red-700",
+};
+
+/** Valid next statuses per current status */
+const STATUS_TRANSITIONS: Record<string, { next: string; label: string; icon: any; variant?: "default" | "outline" | "destructive" }[]> = {
+  draft: [
+    { next: "pending_approval", label: "Invia in approvazione", icon: Send, variant: "default" },
+  ],
+  pending_approval: [
+    { next: "open", label: "Approva e pubblica", icon: CheckCircle, variant: "default" },
+    { next: "draft", label: "Rimanda in bozza", icon: ArrowLeft, variant: "outline" },
+  ],
+  open: [
+    { next: "collecting_bids", label: "Avvia raccolta offerte", icon: Play, variant: "default" },
+  ],
+  collecting_bids: [
+    { next: "evaluating", label: "Chiudi raccolta e valuta", icon: ClipboardList, variant: "default" },
+  ],
+  evaluating: [
+    { next: "awarded", label: "Segna come aggiudicata", icon: Award, variant: "default" },
+  ],
+  awarded: [
+    { next: "closed", label: "Chiudi opportunità", icon: CheckCircle, variant: "outline" },
+  ],
 };
 
 export default function InternalOpportunityDetail() {
@@ -51,27 +75,85 @@ export default function InternalOpportunityDetail() {
     enabled: !!id,
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (nextStatus: string) => {
+      const updated = await opportunityService.update(id!, { status: nextStatus } as any);
+      await auditService.log({
+        tenant_id: profile!.tenant_id,
+        entity_type: "opportunity",
+        entity_id: id!,
+        event_type: "opportunity_status_changed",
+        old_state: { status: opp!.status },
+        new_state: { status: nextStatus },
+      });
+      return updated;
+    },
+    onSuccess: (_, nextStatus) => {
+      toast.success(`Stato aggiornato a "${STATUS_LABELS[nextStatus] ?? nextStatus}"`);
+      qc.invalidateQueries({ queryKey: ["opportunity", id] });
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
+      qc.invalidateQueries({ queryKey: ["opportunities-counts"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Errore aggiornamento stato"),
+  });
+
   if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   if (!opp) return <EmptyState title="Opportunità non trovata" />;
 
   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
+  const canChangeStatus = hasGrant("create_opportunity") || hasGrant("approve_opportunity");
+  const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
 
   return (
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: opp.title }]} />
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate("/internal/opportunities")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{opp.title}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold truncate">{opp.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">{opp.code}</p>
         </div>
         <Badge className={STATUS_COLORS[opp.status] ?? ""} variant="secondary">
           {STATUS_LABELS[opp.status] ?? opp.status}
         </Badge>
       </div>
+
+      {/* Action buttons */}
+      {canChangeStatus && transitions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {transitions.map((t) => {
+            const Icon = t.icon;
+            return (
+              <Button
+                key={t.next}
+                variant={t.variant ?? "default"}
+                disabled={statusMutation.isPending}
+                onClick={() => statusMutation.mutate(t.next)}
+              >
+                <Icon className="mr-2 h-4 w-4" />
+                {t.label}
+              </Button>
+            );
+          })}
+
+          {/* Link to evaluation page */}
+          {["collecting_bids", "evaluating"].includes(opp.status) && (
+            <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/evaluation`)}>
+              <ClipboardList className="mr-2 h-4 w-4" /> Vai alla valutazione
+            </Button>
+          )}
+
+          {/* Link to create order */}
+          {opp.status === "awarded" && (
+            <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
+              <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
+            </Button>
+          )}
+        </div>
+      )}
 
       <Tabs defaultValue="details">
         <TabsList>

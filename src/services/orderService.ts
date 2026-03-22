@@ -60,6 +60,7 @@ export const orderService = {
         end_date: params.endDate,
         milestones: (params.milestones as unknown as Json) || [],
         contract_conditions: params.contractConditions || null,
+        issued_by: params.issuedBy,
         status,
       })
       .select()
@@ -209,6 +210,63 @@ export const orderService = {
       entity_id: orderId,
       event_type: "order_rejected",
       new_state: { status: "rejected", reason },
+    });
+
+    return order as Order;
+  },
+
+  /** Admin approves a pending_approval order → issued */
+  async approveOrder(orderId: string, tenantId: string, approvedBy: string): Promise<Order> {
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ status: "issued", approved_by: approvedBy })
+      .eq("id", orderId)
+      .select()
+      .single();
+    if (error) throw error;
+
+    // Notify supplier
+    const { data: supplierProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("supplier_id", order.supplier_id)
+      .limit(1);
+
+    if (supplierProfiles?.[0]) {
+      await notificationService.send({
+        event_type: "order_issued",
+        recipient_id: supplierProfiles[0].id,
+        tenant_id: tenantId,
+      });
+    }
+
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "order",
+      entity_id: orderId,
+      event_type: "order_approved",
+      new_state: { status: "issued" },
+    });
+
+    return order as Order;
+  },
+
+  /** Admin rejects a pending_approval order */
+  async rejectOrderByAdmin(orderId: string, tenantId: string): Promise<Order> {
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", orderId)
+      .select()
+      .single();
+    if (error) throw error;
+
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "order",
+      entity_id: orderId,
+      event_type: "order_rejected_by_admin",
+      new_state: { status: "cancelled" },
     });
 
     return order as Order;
