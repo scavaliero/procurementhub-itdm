@@ -120,6 +120,11 @@ export const orderService = {
           event_type: "order_issued",
           recipient_id: supplierProfiles[0].id,
           tenant_id: params.tenantId,
+          variables: {
+            order_code: order.code || "",
+            subject: params.subject,
+            amount: String(params.amount),
+          },
         });
       }
     } catch (e) {
