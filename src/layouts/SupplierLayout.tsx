@@ -90,7 +90,7 @@ function SupplierSidebarContent({ navItems }: { navItems: typeof fullNav }) {
 }
 
 export default function SupplierLayout() {
-  const { signOut } = useAuth();
+  const { profile, signOut } = useAuth();
 
   const { data: supplier } = useQuery({
     queryKey: ["my-supplier"],
