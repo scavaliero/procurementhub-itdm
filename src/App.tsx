@@ -40,6 +40,7 @@ import InternalOrderDetail from "@/pages/internal/OrderDetail";
 import InternalCreateOrder from "@/pages/internal/CreateOrder";
 import InternalContractDetail from "@/pages/internal/ContractDetail";
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
+import InternalBillingApprovalDetail from "@/pages/internal/BillingApprovalDetail";
 import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
 import AdminRoles from "@/pages/internal/AdminRoles";
