@@ -1,14 +1,20 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contractService } from "@/services/contractService";
+import { useAuth } from "@/hooks/useAuth";
+import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, ExternalLink, Receipt } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   planned: "Pianificato",
@@ -31,6 +37,15 @@ function formatCurrency(v: number | null | undefined) {
 export default function InternalContractDetail() {
   const { id: contractId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { hasGrant } = useGrants();
+  const qc = useQueryClient();
+
+  const [terminateDialog, setTerminateDialog] = useState(false);
+  const [terminateReason, setTerminateReason] = useState("");
+  const [completeDialog, setCompleteDialog] = useState(false);
+
+  const canManage = hasGrant("manage_orders");
 
   const { data: contract, isLoading: cLoading } = useQuery({
     queryKey: ["contract", contractId],
@@ -42,6 +57,27 @@ export default function InternalContractDetail() {
     queryKey: ["contract-summary", contractId],
     queryFn: () => contractService.getEconomicSummary(contractId!),
     enabled: !!contractId,
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: () => contractService.completeContract(contractId!, profile!.tenant_id),
+    onSuccess: () => {
+      toast.success("Contratto completato");
+      qc.invalidateQueries({ queryKey: ["contract", contractId] });
+      setCompleteDialog(false);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const terminateMutation = useMutation({
+    mutationFn: () => contractService.terminateContract(contractId!, profile!.tenant_id, terminateReason),
+    onSuccess: () => {
+      toast.success("Contratto terminato");
+      qc.invalidateQueries({ queryKey: ["contract", contractId] });
+      setTerminateDialog(false);
+      setTerminateReason("");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const isLoading = cLoading || sLoading;
@@ -57,6 +93,8 @@ export default function InternalContractDetail() {
   const usedPct = summary ? Math.round(100 - (summary.residual_pct ?? 100)) : 0;
   const residualPct = summary?.residual_pct ?? 100;
   const barColor = usedPct >= 90 ? "bg-destructive" : usedPct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+  const isActive = contract.status === "active";
+  const isClosed = contract.status === "completed" || contract.status === "terminated";
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
@@ -65,7 +103,7 @@ export default function InternalContractDetail() {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">
             Contratto — {contract.orders?.code ?? "—"}
           </h1>
@@ -78,7 +116,24 @@ export default function InternalContractDetail() {
         </div>
       </div>
 
-      {residualPct < 10 && (
+      {/* Action buttons */}
+      {canManage && isActive && (
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setCompleteDialog(true)} className="gap-2">
+            <CheckCircle className="h-4 w-4" /> Completa contratto
+          </Button>
+          <Button variant="destructive" onClick={() => setTerminateDialog(true)} className="gap-2">
+            <XCircle className="h-4 w-4" /> Termina anticipatamente
+          </Button>
+          <Link to="/internal/billing-approvals">
+            <Button variant="outline" className="gap-2">
+              <Receipt className="h-4 w-4" /> Vai ai benestare
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {residualPct < 10 && !isClosed && (
         <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>Budget quasi esaurito — residuo inferiore al 10%</span>
@@ -166,9 +221,68 @@ export default function InternalContractDetail() {
               <dt className="text-muted-foreground">Importo contratto</dt>
               <dd className="font-medium">{formatCurrency(contract.total_amount)}</dd>
             </div>
+            {contract.progress_notes && (
+              <div className="col-span-2">
+                <dt className="text-muted-foreground">Note</dt>
+                <dd className="font-medium whitespace-pre-wrap">{contract.progress_notes}</dd>
+              </div>
+            )}
           </dl>
         </CardContent>
       </Card>
+
+      {/* Complete Dialog */}
+      <Dialog open={completeDialog} onOpenChange={setCompleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Completa contratto</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Confermi di voler chiudere questo contratto come completato? 
+            Questa azione è irreversibile.
+          </p>
+          {summary && Number(summary.pending_approval_count) > 0 && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Ci sono ancora {summary.pending_approval_count} benestare in attesa di approvazione.</span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteDialog(false)}>Annulla</Button>
+            <Button disabled={completeMutation.isPending} onClick={() => completeMutation.mutate()}>
+              Conferma completamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Terminate Dialog */}
+      <Dialog open={terminateDialog} onOpenChange={(open) => { if (!open) { setTerminateDialog(false); setTerminateReason(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Termina contratto anticipatamente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Motivazione *</Label>
+            <Textarea
+              value={terminateReason}
+              onChange={(e) => setTerminateReason(e.target.value)}
+              rows={3}
+              placeholder="Inserisci la motivazione della terminazione..."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setTerminateDialog(false); setTerminateReason(""); }}>Annulla</Button>
+            <Button
+              variant="destructive"
+              disabled={!terminateReason.trim() || terminateMutation.isPending}
+              onClick={() => terminateMutation.mutate()}
+            >
+              Conferma terminazione
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
