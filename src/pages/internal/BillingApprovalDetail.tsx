@@ -229,7 +229,7 @@ export default function BillingApprovalDetail() {
 
       {/* Detail / Edit */}
       {editing ? (
-        <Card>
+        <Card className="card-top-billing">
           <CardHeader>
             <CardTitle className="text-base">Modifica benestare</CardTitle>
           </CardHeader>
@@ -292,7 +292,7 @@ export default function BillingApprovalDetail() {
       ) : (
         <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card className="card-top-billing">
             <CardHeader>
               <CardTitle className="text-base">Dati benestare</CardTitle>
             </CardHeader>
@@ -320,7 +320,7 @@ export default function BillingApprovalDetail() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-top-billing">
             <CardHeader>
               <CardTitle className="text-base">Informazioni contratto</CardTitle>
             </CardHeader>

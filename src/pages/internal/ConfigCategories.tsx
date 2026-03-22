@@ -109,7 +109,7 @@ export default function ConfigCategories() {
       ) : (
         <div className="space-y-2">
           {categories.map((cat) => (
-            <Card key={cat.id}>
+            <Card key={cat.id} className="card-top-config">
               <CardContent className="py-3 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
