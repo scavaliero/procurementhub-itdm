@@ -16,8 +16,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { CalendarIcon, Search, Filter, Eye, RotateCcw } from "lucide-react";
+import { CalendarIcon, Search, Filter, Eye, RotateCcw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { exportService } from "@/services/exportService";
+import { toast } from "sonner";
 
 const EVENT_LABELS: Record<string, string> = {
   opportunity_created: "Opportunità creata",
