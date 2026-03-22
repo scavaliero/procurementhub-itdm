@@ -78,6 +78,7 @@ export default function SupplierBillingApprovals() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}
