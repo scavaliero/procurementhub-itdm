@@ -27,6 +27,7 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { UserStatusBadge } from "@/components/admin/UserStatusBadge";
 import { UserInfoDrawer } from "@/components/admin/UserInfoDrawer";
+import { ManageRoleDialog } from "@/components/admin/ManageRoleDialog";
 import { toast } from "sonner";
 import {
   Plus,
@@ -45,6 +46,7 @@ export default function AdminUsers() {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [roleUser, setRoleUser] = useState<Profile | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [confirmAction, setConfirmAction] = useState<{
