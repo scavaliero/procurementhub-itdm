@@ -362,6 +362,9 @@ export default function BillingApprovalDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Attachments */}
+        <BillingAttachments billingId={id!} canEdit={canEdit} />
       )}
 
       {/* Delete dialog */}
