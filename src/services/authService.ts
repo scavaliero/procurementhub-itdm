@@ -11,17 +11,18 @@ export const authService = {
     try {
       const profile = await this.getCurrentProfile();
       if (profile) {
-        await supabase.from("audit_logs").insert([{
+        const { error: auditErr } = await supabase.from("audit_logs").insert([{
           tenant_id: profile.tenant_id,
           entity_type: "auth",
-          entity_id: data.user?.id || null,
+          entity_id: data.user?.id ?? null,
           event_type: "login",
-          user_id: data.user?.id || null,
+          user_id: data.user?.id ?? null,
           user_email: email,
           new_state: { method: "password" } as unknown as Json,
         }]);
+        if (auditErr) console.error("Audit login error:", auditErr);
       }
-    } catch { /* don't break login */ }
+    } catch (e) { console.error("Audit login exception:", e); }
 
     return data;
   },
@@ -46,7 +47,7 @@ export const authService = {
       if (user) {
         const profile = await this.getCurrentProfile();
         if (profile) {
-          await supabase.from("audit_logs").insert([{
+          const { error: auditErr } = await supabase.from("audit_logs").insert([{
             tenant_id: profile.tenant_id,
             entity_type: "auth",
             entity_id: user.id,
@@ -54,9 +55,10 @@ export const authService = {
             user_id: user.id,
             user_email: user.email || null,
           }]);
+          if (auditErr) console.error("Audit logout error:", auditErr);
         }
       }
-    } catch { /* don't break logout */ }
+    } catch (e) { console.error("Audit logout exception:", e); }
 
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
