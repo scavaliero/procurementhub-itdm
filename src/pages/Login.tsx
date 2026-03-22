@@ -60,7 +60,12 @@ export default function LoginPage() {
               {loginMutation.isPending ? "Accesso…" : "Accedi"}
             </Button>
           </form>
-          <p className="text-sm text-center text-muted-foreground mt-4">
+          <div className="text-center mt-3">
+            <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline">
+              Password dimenticata?
+            </Link>
+          </div>
+          <p className="text-sm text-center text-muted-foreground mt-2">
             Non hai un account?{" "}
             <Link to="/register" className="text-primary hover:underline">Registrati</Link>
           </p>
