@@ -358,7 +358,15 @@ export default function AuditLogs() {
                         {log.created_at ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: it }) : "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium">{log.user_email || "Sistema"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{log.user_email || "Sistema"}</span>
+                          {log.user_email && (() => {
+                            const uType = getUserType(log);
+                            if (uType === "internal") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-300 text-blue-700 bg-blue-50">Interno</Badge>;
+                            if (uType === "supplier") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Fornitore</Badge>;
+                            return null;
+                          })()}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant="secondary" className={cn("text-xs", ENTITY_COLORS[log.entity_type] ?? "bg-gray-100 text-gray-700")}>

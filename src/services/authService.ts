@@ -53,6 +53,7 @@ export const authService = {
         event_type: string;
         user_id: string | null;
         user_email: string;
+        user_role: string;
         new_state?: Json;
       } = {
         tenant_id: profile.tenant_id,
@@ -61,6 +62,7 @@ export const authService = {
         event_type: eventType,
         user_id: userId,
         user_email: email,
+        user_role: profile.user_type,
       };
       if (eventType === "login") {
         insertData.new_state = { method: "password" } as unknown as Json;
