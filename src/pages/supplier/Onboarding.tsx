@@ -57,6 +57,12 @@ export default function SupplierOnboarding() {
     enabled: !!supplier,
   });
 
+  const { data: existingContacts } = useQuery({
+    queryKey: ["supplier-contacts", supplier?.id],
+    queryFn: () => contactService.list(supplier!.id),
+    enabled: !!supplier,
+  });
+
   // Step 1 state
   const [companyData, setCompanyData] = useState<Partial<Supplier>>({});
   const [address, setAddress] = useState<Record<string, string>>({});
@@ -65,6 +71,7 @@ export default function SupplierOnboarding() {
   const [contacts, setContacts] = useState<Contact[]>([
     { nome: "", cognome: "", ruolo: "", email: "", phone: "" },
   ]);
+  const [contactsInitDone, setContactsInitDone] = useState(false);
 
   // Step 3 state
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
