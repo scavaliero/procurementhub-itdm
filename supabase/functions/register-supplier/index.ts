@@ -32,12 +32,33 @@ Deno.serve(async (req) => {
       user_metadata: { full_name: contact_name },
       email_confirm: false,
     });
+
     if (authErr) {
+      // If user already exists, check if they confirmed email
       if (authErr.message?.includes("already been registered") || authErr.message?.includes("already exists")) {
-        throw new Error("Questa email è già registrata. Prova ad accedere o usa un'altra email.");
+        // Look up existing user
+        const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = users?.find((u: any) => u.email === email);
+
+        if (existingUser && !existingUser.email_confirmed_at) {
+          // Re-send confirmation email via Supabase resend
+          const anonClient = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_ANON_KEY")!,
+          );
+          await anonClient.auth.resend({ type: "signup", email });
+          return new Response(
+            JSON.stringify({ resent: true, message: "Email di conferma re-inviata. Controlla la tua casella di posta." }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        // User exists and already confirmed → suggest password recovery
+        throw new Error("Questa email è già registrata e confermata. Usa la funzione 'Password dimenticata' per recuperare l'accesso.");
       }
       throw authErr;
     }
+
     const userId = authData.user?.id;
     if (!userId) throw new Error("Utente non creato");
 
