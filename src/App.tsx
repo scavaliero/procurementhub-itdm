@@ -122,6 +122,7 @@ const App = () => (
             <Route path="/internal/admin/users" element={<AdminUsers />} />
             <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
             <Route path="/internal/profile" element={<InternalProfile />} />
+            <Route path="/internal/change-password" element={<ChangePassword />} />
           </Route>
 
           {/* Catch-all */}
