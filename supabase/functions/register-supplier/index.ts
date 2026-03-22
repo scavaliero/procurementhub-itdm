@@ -69,14 +69,16 @@ Deno.serve(async (req) => {
       if (!isDuplicateEmail) throw authErr;
 
       // Existing account: if not confirmed, resend confirmation mail
-      const { data: existingUser, error: existingErr } = await supabaseAdmin
-        .schema("auth")
-        .from("users")
-        .select("id, email_confirmed_at")
-        .eq("email", normalizedEmail)
-        .maybeSingle();
+      const { data: listed, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
 
-      if (existingErr) throw existingErr;
+      if (listErr) throw listErr;
+
+      const existingUser = listed.users.find(
+        (u) => (u.email ?? "").toLowerCase() === normalizedEmail,
+      );
 
       if (existingUser && !existingUser.email_confirmed_at) {
         const { error: resendErr } = await anonClient.auth.resend({
