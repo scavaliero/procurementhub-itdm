@@ -46,7 +46,15 @@ export const authService = {
         console.warn(`Audit ${eventType}: no profile found`);
         return;
       }
-      const payload: Record<string, unknown> = {
+      const insertData: {
+        tenant_id: string;
+        entity_type: string;
+        entity_id: string | null;
+        event_type: string;
+        user_id: string | null;
+        user_email: string;
+        new_state?: Json;
+      } = {
         tenant_id: profile.tenant_id,
         entity_type: "auth",
         entity_id: userId,
@@ -55,9 +63,9 @@ export const authService = {
         user_email: email,
       };
       if (eventType === "login") {
-        payload.new_state = { method: "password" } as unknown as Json;
+        insertData.new_state = { method: "password" } as unknown as Json;
       }
-      const { error: auditErr } = await supabase.from("audit_logs").insert([payload]);
+      const { error: auditErr } = await supabase.from("audit_logs").insert([insertData]);
       if (auditErr) {
         console.error(`Audit ${eventType} insert error:`, auditErr);
       } else {
