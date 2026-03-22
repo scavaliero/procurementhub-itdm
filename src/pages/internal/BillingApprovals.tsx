@@ -192,8 +192,8 @@ export default function InternalBillingApprovals() {
   function resetCreateForm() {
     setShowCreate(false);
     setSelectedContract("");
-    setPeriodStart("");
-    setPeriodEnd("");
+    setPeriodStart(undefined);
+    setPeriodEnd(undefined);
     setAmount(0);
     setActivityDesc("");
     setAttachments([]);
