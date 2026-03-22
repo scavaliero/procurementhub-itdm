@@ -7,6 +7,17 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
+    // Update last_login_at on profile
+    if (data.user) {
+      supabase
+        .from("profiles")
+        .update({ last_login_at: new Date().toISOString() })
+        .eq("id", data.user.id)
+        .then(({ error: updErr }) => {
+          if (updErr) console.error("Failed to update last_login_at:", updErr);
+        });
+    }
+
     // Log login event asynchronously (don't block login flow)
     this.logAuthEvent(data.user?.id ?? null, email, "login").catch((e) => console.error("Audit login fire-and-forget error:", e));
 
