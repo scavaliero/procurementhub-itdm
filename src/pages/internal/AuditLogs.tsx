@@ -107,6 +107,7 @@ export default function AuditLogs() {
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState("all");
   const [eventFilter, setEventFilter] = useState("all");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(0);
@@ -114,7 +115,7 @@ export default function AuditLogs() {
   const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["audit-logs", search, entityFilter, eventFilter, dateFrom, dateTo, page],
+    queryKey: ["audit-logs", search, entityFilter, eventFilter, userTypeFilter, dateFrom, dateTo, page],
     queryFn: async () => {
       let q = supabase
         .from("audit_logs")
@@ -127,6 +128,7 @@ export default function AuditLogs() {
       }
       if (entityFilter !== "all") q = q.eq("entity_type", entityFilter);
       if (eventFilter !== "all") q = q.eq("event_type", eventFilter);
+      if (userTypeFilter !== "all") q = q.eq("user_role", userTypeFilter);
       if (dateFrom) q = q.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
       if (dateTo) q = q.lte("created_at", format(dateTo, "yyyy-MM-dd") + "T23:59:59");
 
@@ -178,6 +180,7 @@ export default function AuditLogs() {
     setSearch("");
     setEntityFilter("all");
     setEventFilter("all");
+    setUserTypeFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
     setPage(0);
@@ -197,6 +200,7 @@ export default function AuditLogs() {
       }
       if (entityFilter !== "all") q = q.eq("entity_type", entityFilter);
       if (eventFilter !== "all") q = q.eq("event_type", eventFilter);
+      if (userTypeFilter !== "all") q = q.eq("user_role", userTypeFilter);
       if (dateFrom) q = q.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
       if (dateTo) q = q.lte("created_at", format(dateTo, "yyyy-MM-dd") + "T23:59:59");
 
@@ -292,6 +296,27 @@ export default function AuditLogs() {
                 {filterOptions?.events.filter(e => e !== "__verify__").map((e) => (
                   <SelectItem key={e} value={e}>{EVENT_LABELS[e] ?? e}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={userTypeFilter} onValueChange={(v) => { setUserTypeFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Tipo utente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti gli utenti</SelectItem>
+                <SelectItem value="internal">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+                    Interno
+                  </span>
+                </SelectItem>
+                <SelectItem value="supplier">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                    Fornitore
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
 
