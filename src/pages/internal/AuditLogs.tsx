@@ -148,6 +148,48 @@ export default function AuditLogs() {
     setPage(0);
   }
 
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      let q = supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5000);
+
+      if (search.trim()) {
+        q = q.or(`user_email.ilike.%${search.trim()}%,event_type.ilike.%${search.trim()}%,entity_type.ilike.%${search.trim()}%`);
+      }
+      if (entityFilter !== "all") q = q.eq("entity_type", entityFilter);
+      if (eventFilter !== "all") q = q.eq("event_type", eventFilter);
+      if (dateFrom) q = q.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
+      if (dateTo) q = q.lte("created_at", format(dateTo, "yyyy-MM-dd") + "T23:59:59");
+
+      const { data: logs, error } = await q;
+      if (error) throw error;
+      if (!logs?.length) { toast.info("Nessun evento da esportare"); return; }
+
+      const csv = exportService.generateCsv(logs as Record<string, unknown>[], [
+        { key: "created_at", header: "Data/Ora", formatter: (v) => v ? format(new Date(v as string), "dd/MM/yyyy HH:mm:ss") : "" },
+        { key: "user_email", header: "Utente", formatter: (v) => String(v ?? "Sistema") },
+        { key: "entity_type", header: "Entità", formatter: (v) => ENTITY_LABELS[v as string] ?? String(v ?? "") },
+        { key: "event_type", header: "Evento", formatter: (v) => EVENT_LABELS[v as string] ?? String(v ?? "") },
+        { key: "entity_id", header: "ID Entità", formatter: (v) => String(v ?? "") },
+        { key: "old_state", header: "Stato precedente", formatter: (v) => v ? JSON.stringify(v) : "" },
+        { key: "new_state", header: "Stato nuovo", formatter: (v) => v ? JSON.stringify(v) : "" },
+      ]);
+
+      exportService.downloadCsv(csv, `audit-log-${format(new Date(), "yyyy-MM-dd")}.csv`);
+      toast.success(`${logs.length} eventi esportati`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Errore durante l'esportazione");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!canView) {
     return (
       <div className="p-6">
