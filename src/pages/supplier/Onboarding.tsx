@@ -183,6 +183,68 @@ export default function SupplierOnboarding() {
     );
   }
 
+  // ── Enabled: show read-only profile summary + redirect to documents ──
+  if (supplier.status === "enabled") {
+    const addr = supplier.legal_address as Record<string, string> | null;
+    return (
+      <div className="p-6 max-w-2xl mx-auto space-y-6">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
+            <Check className="h-7 w-7 text-green-600" />
+          </div>
+          <div className="text-center space-y-2">
+            <h1 className="text-xl font-semibold">Account abilitato</h1>
+            <p className="text-muted-foreground text-sm">
+              Il tuo account è stato abilitato. Ora devi caricare i documenti obbligatori
+              per completare il processo di qualifica.
+            </p>
+          </div>
+          <Badge variant="default" className="text-sm">Stato: Abilitato</Badge>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Riepilogo Anagrafica</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <span className="text-muted-foreground">Ragione sociale</span>
+              <span className="font-medium">{supplier.company_name}</span>
+              {supplier.company_type && (
+                <>
+                  <span className="text-muted-foreground">Tipo società</span>
+                  <span>{supplier.company_type}</span>
+                </>
+              )}
+              {supplier.pec && (
+                <>
+                  <span className="text-muted-foreground">PEC</span>
+                  <span>{supplier.pec}</span>
+                </>
+              )}
+              {supplier.website && (
+                <>
+                  <span className="text-muted-foreground">Sito Web</span>
+                  <span>{supplier.website}</span>
+                </>
+              )}
+              {addr && (addr.street || addr.city) && (
+                <>
+                  <span className="text-muted-foreground">Sede legale</span>
+                  <span>{[addr.street, addr.city, addr.province, addr.zip, addr.country].filter(Boolean).join(", ")}</span>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full" onClick={() => navigate("/supplier/documents")}>
+          Vai al caricamento documenti
+        </Button>
+      </div>
+    );
+  }
+
   const steps = ["Dati Azienda", "Referenti", "Categorie", "Riepilogo"];
   const progress = ((step + 1) / steps.length) * 100;
 
