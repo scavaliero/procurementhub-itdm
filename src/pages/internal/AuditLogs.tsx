@@ -115,7 +115,7 @@ export default function AuditLogs() {
   const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["audit-logs", search, entityFilter, eventFilter, dateFrom, dateTo, page],
+    queryKey: ["audit-logs", search, entityFilter, eventFilter, userTypeFilter, dateFrom, dateTo, page],
     queryFn: async () => {
       let q = supabase
         .from("audit_logs")
