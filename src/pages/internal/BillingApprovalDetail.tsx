@@ -290,6 +290,7 @@ export default function BillingApprovalDetail() {
           </CardContent>
         </Card>
       ) : (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -363,8 +364,8 @@ export default function BillingApprovalDetail() {
           </Card>
         </div>
 
-        {/* Attachments */}
         <BillingAttachments billingId={id!} canEdit={canEdit} />
+        </>
       )}
 
       {/* Delete dialog */}
