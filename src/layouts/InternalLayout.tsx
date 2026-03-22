@@ -5,11 +5,9 @@ import {
 } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
-import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
