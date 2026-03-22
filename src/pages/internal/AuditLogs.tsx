@@ -200,6 +200,7 @@ export default function AuditLogs() {
       }
       if (entityFilter !== "all") q = q.eq("entity_type", entityFilter);
       if (eventFilter !== "all") q = q.eq("event_type", eventFilter);
+      if (userTypeFilter !== "all") q = q.eq("user_role", userTypeFilter);
       if (dateFrom) q = q.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
       if (dateTo) q = q.lte("created_at", format(dateTo, "yyyy-MM-dd") + "T23:59:59");
 
