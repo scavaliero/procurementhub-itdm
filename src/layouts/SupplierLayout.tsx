@@ -43,30 +43,43 @@ function SupplierSidebarContent({ navItems }: { navItems: typeof fullNav }) {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b px-4 py-3">
+      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
         {!collapsed && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold tracking-tight text-primary">ITDM</span>
-            <span className="text-[10px] font-medium text-muted-foreground">GROUP</span>
-            <span className="ml-0.5 border-l pl-1.5 text-xs font-semibold text-foreground">Fornitori</span>
+          <div className="flex items-center gap-2">
+            <span className="text-base font-extrabold tracking-tight text-white">ITDM</span>
+            <span className="text-[9px] font-semibold text-sidebar-foreground/60 uppercase leading-none -ml-0.5">
+              Group
+            </span>
+            <span className="border-l border-sidebar-foreground/30 pl-2 ml-0.5 text-sm font-bold text-white">
+              Fornitori
+            </span>
           </div>
         )}
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="py-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4 mb-1">
+            Menu
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.url)}>
-                    <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                const active = location.pathname.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <NavLink
+                        to={item.url}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                      >
+                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        {!collapsed && <span className="text-sm">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -90,11 +103,11 @@ export default function SupplierLayout() {
   if (status === "pre_registered") {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <header className="h-14 flex items-center justify-between px-4 bg-primary text-primary-foreground">
+        <header className="h-14 flex items-center justify-between px-4 bg-primary text-primary-foreground shadow-md">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold tracking-tight">ITDM</span>
-            <span className="text-[10px] font-medium opacity-80">GROUP</span>
-            <span className="ml-1 border-l border-primary-foreground/30 pl-2 text-xs font-semibold">
+            <span className="text-base font-extrabold tracking-tight">ITDM</span>
+            <span className="text-[9px] font-semibold opacity-60 uppercase leading-none">Group</span>
+            <span className="border-l border-primary-foreground/30 pl-2 ml-0.5 text-sm font-bold">
               Procurement Hub
             </span>
           </div>
@@ -128,8 +141,8 @@ export default function SupplierLayout() {
       <div className="min-h-screen flex w-full bg-background">
         <SupplierSidebarContent navItems={navItems} />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center justify-between px-4 bg-primary text-primary-foreground">
-            <div className="flex items-center gap-2">
+          <header className="h-14 flex items-center justify-between px-4 bg-primary text-primary-foreground shadow-md">
+            <div className="flex items-center gap-3">
               <SidebarTrigger className="text-primary-foreground hover:bg-primary-foreground/10" />
               {profile && (
                 <span className="text-sm font-medium opacity-90 hidden sm:inline">

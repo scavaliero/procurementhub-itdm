@@ -35,12 +35,14 @@ function KpiCard({
   subtitle?: string;
 }) {
   return (
-    <Card className={alert ? "border-destructive/50 bg-destructive/5" : ""}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
-        <Icon className={`h-4 w-4 ${alert ? "text-destructive" : "text-muted-foreground"}`} />
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${alert ? "bg-destructive/10" : "bg-primary/8"}`}>
+          <Icon className={`h-4 w-4 ${alert ? "text-destructive" : "text-primary"}`} />
+        </div>
       </CardHeader>
       <CardContent>
         <p className="text-2xl font-bold tabular-nums">{value}</p>
@@ -56,7 +58,7 @@ function SkeletonCards({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <Card key={i}>
+        <Card key={i} className="shadow-sm">
           <CardHeader className="pb-2">
             <Skeleton className="h-4 w-24" />
           </CardHeader>
@@ -66,6 +68,23 @@ function SkeletonCards({ count = 4 }: { count?: number }) {
         </Card>
       ))}
     </div>
+  );
+}
+
+function SectionHeader({
+  icon, title, variant = "default",
+}: {
+  icon: string;
+  title: string;
+  variant?: "default" | "green";
+}) {
+  return (
+    <h2 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
+      variant === "green" ? "section-accent-bar-green" : "section-accent-bar"
+    }`}>
+      <span className="text-base">{icon}</span>
+      {title}
+    </h2>
   );
 }
 
@@ -142,18 +161,14 @@ export default function InternalDashboard() {
   ];
 
   return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-
+    <div className="p-4 sm:p-6 space-y-8">
       {/* ── Albo Fornitori ─── */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Building2 className="h-5 w-5" /> Albo Fornitori
-        </h2>
+      <section className="space-y-4">
+        <SectionHeader icon="🏢" title="Albo Fornitori" />
         {loadingSuppliers || loadingDocs ? (
           <SkeletonCards count={6} />
         ) : (
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {supplierKpis.map((kpi) => {
               const value = kpi.key === "_total"
                 ? totalSuppliers
@@ -177,14 +192,12 @@ export default function InternalDashboard() {
 
       {/* ── Procurement ─── */}
       {hasGrant("view_bids") && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Briefcase className="h-5 w-5" /> Procurement
-          </h2>
+        <section className="space-y-4">
+          <SectionHeader icon="📋" title="Procurement" variant="green" />
           {loadingOpp ? (
             <SkeletonCards count={4} />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {(oppStats ?? []).map((r) => (
                 <KpiCard
                   key={r.status}
@@ -205,11 +218,9 @@ export default function InternalDashboard() {
 
       {/* ── Economici ─── */}
       {hasGrant("view_orders") && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" /> Indicatori Economici
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="space-y-4">
+          <SectionHeader icon="💰" title="Indicatori Economici" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} />
             <KpiCard
               title="Benestare in approvazione"
@@ -229,76 +240,37 @@ export default function InternalDashboard() {
       )}
 
       {/* ── Liste recenti ─── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Ultime opportunità</CardTitle>
-            <Link
-              to="/internal/opportunities"
-              className="text-xs text-primary flex items-center gap-1 hover:underline"
-            >
-              Vedi tutte <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {recentOpps.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nessuna opportunità.</p>
-            ) : (
-              <ul className="divide-y">
-                {recentOpps.map((o) => (
-                  <li key={o.id} className="py-2">
-                    <Link
-                      to={`/internal/opportunities/${o.id}`}
-                      className="flex items-center justify-between hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{o.title}</p>
-                        <p className="text-xs text-muted-foreground">{o.code}</p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0 ml-2 text-[11px]">
-                        {oppStatusLabels[o.status] ?? o.status}
-                      </Badge>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {hasGrant("approve_billing_approval") && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Benestare da approvare</CardTitle>
+      <section className="space-y-4">
+        <SectionHeader icon="📌" title="Attività Recenti" variant="green" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
+              <CardTitle className="text-sm font-semibold">Ultime opportunità</CardTitle>
               <Link
-                to="/internal/billing-approvals"
-                className="text-xs text-primary flex items-center gap-1 hover:underline"
+                to="/internal/opportunities"
+                className="text-xs text-primary flex items-center gap-1 hover:underline font-medium"
               >
-                Vedi tutti <ArrowRight className="h-3 w-3" />
+                Vedi tutte <ArrowRight className="h-3 w-3" />
               </Link>
             </CardHeader>
-            <CardContent>
-              {recentBillings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun benestare in attesa.</p>
+            <CardContent className="pt-3">
+              {recentOpps.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Nessuna opportunità.</p>
               ) : (
                 <ul className="divide-y">
-                  {recentBillings.map((b: any) => (
-                    <li key={b.id} className="py-2">
+                  {recentOpps.map((o) => (
+                    <li key={o.id} className="py-2.5 first:pt-0 last:pb-0">
                       <Link
-                        to="/internal/billing-approvals"
-                        className="flex items-center justify-between hover:bg-muted/50 -mx-2 px-2 py-1 rounded transition-colors"
+                        to={`/internal/opportunities/${o.id}`}
+                        className="flex items-center justify-between hover:bg-muted/50 -mx-2 px-2 py-1 rounded-md transition-colors"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium">{b.code ?? "—"}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {b.suppliers?.company_name ?? "—"}
-                          </p>
+                          <p className="text-sm font-medium truncate">{o.title}</p>
+                          <p className="text-xs text-muted-foreground">{o.code}</p>
                         </div>
-                        <span className="text-sm font-medium tabular-nums shrink-0 ml-2">
-                          €{Number(b.amount).toLocaleString("it-IT", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </span>
+                        <Badge variant="outline" className="shrink-0 ml-2 text-[11px]">
+                          {oppStatusLabels[o.status] ?? o.status}
+                        </Badge>
                       </Link>
                     </li>
                   ))}
@@ -306,8 +278,50 @@ export default function InternalDashboard() {
               )}
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          {hasGrant("approve_billing_approval") && (
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
+                <CardTitle className="text-sm font-semibold">Benestare da approvare</CardTitle>
+                <Link
+                  to="/internal/billing-approvals"
+                  className="text-xs text-primary flex items-center gap-1 hover:underline font-medium"
+                >
+                  Vedi tutti <ArrowRight className="h-3 w-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="pt-3">
+                {recentBillings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Nessun benestare in attesa.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {recentBillings.map((b: any) => (
+                      <li key={b.id} className="py-2.5 first:pt-0 last:pb-0">
+                        <Link
+                          to="/internal/billing-approvals"
+                          className="flex items-center justify-between hover:bg-muted/50 -mx-2 px-2 py-1 rounded-md transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">{b.code ?? "—"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {b.suppliers?.company_name ?? "—"}
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold tabular-nums shrink-0 ml-2">
+                            €{Number(b.amount).toLocaleString("it-IT", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
