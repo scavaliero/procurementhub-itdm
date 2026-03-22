@@ -701,18 +701,6 @@ export default function InternalVendorDetail() {
                         >
                           {sc.status === "qualified" ? "Qualificato" : "In attesa"}
                         </Badge>
-                        {canApproveAccreditation && sc.status !== "qualified" && (
-                          <Button
-                            size="sm"
-                            disabled={approveCategoryMutation.isPending}
-                            onClick={() =>
-                              approveCategoryMutation.mutate(sc.id)
-                            }
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />{" "}
-                            Approva qualifica
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
