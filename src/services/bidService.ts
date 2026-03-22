@@ -82,11 +82,20 @@ export const bidService = {
       status: "draft",
     };
 
-    if (existingBidId) {
+    // Auto-detect existing bid if not provided
+    let bidId = existingBidId;
+    if (!bidId) {
+      const existing = await this.getByOpportunityAndSupplier(params.opportunity_id, params.supplier_id);
+      if (existing && existing.status === "draft") {
+        bidId = existing.id;
+      }
+    }
+
+    if (bidId) {
       const { data, error } = await supabase
         .from("bids")
         .update(payload)
-        .eq("id", existingBidId)
+        .eq("id", bidId)
         .select()
         .maybeSingle();
       if (error) throw error;
