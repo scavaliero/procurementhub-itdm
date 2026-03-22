@@ -129,8 +129,6 @@ export function NotificationBell() {
                     {stripHtml(n.body)}
                   </p>
                 )}
-                  </p>
-                )}
                 {n.created_at && (
                   <p className="text-[11px] text-muted-foreground/60 mt-1">
                     {formatDistanceToNow(new Date(n.created_at), {
