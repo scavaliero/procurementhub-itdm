@@ -5,24 +5,16 @@ import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SUPPLIER_STATUS_LABELS_PLURAL } from "@/lib/supplierStatusConfig";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
   AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
+  Eye,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
 
-const statusLabels: Record<string, string> = {
-  pre_registered: "Pre-registrati",
-  enabled: "Abilitati",
-  in_accreditation: "In accreditamento",
-  in_approval: "In approvazione",
-  pending_review: "In revisione",
-  accredited: "Accreditati",
-  suspended: "Sospesi",
-  rejected: "Respinti",
-  revoked: "Revocati",
-  blacklisted: "Blacklist",
+const oppStatusLabels: Record<string, string> = {
   draft: "Bozza",
   pending_approval: "In approvazione",
   open: "Aperte",
