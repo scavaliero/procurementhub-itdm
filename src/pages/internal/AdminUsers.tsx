@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -24,10 +25,26 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Plus, ShieldCheck, UserCircle } from "lucide-react";
+import {
+  Plus,
+  ShieldCheck,
+  UserCircle,
+  MoreVertical,
+  Mail,
+  UserCheck,
+  UserX,
+  Trash2,
+} from "lucide-react";
 import type { Profile, Role } from "@/types";
 
 export default function AdminUsers() {
@@ -37,6 +54,13 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [confirmAction, setConfirmAction] = useState<{
+    action: string;
+    user: Profile;
+    label: string;
+    description: string;
+    variant: "default" | "destructive";
+  } | null>(null);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["internal-profiles"],
@@ -95,6 +119,57 @@ export default function AdminUsers() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const manageUserMutation = useMutation({
+    mutationFn: async ({ action, userId }: { action: string; userId: string }) => {
+      return authService.manageUser(action, userId);
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Operazione completata");
+      qc.invalidateQueries({ queryKey: ["internal-profiles"] });
+      setConfirmAction(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+      setConfirmAction(null);
+    },
+  });
+
+  const handleAction = (action: string, user: Profile) => {
+    if (action === "resend_invite") {
+      setConfirmAction({
+        action,
+        user,
+        label: "Re-invia Invito",
+        description: `Verrà inviata una nuova email a ${user.email} con il link per impostare la password.`,
+        variant: "default",
+      });
+    } else if (action === "activate") {
+      setConfirmAction({
+        action,
+        user,
+        label: "Attiva Utente",
+        description: `L'utente ${user.full_name} verrà riattivato e potrà accedere nuovamente alla piattaforma.`,
+        variant: "default",
+      });
+    } else if (action === "deactivate") {
+      setConfirmAction({
+        action,
+        user,
+        label: "Disattiva Utente",
+        description: `L'utente ${user.full_name} verrà disattivato e non potrà più accedere alla piattaforma.`,
+        variant: "destructive",
+      });
+    } else if (action === "delete") {
+      setConfirmAction({
+        action,
+        user,
+        label: "Elimina Utente",
+        description: `L'utente ${user.full_name} (${user.email}) verrà eliminato definitivamente. Questa azione è irreversibile.`,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) return <PageSkeleton />;
 
   return (
@@ -114,26 +189,76 @@ export default function AdminUsers() {
         <EmptyState title="Nessun utente interno" />
       ) : (
         <div className="space-y-2">
-          {(profiles as Profile[]).map((p) => (
-            <Card
-              key={p.id}
-              className="cursor-pointer hover:shadow-sm transition-shadow"
-              onClick={() => setSelectedUser(p)}
-            >
-              <CardContent className="py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{p.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{p.email}</p>
+          {(profiles as Profile[]).map((p) => {
+            const isSelf = p.id === currentProfile?.id;
+            return (
+              <Card key={p.id} className="hover:shadow-sm transition-shadow">
+                <CardContent className="py-3 flex items-center justify-between">
+                  <div
+                    className="flex items-center gap-3 flex-1 cursor-pointer"
+                    onClick={() => setSelectedUser(p)}
+                  >
+                    <UserCircle className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        {p.full_name}
+                        {isSelf && (
+                          <span className="text-xs text-muted-foreground ml-2">(tu)</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{p.email}</p>
+                    </div>
                   </div>
-                </div>
-                <Badge variant={p.is_active ? "default" : "outline"}>
-                  {p.is_active ? "Attivo" : "Inattivo"}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={p.is_active ? "default" : "outline"}>
+                      {p.is_active ? "Attivo" : "Disattivato"}
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setSelectedUser(p)}>
+                          <ShieldCheck className="h-4 w-4 mr-2" />
+                          Gestisci Ruoli
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction("resend_invite", p)}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Re-invia Invito
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {p.is_active ? (
+                          <DropdownMenuItem
+                            onClick={() => handleAction("deactivate", p)}
+                            disabled={isSelf}
+                            className="text-orange-600"
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            Disattiva
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleAction("activate", p)}>
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Riattiva
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => handleAction("delete", p)}
+                          disabled={isSelf}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Elimina
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -142,6 +267,9 @@ export default function AdminUsers() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Invita Utente Interno</DialogTitle>
+            <DialogDescription>
+              L'utente riceverà un'email con un link per impostare la password.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -160,6 +288,35 @@ export default function AdminUsers() {
               onClick={() => inviteMutation.mutate()}
             >
               {inviteMutation.isPending ? "Invio…" : "Invita"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation dialog */}
+      <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmAction?.label}</DialogTitle>
+            <DialogDescription>{confirmAction?.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmAction(null)}>
+              Annulla
+            </Button>
+            <Button
+              variant={confirmAction?.variant || "default"}
+              disabled={manageUserMutation.isPending}
+              onClick={() => {
+                if (confirmAction) {
+                  manageUserMutation.mutate({
+                    action: confirmAction.action,
+                    userId: confirmAction.user.id,
+                  });
+                }
+              }}
+            >
+              {manageUserMutation.isPending ? "Elaborazione…" : "Conferma"}
             </Button>
           </DialogFooter>
         </DialogContent>

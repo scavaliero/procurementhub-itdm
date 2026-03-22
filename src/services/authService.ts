@@ -72,4 +72,17 @@ export const authService = {
     if (data?.error) throw new Error(data.error);
     return data.userId;
   },
+
+  async manageUser(action: string, userId: string): Promise<{ success: boolean; message: string }> {
+    const { data, error } = await supabase.functions.invoke("manage-internal-user", {
+      body: {
+        action,
+        user_id: userId,
+        redirect_to: `${window.location.origin}/reset-password`,
+      },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  },
 };
