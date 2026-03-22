@@ -232,8 +232,8 @@ export default function InternalOpportunities() {
         <EmptyState title="Nessuna opportunità" description="Non ci sono opportunità con i filtri selezionati." />
       ) : (
         <>
-          <div className="overflow-x-auto">
-          <Table>
+          <div className="overflow-x-auto -mx-4 sm:-mx-0">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Codice</TableHead>
