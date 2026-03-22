@@ -94,6 +94,38 @@ export default function SupplierOnboarding() {
     initDone[1](true);
   }
 
+  // Init contacts from DB
+  useEffect(() => {
+    if (existingContacts && existingContacts.length > 0 && !contactsInitDone) {
+      setContacts(
+        existingContacts.map((c) => ({
+          nome: c.first_name,
+          cognome: c.last_name || "",
+          ruolo: c.role || "",
+          email: c.email,
+          phone: c.phone || "",
+        }))
+      );
+      setContactsInitDone(true);
+    }
+  }, [existingContacts, contactsInitDone]);
+
+  const saveContactsToDB = async () => {
+    if (!supplier || !profile) return;
+    const validContacts = contacts.filter((c) => c.nome && c.email);
+    await contactService.upsertAll(
+      supplier.id,
+      profile.tenant_id,
+      validContacts.map((c) => ({
+        first_name: c.nome,
+        last_name: c.cognome || undefined,
+        role: c.ruolo || undefined,
+        email: c.email,
+        phone: c.phone || undefined,
+      }))
+    );
+  };
+
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
       if (!supplier) return;
@@ -101,6 +133,7 @@ export default function SupplierOnboarding() {
         ...companyData,
         legal_address: address as any,
       } as any);
+      await saveContactsToDB();
     },
     onError: () => toast.error("Errore nel salvataggio bozza"),
   });
