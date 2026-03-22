@@ -456,7 +456,7 @@ export default function InternalVendorDetail() {
   };
 
   const dialogTitle: Record<string, string> = {
-    enable: "Abilita accreditamento",
+    enable: "Abilita fase documenti",
     approve: "Approva accreditamento",
     integrate: "Richiedi integrazione",
     suspend: "Sospendi fornitore",
