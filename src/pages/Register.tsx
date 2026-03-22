@@ -148,6 +148,16 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="pec">PEC</Label>
+              <Input id="pec" type="email" {...register("pec")} />
+              {errors.pec && (
+                <p className="text-xs text-destructive">
+                  {errors.pec.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="password">Password * (min. 12 caratteri)</Label>
               <Input
                 id="password"
