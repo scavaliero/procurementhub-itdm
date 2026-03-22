@@ -161,6 +161,15 @@ export const vendorService = {
     return data?.id || null;
   },
 
+  async getSupplierProfiles(supplierId: string) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, phone")
+      .eq("supplier_id", supplierId);
+    if (error) throw error;
+    return data || [];
+  },
+
   /**
    * Paginated + filtered supplier list.
    */

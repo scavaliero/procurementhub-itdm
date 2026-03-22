@@ -106,6 +106,12 @@ export default function InternalVendorDetail() {
     enabled: !!id,
   });
 
+  const { data: supplierProfiles = [] } = useQuery({
+    queryKey: ["supplier-profiles", id],
+    queryFn: () => vendorService.getSupplierProfiles(id!),
+    enabled: !!id,
+  });
+
   const { data: docs = [] } = useQuery({
     queryKey: ["supplier-documents", id],
     queryFn: () => documentService.getSupplierDocuments(id!),
@@ -479,9 +485,10 @@ export default function InternalVendorDetail() {
             </TabsList>
 
             {/* ── Tab Anagrafica ── */}
-            <TabsContent value="info" className="mt-4">
+            <TabsContent value="info" className="mt-4 space-y-4">
               <Card>
-                <CardContent className="pt-6">
+                <CardHeader><CardTitle className="text-base">Dati Azienda</CardTitle></CardHeader>
+                <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                     <InfoRow label="Ragione Sociale" value={supplier.company_name} />
                     <InfoRow label="Tipo Società" value={supplier.company_type} />
@@ -525,6 +532,23 @@ export default function InternalVendorDetail() {
                   </div>
                 </CardContent>
               </Card>
+
+              {supplierProfiles.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Referenti</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {supplierProfiles.map((p) => (
+                        <div key={p.id} className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1 text-sm border-b last:border-0 pb-3 last:pb-0">
+                          <InfoRow label="Nome" value={p.full_name} />
+                          <InfoRow label="Email" value={p.email} />
+                          <InfoRow label="Telefono" value={p.phone} />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* ── Tab Documenti ── */}

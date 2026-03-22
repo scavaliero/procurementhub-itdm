@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import type { Supplier } from "@/types";
 
 interface Contact {
@@ -38,6 +39,11 @@ export default function SupplierOnboarding() {
     queryFn: () => vendorService.getMySupplier(),
     enabled: !!profile,
   });
+
+  // Profile data (email, phone, full_name from registration)
+  const profileEmail = profile?.email || "";
+  const profilePhone = profile?.phone || "";
+  const profileName = profile?.full_name || "";
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -247,6 +253,22 @@ export default function SupplierOnboarding() {
                     setCompanyData({ ...companyData, website: e.target.value })
                   }
                 />
+              </div>
+            </div>
+            <Separator className="my-2" />
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Dati dal profilo di registrazione</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Referente</Label>
+                <Input value={profileName} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={profileEmail} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Telefono</Label>
+                <Input value={profilePhone || "—"} disabled className="bg-muted" />
               </div>
             </div>
             <div className="space-y-1.5">
