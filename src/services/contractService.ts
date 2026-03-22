@@ -81,7 +81,6 @@ export const contractService = {
       .eq("id", contractId);
     if (error) throw error;
 
-    const { default: auditService } = await import("@/services/auditService");
     await auditService.log({
       tenant_id: tenantId,
       entity_type: "contract",
