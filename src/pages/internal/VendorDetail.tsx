@@ -291,6 +291,15 @@ export default function InternalVendorDetail() {
       onClick: () => setActionDialog({ type: "suspend" }),
     });
   }
+  if (supplier.status === "suspended" && canSuspend) {
+    actions.push({
+      key: "reactivate",
+      label: "Riattiva",
+      icon: RotateCcw,
+      variant: "default",
+      onClick: () => setActionDialog({ type: "reactivate" }),
+    });
+  }
   if (
     (supplier.status === "accredited" || supplier.status === "suspended") &&
     canSuspend
