@@ -184,6 +184,7 @@ export default function InternalDashboard() {
                   icon={kpi.icon}
                   alert={kpi.alert && value > 0}
                   subtitle={kpi.subtitle}
+                  cardClass="card-top-suppliers"
                 />
               );
             })}
