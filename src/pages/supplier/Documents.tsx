@@ -8,11 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2, Send, Lock } from "lucide-react";
+import { useRef, useState } from "react";
 import type { DocumentType, UploadedDocument } from "@/types";
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ElementType }> = {
@@ -23,16 +31,21 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   expired: { label: "Scaduto", variant: "destructive", icon: AlertCircle },
 };
 
+/** States where documents are locked (waiting for admin review) */
+const LOCKED_STATUSES = ["in_accreditation", "in_approval", "pending_review"];
+
 function DocumentCard({
   docType,
   uploaded,
   supplierId,
   tenantId,
+  locked,
 }: {
   docType: DocumentType;
   uploaded: UploadedDocument | undefined;
   supplierId: string;
   tenantId: string;
+  locked: boolean;
 }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -69,7 +82,6 @@ function DocumentCard({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  // Determine effective status (check expiry for approved docs)
   const isExpiringSoon = uploaded?.status === "approved" && uploaded?.expiry_date &&
     new Date(uploaded.expiry_date) > new Date() &&
     new Date(uploaded.expiry_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -81,11 +93,15 @@ function DocumentCard({
   const StatusIcon = cfg.icon;
 
   return (
-    <Card>
+    <Card className={locked ? "opacity-80" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            {locked ? (
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            )}
             <CardTitle className="text-sm font-medium">{docType.name}</CardTitle>
           </div>
           <Badge variant={cfg.variant} className="text-xs gap-1">
@@ -98,6 +114,16 @@ function DocumentCard({
         {docType.description && (
           <p className="text-xs text-muted-foreground">{docType.description}</p>
         )}
+
+        {/* Locked banner */}
+        {locked && uploaded && (
+          <div className="rounded-md bg-muted border px-3 py-2">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Documenti inviati — in attesa di revisione
+            </p>
+          </div>
+        )}
+
         {uploaded?.review_notes && uploaded.status === "rejected" && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
             <p className="text-xs font-medium text-destructive">Motivo rifiuto:</p>
@@ -105,26 +131,18 @@ function DocumentCard({
           </div>
         )}
 
-        {/* Expiring soon warning */}
         {isExpiringSoon && (
           <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2">
             <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
               ⚠ Documento in scadenza il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
             </p>
-            <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-0.5">
-              Sostituisci il documento prima della scadenza per evitare la sospensione dell'accesso.
-            </p>
           </div>
         )}
 
-        {/* Expired warning */}
         {isExpired && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
             <p className="text-xs font-medium text-destructive">
               Documento scaduto il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
-            </p>
-            <p className="text-xs text-destructive/80 mt-0.5">
-              Carica un nuovo documento aggiornato per ripristinare l'accesso.
             </p>
           </div>
         )}
@@ -138,66 +156,69 @@ function DocumentCard({
           <p className="text-xs truncate">{uploaded.original_filename}</p>
         )}
 
-        {/* Show delete + re-upload for rejected docs */}
-        {uploaded?.status === "rejected" && (
-          <Button
-            size="sm"
-            variant="destructive"
-            className="w-full"
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate(uploaded.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
-            {deleteMutation.isPending ? "Eliminazione…" : "Elimina e ricarica"}
-          </Button>
-        )}
-
-        {/* Upload form: show when no doc, rejected not shown, or expiring/expired */}
-        {(!uploaded || uploaded.status !== "rejected") && (
+        {/* Actions — hidden when locked */}
+        {!locked && (
           <>
-            <div className="space-y-1">
-              <Label className="text-xs">
-                Data scadenza <span className="text-destructive">*</span>
-              </Label>
-              <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
-            </div>
-            <div>
-              <input
-                ref={fileRef}
-                type="file"
-                className="hidden"
-                accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
-                    if (file.size > maxBytes) {
-                      toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
-                      return;
-                    }
-                    uploadMutation.mutate(file);
-                  }
-                }}
-              />
+            {uploaded?.status === "rejected" && (
               <Button
                 size="sm"
-                variant={isExpired || isExpiringSoon ? "default" : "outline"}
+                variant="destructive"
                 className="w-full"
-                disabled={uploadMutation.isPending}
-                onClick={() => fileRef.current?.click()}
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(uploaded.id)}
               >
-                <Upload className="h-3.5 w-3.5 mr-1" />
-                {uploadMutation.isPending
-                  ? "Caricamento…"
-                  : isExpired
-                  ? "Sostituisci documento scaduto"
-                  : isExpiringSoon
-                  ? "Sostituisci documento"
-                  : uploaded
-                  ? "Ricarica"
-                  : "Carica"}
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                {deleteMutation.isPending ? "Eliminazione…" : "Elimina e ricarica"}
               </Button>
-            </div>
+            )}
+
+            {(!uploaded || uploaded.status !== "rejected") && (
+              <>
+                <div className="space-y-1">
+                  <Label className="text-xs">
+                    Data scadenza <span className="text-destructive">*</span>
+                  </Label>
+                  <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
+                </div>
+                <div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    className="hidden"
+                    accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
+                        if (file.size > maxBytes) {
+                          toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
+                          return;
+                        }
+                        uploadMutation.mutate(file);
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant={isExpired || isExpiringSoon ? "default" : "outline"}
+                    className="w-full"
+                    disabled={uploadMutation.isPending}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5 mr-1" />
+                    {uploadMutation.isPending
+                      ? "Caricamento…"
+                      : isExpired
+                      ? "Sostituisci documento scaduto"
+                      : isExpiringSoon
+                      ? "Sostituisci documento"
+                      : uploaded
+                      ? "Ricarica"
+                      : "Carica"}
+                  </Button>
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -211,6 +232,8 @@ function DocumentCard({
 
 export default function SupplierDocuments() {
   const { profile } = useAuth();
+  const qc = useQueryClient();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const { data: supplier, isLoading: supLoading } = useQuery({
     queryKey: ["my-supplier"],
@@ -227,6 +250,19 @@ export default function SupplierDocuments() {
     queryKey: ["supplier-documents", supplier?.id],
     queryFn: () => documentService.getSupplierDocuments(supplier!.id),
     enabled: !!supplier,
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      if (!supplier) throw new Error("Fornitore non trovato");
+      await vendorService.updateSupplier(supplier.id, { status: "in_accreditation" as any });
+    },
+    onSuccess: () => {
+      toast.success("Documenti inviati per revisione");
+      setShowConfirm(false);
+      qc.invalidateQueries({ queryKey: ["my-supplier"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   if (supLoading || dtLoading || udLoading) return <PageSkeleton />;
@@ -247,17 +283,28 @@ export default function SupplierDocuments() {
   });
 
   const mandatory = docTypes.filter((dt) => dt.is_mandatory);
+  const mandatoryUploaded = mandatory.filter(
+    (dt) => latestByType[dt.id] && latestByType[dt.id].status !== "rejected"
+  ).length;
   const approved = mandatory.filter(
     (dt) => latestByType[dt.id]?.status === "approved"
   ).length;
   const progressPct = mandatory.length > 0 ? (approved / mandatory.length) * 100 : 0;
+
+  const isLocked = LOCKED_STATUSES.includes(supplier.status);
+  const canSubmit = !isLocked
+    && supplier.status === "enabled"
+    && mandatory.length > 0
+    && mandatoryUploaded >= mandatory.length;
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Documenti</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Carica i documenti richiesti per la qualifica.
+          {isLocked
+            ? "I documenti sono stati inviati e sono in attesa di revisione."
+            : "Carica i documenti richiesti per la qualifica."}
         </p>
       </div>
 
@@ -271,6 +318,28 @@ export default function SupplierDocuments() {
               <span className="text-sm text-muted-foreground">{Math.round(progressPct)}%</span>
             </div>
             <Progress value={progressPct} className="h-2" />
+            {isLocked && (
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <Lock className="h-3 w-3" /> In attesa di revisione da parte dell'amministratore
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Submit button */}
+      {canSubmit && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Tutti i documenti obbligatori sono stati caricati</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Invia i documenti per la revisione. Non potrai modificarli fino al completamento della revisione.
+              </p>
+            </div>
+            <Button onClick={() => setShowConfirm(true)} className="gap-2 shrink-0">
+              <Send className="h-4 w-4" /> Invia per revisione
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -289,10 +358,34 @@ export default function SupplierDocuments() {
               uploaded={latestByType[dt.id]}
               supplierId={supplier.id}
               tenantId={supplier.tenant_id}
+              locked={isLocked}
             />
           ))}
         </div>
       )}
+
+      {/* Confirm dialog */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Conferma invio documenti</DialogTitle>
+            <DialogDescription>
+              Una volta inviati, i documenti non potranno essere modificati fino al completamento della revisione da parte dell'amministratore.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirm(false)}>Annulla</Button>
+            <Button
+              onClick={() => submitMutation.mutate()}
+              disabled={submitMutation.isPending}
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {submitMutation.isPending ? "Invio…" : "Conferma invio"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
