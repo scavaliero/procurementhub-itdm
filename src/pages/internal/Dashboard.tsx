@@ -188,7 +188,7 @@ export default function InternalDashboard() {
               {(oppStats ?? []).map((r) => (
                 <KpiCard
                   key={r.status}
-                  title={statusLabels[r.status] ?? r.status}
+                  title={oppStatusLabels[r.status] ?? r.status}
                   value={r.count}
                   icon={Briefcase}
                 />
