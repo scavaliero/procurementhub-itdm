@@ -301,6 +301,7 @@ export default function InternalBillingApprovals() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}

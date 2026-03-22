@@ -267,6 +267,7 @@ export default function InternalOpportunities() {
               ))}
             </TableBody>
           </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
