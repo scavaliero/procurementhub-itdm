@@ -204,7 +204,7 @@ export default function InternalBillingApprovals() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 min-w-0 overflow-hidden">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Benestare" }]} />
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
@@ -233,7 +233,7 @@ export default function InternalBillingApprovals() {
       {/* Filter */}
       <div className="flex gap-3">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -251,8 +251,8 @@ export default function InternalBillingApprovals() {
       ) : (
         <Card className="card-top-billing">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-            <Table>
+            <div className="overflow-x-auto -mx-4 sm:-mx-0">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Codice</TableHead>

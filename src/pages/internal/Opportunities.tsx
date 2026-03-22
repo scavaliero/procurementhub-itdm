@@ -136,7 +136,7 @@ export default function InternalOpportunities() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 min-w-0 overflow-hidden">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità" }]} />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -232,8 +232,8 @@ export default function InternalOpportunities() {
         <EmptyState title="Nessuna opportunità" description="Non ci sono opportunità con i filtri selezionati." />
       ) : (
         <>
-          <div className="overflow-x-auto">
-          <Table>
+          <div className="overflow-x-auto -mx-4 sm:-mx-0">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Codice</TableHead>
