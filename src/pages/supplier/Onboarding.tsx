@@ -127,19 +127,21 @@ export default function SupplierOnboarding() {
   };
 
   const saveDraftMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { includeContacts?: boolean }) => {
       if (!supplier) return;
       await vendorService.updateSupplier(supplier.id, {
         ...companyData,
         legal_address: address as any,
       } as any);
-      await saveContactsToDB();
+      if (opts?.includeContacts) {
+        await saveContactsToDB();
+      }
     },
     onError: () => toast.error("Errore nel salvataggio bozza"),
   });
 
-  const saveDraft = useCallback(() => {
-    if (supplier) saveDraftMutation.mutate();
+  const saveDraft = useCallback((includeContacts = false) => {
+    if (supplier) saveDraftMutation.mutate({ includeContacts });
   }, [supplier, saveDraftMutation]);
 
   const finalizeMutation = useMutation({
@@ -299,7 +301,8 @@ export default function SupplierOnboarding() {
   };
 
   const handleNext = () => {
-    saveDraft();
+    // Save contacts to DB only when leaving step 1 (Referenti)
+    saveDraft(step === 1);
     setStep((s) => Math.min(s + 1, steps.length - 1));
   };
 
