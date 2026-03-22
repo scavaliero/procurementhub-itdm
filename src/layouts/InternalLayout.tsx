@@ -137,9 +137,14 @@ export default function InternalLayout() {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-primary-foreground hover:bg-primary-foreground/10" />
               {profile && (
-                <span className="text-sm font-medium opacity-90 hidden sm:inline">
+                <NavLink
+                  to="/internal/profile"
+                  className="text-sm font-medium opacity-90 hidden sm:inline hover:opacity-100 transition-opacity flex items-center gap-1.5"
+                  activeClassName="opacity-100 underline underline-offset-4"
+                >
+                  <UserCog className="h-3.5 w-3.5" />
                   {profile.full_name}
-                </span>
+                </NavLink>
               )}
             </div>
             <div className="flex items-center gap-1">
