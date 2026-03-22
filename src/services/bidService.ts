@@ -164,7 +164,7 @@ export const bidService = {
         variables: {
           opportunity_title: opp.title || "",
           opportunity_code: opp.code || "",
-          company_name: (supplierProfile?.suppliers as any)?.company_name || "",
+          company_name: supplierData?.company_name || "",
           amount: data.total_amount ? String(data.total_amount) : "",
         },
       });

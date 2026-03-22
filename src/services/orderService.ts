@@ -276,6 +276,12 @@ export const orderService = {
         .eq("supplier_id", order.supplier_id)
         .limit(1);
 
+      const { data: supplierData } = await supabase
+        .from("suppliers")
+        .select("company_name")
+        .eq("id", order.supplier_id)
+        .single();
+
       if (supplierProfiles?.[0]) {
         await notificationService.send({
           event_type: "order_issued",
@@ -285,6 +291,7 @@ export const orderService = {
             order_code: order.code || "",
             subject: order.subject || "",
             amount: String(order.amount),
+            company_name: supplierData?.company_name || "",
           },
         });
       }

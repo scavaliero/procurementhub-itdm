@@ -145,7 +145,11 @@ export const vendorService = {
           event_type: `supplier_${params.toStatus}`,
           recipient_id: profileId,
           tenant_id: sup.tenant_id,
-          variables: { status: params.toStatus, reason: params.reason || "" },
+          variables: {
+            company_name: sup.company_name || "",
+            status: params.toStatus,
+            reason: params.reason || "",
+          },
         });
       }
     } catch (e) {
