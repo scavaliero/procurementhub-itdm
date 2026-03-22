@@ -136,6 +136,9 @@ Deno.serve(async (req) => {
       recipient_email,
       tenant_id,
       variables,
+      link_url,
+      related_entity_id,
+      related_entity_type,
     } = payload;
 
     const rawVars =
