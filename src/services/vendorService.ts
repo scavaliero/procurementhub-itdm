@@ -59,6 +59,20 @@ export const vendorService = {
       });
     if (profErr) throw profErr;
 
+    // Assign "Fornitore" role
+    const { data: supplierRole } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", "Fornitore")
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if (supplierRole) {
+      const { error: roleErr } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role_id: supplierRole.id });
+      if (roleErr) console.error("Role assignment error:", roleErr);
+    }
+
     const { error: histErr } = await supabase
       .from("supplier_status_history")
       .insert({
