@@ -140,7 +140,7 @@ export default function SupplierDashboard() {
         {loadingStatus ? (
           <Skeleton className="h-14 w-48" />
         ) : (
-          <Card className="shadow-sm inline-flex">
+          <Card className="shadow-sm inline-flex card-top-status">
             <CardContent className="py-4 px-6 flex items-center gap-3">
               <span className="text-sm text-muted-foreground">Il tuo stato:</span>
               <Badge variant={statusInfo.variant} className="text-base px-3 py-1">
