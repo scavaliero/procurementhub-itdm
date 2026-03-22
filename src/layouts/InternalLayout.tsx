@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Briefcase, ShoppingCart, FileText,
-  Settings, ShieldCheck, LogOut, Users, Menu,
+  Settings, ShieldCheck, LogOut, Users, Menu, ScrollText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
