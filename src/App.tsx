@@ -15,6 +15,7 @@ import ForgotPasswordPage from "@/pages/ForgotPassword";
 import ResetPasswordPage from "@/pages/ResetPassword";
 import PostLoginRedirect from "@/pages/PostLoginRedirect";
 import NotFound from "@/pages/NotFound";
+import AuthCallback from "@/pages/AuthCallback";
 
 import SupplierLayout from "@/layouts/SupplierLayout";
 import SupplierDashboard from "@/pages/supplier/Dashboard";
