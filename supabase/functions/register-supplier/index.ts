@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
       .insert({
         company_name,
         vat_number_hash: btoa(vat_number),
+        pec: pec || null,
         status: "pre_registered",
         tenant_id: tenantId,
       })
