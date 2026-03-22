@@ -32,6 +32,28 @@ export const grantService = {
     return data as Role;
   },
 
+  async deleteRole(id: string) {
+    // Delete role_grants first, then the role
+    const { error: rgErr } = await supabase
+      .from("role_grants")
+      .delete()
+      .eq("role_id", id);
+    if (rgErr) throw rgErr;
+
+    // Delete user_roles associations
+    const { error: urErr } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("role_id", id);
+    if (urErr) throw urErr;
+
+    const { error } = await supabase
+      .from("roles")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+
   async listGrants(): Promise<Grant[]> {
     const { data, error } = await supabase
       .from("grants")
