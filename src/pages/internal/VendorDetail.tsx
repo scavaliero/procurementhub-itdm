@@ -831,6 +831,7 @@ export default function InternalVendorDetail() {
                 setActionDialog(null);
                 setDialogMessage("");
                 setRevokeConfirm("");
+                setBanUser(false);
               }}
             >
               Annulla
@@ -838,7 +839,8 @@ export default function InternalVendorDetail() {
             <Button
               variant={
                 actionDialog?.type === "suspend" ||
-                actionDialog?.type === "revoke"
+                actionDialog?.type === "revoke" ||
+                actionDialog?.type === "reject"
                   ? "destructive"
                   : "default"
               }
