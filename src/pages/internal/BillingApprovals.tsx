@@ -336,11 +336,31 @@ export default function InternalBillingApprovals() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Periodo inizio *</Label>
-                <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodStart && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {periodStart ? format(periodStart, "dd/MM/yyyy") : "Seleziona data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Periodo fine *</Label>
-                <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodEnd && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {periodEnd ? format(periodEnd, "dd/MM/yyyy") : "Seleziona data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => periodStart ? date < periodStart : false} />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
