@@ -131,13 +131,7 @@ export default function InternalBillingApprovals() {
     mutationFn: async () => {
       if (!profile || !selectedContractData) throw new Error("Dati mancanti");
 
-      // 1. Check limit via edge function
-      const check = await billingApprovalService.checkLimit(selectedContract, amount);
-      if (!check.valid) {
-        throw new Error(check.message || `Importo supera il residuo contrattuale (${check.code})`);
-      }
-
-      // 2. Save draft first
+      // 1. Save draft first
       const billing = await billingApprovalService.saveDraft({
         tenantId: profile.tenant_id,
         contractId: selectedContract,
@@ -150,12 +144,12 @@ export default function InternalBillingApprovals() {
         createdBy: profile.id,
       });
 
-      // 3. Upload attachments
+      // 2. Upload attachments
       for (const file of attachments) {
         await billingApprovalService.uploadAttachment(billing.id, file);
       }
 
-      // 4. Submit for approval
+      // 3. Submit for approval (includes server-side RB-08 check)
       await billingApprovalService.submitForApproval(billing.id, profile.tenant_id);
 
       return billing;

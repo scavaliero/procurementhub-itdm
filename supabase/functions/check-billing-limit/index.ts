@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
           residual_amount: residualAmount,
           authorized_amount: authorizedAmount,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
