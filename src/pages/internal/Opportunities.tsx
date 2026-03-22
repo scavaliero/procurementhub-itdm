@@ -140,7 +140,10 @@ export default function InternalOpportunities() {
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità" }]} />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Opportunità</h1>
+        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
+          <span className="text-base">📋</span>
+          Opportunità
+        </h2>
         <div className="flex gap-2">
           {hasGrant("export_data") && (
             <Button variant="outline" onClick={handleExportCsv} className="gap-2">

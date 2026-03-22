@@ -74,7 +74,10 @@ export default function InternalOrders() {
   return (
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Ordini" }]} />
-      <h1 className="text-2xl font-bold">Ordini</h1>
+      <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
+        <span className="text-base">🛒</span>
+        Ordini
+      </h2>
 
       {orders.length === 0 ? (
         <EmptyState title="Nessun ordine" description="Non ci sono ordini registrati." />
