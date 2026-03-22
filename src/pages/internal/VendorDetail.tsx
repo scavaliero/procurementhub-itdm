@@ -41,6 +41,7 @@ import {
   AlertTriangle,
   Send,
   Unlock,
+  RotateCcw,
 } from "lucide-react";
 import type { UploadedDocument, Supplier, SupplierCategory, SupplierStatusHistory } from "@/types";
 
@@ -88,7 +89,7 @@ export default function InternalVendorDetail() {
 
   // Dialog state
   const [actionDialog, setActionDialog] = useState<{
-    type: "enable" | "approve" | "integrate" | "suspend" | "revoke";
+    type: "enable" | "approve" | "integrate" | "suspend" | "revoke" | "reactivate";
   } | null>(null);
   const [dialogMessage, setDialogMessage] = useState("");
   const [revokeConfirm, setRevokeConfirm] = useState("");
@@ -290,6 +291,15 @@ export default function InternalVendorDetail() {
       onClick: () => setActionDialog({ type: "suspend" }),
     });
   }
+  if (supplier.status === "suspended" && canSuspend) {
+    actions.push({
+      key: "reactivate",
+      label: "Riattiva",
+      icon: RotateCcw,
+      variant: "default",
+      onClick: () => setActionDialog({ type: "reactivate" }),
+    });
+  }
   if (
     (supplier.status === "accredited" || supplier.status === "suspended") &&
     canSuspend
@@ -363,6 +373,20 @@ export default function InternalVendorDetail() {
         }
         statusMutation.mutate({ toStatus: "revoked" });
         break;
+      case "reactivate":
+        if (!dialogMessage.trim()) {
+          toast.error("Inserisci il motivo della riattivazione");
+          return;
+        }
+        statusMutation.mutate({
+          toStatus: "accredited",
+          reason: dialogMessage,
+          extraUpdate: {
+            suspension_reason: null,
+            suspended_at: null,
+          },
+        });
+        break;
     }
   };
 
@@ -372,6 +396,7 @@ export default function InternalVendorDetail() {
     integrate: "Richiedi integrazione",
     suspend: "Sospendi fornitore",
     revoke: "Revoca fornitore",
+    reactivate: "Riattiva fornitore",
   };
 
   return (
@@ -712,11 +737,14 @@ export default function InternalVendorDetail() {
           </DialogHeader>
 
           {(actionDialog?.type === "integrate" ||
-            actionDialog?.type === "suspend") && (
+            actionDialog?.type === "suspend" ||
+            actionDialog?.type === "reactivate") && (
             <div className="space-y-2">
               <Label>
                 {actionDialog.type === "suspend"
                   ? "Motivo sospensione *"
+                  : actionDialog.type === "reactivate"
+                  ? "Motivo riattivazione *"
                   : "Messaggio *"}
               </Label>
               <Textarea
