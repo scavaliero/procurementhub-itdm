@@ -424,7 +424,15 @@ export default function AuditLogs() {
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Utente</span>
-                  <span className="font-medium">{detailLog.user_email || "Sistema"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{detailLog.user_email || "Sistema"}</span>
+                    {detailLog.user_email && (() => {
+                      const uType = getUserType(detailLog);
+                      if (uType === "internal") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-300 text-blue-700 bg-blue-50">Interno</Badge>;
+                      if (uType === "supplier") return <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">Fornitore</Badge>;
+                      return null;
+                    })()}
+                  </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Entità</span>
