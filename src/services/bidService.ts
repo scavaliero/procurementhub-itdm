@@ -366,6 +366,20 @@ export const bidService = {
 
     // 6. Notify all invited suppliers (non-blocking — don't let notification failures break award)
     try {
+      // Get opportunity details for variables
+      const { data: oppData } = await supabase
+        .from("opportunities")
+        .select("title, code")
+        .eq("id", params.opportunityId)
+        .single();
+
+      // Get winning supplier name
+      const { data: winnerSup } = await supabase
+        .from("suppliers")
+        .select("company_name")
+        .eq("id", params.supplierId)
+        .single();
+
       const { data: invitations } = await supabase
         .from("opportunity_invitations")
         .select("supplier_id, suppliers(id)")
@@ -384,6 +398,12 @@ export const bidService = {
                 event_type: "opportunity_awarded",
                 recipient_id: sp.id,
                 tenant_id: params.tenantId,
+                variables: {
+                  opportunity_title: oppData?.title || "",
+                  opportunity_code: oppData?.code || "",
+                  company_name: winnerSup?.company_name || "",
+                  is_winner: sp.supplier_id === params.supplierId ? "true" : "false",
+                },
               });
             } catch (notifErr) {
               console.warn("Non-blocking notification error:", notifErr);

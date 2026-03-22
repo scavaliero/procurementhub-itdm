@@ -231,7 +231,7 @@ export const billingApprovalService = {
 
     const { data: billing } = await supabase
       .from("billing_approvals")
-      .select("supplier_id")
+      .select("supplier_id, code, amount, suppliers(company_name)")
       .eq("id", billingId)
       .single();
 
@@ -247,6 +247,12 @@ export const billingApprovalService = {
           event_type: "billing_rejected",
           recipient_id: profiles[0].id,
           tenant_id: tenantId,
+          variables: {
+            billing_code: billing.code || "",
+            amount: String(billing.amount),
+            company_name: (billing.suppliers as any)?.company_name || "",
+            reason,
+          },
         });
       }
     }
