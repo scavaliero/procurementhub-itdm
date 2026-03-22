@@ -52,8 +52,10 @@ function InternalSidebarContent() {
   const showConfig = hasGrant("manage_document_types");
   const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users") || hasGrant("view_audit_logs");
 
-  const renderItems = (items: typeof mainNav) =>
-    items.map((item) => {
+  const renderItems = (items: typeof adminNav) =>
+    items
+      .filter((item) => !("grant" in item) || !item.grant || hasGrant(item.grant))
+      .map((item) => {
       const active = location.pathname.startsWith(item.url);
       return (
         <SidebarMenuItem key={item.url}>
