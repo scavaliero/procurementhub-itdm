@@ -88,8 +88,9 @@ export const bidService = {
         .update(payload)
         .eq("id", existingBidId)
         .select()
-        .single();
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Impossibile aggiornare l'offerta — verifica che sia ancora in stato bozza");
       return data as Bid;
     } else {
       const { data, error } = await supabase

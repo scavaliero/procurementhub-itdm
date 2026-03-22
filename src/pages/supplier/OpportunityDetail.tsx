@@ -64,7 +64,8 @@ export default function SupplierOpportunityDetail() {
   });
 
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
-  const isSubmitted = existingBid?.status === "submitted";
+  const bidEditable = !existingBid || existingBid.status === "draft";
+  const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const formDisabled = isSubmitted || deadlinePassed;
 
   const {
@@ -211,12 +212,21 @@ export default function SupplierOpportunityDetail() {
           <h1 className="text-2xl font-bold">{opp.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">{opp.code}</p>
         </div>
-        {isSubmitted && (
-          <Badge className="bg-emerald-100 text-emerald-700">
-            <CheckCircle className="h-3 w-3 mr-1" /> Offerta inviata
+        {existingBid && existingBid.status !== "draft" && (
+          <Badge className={
+            existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
+            existingBid.status === "submitted" ? "bg-blue-100 text-blue-700" :
+            existingBid.status === "not_awarded" ? "bg-amber-100 text-amber-700" :
+            "bg-muted text-muted-foreground"
+          }>
+            <CheckCircle className="h-3 w-3 mr-1" />
+            {existingBid.status === "winning" ? "Aggiudicata" :
+             existingBid.status === "submitted" ? "Offerta inviata" :
+             existingBid.status === "not_awarded" ? "Non aggiudicata" :
+             existingBid.status}
           </Badge>
         )}
-        {deadlinePassed && !isSubmitted && (
+        {deadlinePassed && !existingBid && (
           <Badge variant="destructive">Scadenza superata</Badge>
         )}
       </div>
