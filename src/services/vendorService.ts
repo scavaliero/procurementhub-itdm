@@ -24,6 +24,7 @@ export const vendorService = {
         pec: params.pec || null,
         password: params.password,
         category_id: params.category_id || null,
+        redirect_to: `${window.location.origin}/auth/callback`,
       },
     });
     if (error) throw error;
