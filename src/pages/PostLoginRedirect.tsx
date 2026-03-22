@@ -85,7 +85,8 @@ export default function PostLoginRedirect() {
     );
   }
 
-  return profile.user_type === "supplier"
-    ? <Navigate to="/supplier/dashboard" replace />
-    : <Navigate to="/internal/dashboard" replace />;
+  if (profile.user_type === "supplier") {
+    return <Navigate to="/supplier/onboarding" replace />;
+  }
+  return <Navigate to="/internal/dashboard" replace />;
 }
