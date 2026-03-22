@@ -205,7 +205,7 @@ export default function SupplierDashboard() {
             { title: "Benestare", to: "/supplier/billing-approvals", icon: FileCheck },
           ].map((link) => (
             <Link key={link.to} to={link.to}>
-              <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3">
+              <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3 card-top-quick">
                 <CardContent className="p-0 flex flex-col items-center gap-2.5">
                   <div className="h-12 w-12 rounded-xl bg-primary/8 flex items-center justify-center">
                     <link.icon className="h-6 w-6 text-primary" />
