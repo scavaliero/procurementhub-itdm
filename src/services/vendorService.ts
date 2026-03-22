@@ -92,11 +92,14 @@ export const vendorService = {
       status: params.toStatus,
       ...(params.extraUpdate || {}),
     };
-    const { error: updErr } = await supabase
+    const { data: updData, error: updErr } = await supabase
       .from("suppliers")
       .update(updatePayload)
-      .eq("id", params.supplierId);
+      .eq("id", params.supplierId)
+      .select("id, status")
+      .maybeSingle();
     if (updErr) throw updErr;
+    if (!updData) throw new Error("Aggiornamento stato non riuscito — verifica i permessi");
 
     // Insert history
     const { error: histErr } = await supabase

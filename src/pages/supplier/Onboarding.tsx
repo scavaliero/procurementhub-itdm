@@ -129,10 +129,10 @@ export default function SupplierOnboarding() {
         console.error(e);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Dati inviati con successo! La tua richiesta è in fase di revisione.");
-      qc.invalidateQueries({ queryKey: ["my-supplier"] });
-      // SupplierRoute will show the "pending_review" waiting screen
+      await qc.invalidateQueries({ queryKey: ["my-supplier"] });
+      await qc.refetchQueries({ queryKey: ["my-supplier"] });
       navigate("/supplier/dashboard");
     },
     onError: (err: Error) => toast.error(err.message),
