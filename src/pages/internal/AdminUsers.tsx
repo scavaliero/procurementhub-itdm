@@ -233,7 +233,7 @@ export default function AdminUsers() {
                           <DropdownMenuItem
                             onClick={() => handleAction("deactivate", p)}
                             disabled={isSelf}
-                            className="text-orange-600"
+                            className="text-destructive/80"
                           >
                             <UserX className="h-4 w-4 mr-2" />
                             Disattiva
