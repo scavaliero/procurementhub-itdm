@@ -45,6 +45,7 @@ import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
 import ConfigCategories from "@/pages/internal/ConfigCategories";
 import AdminRoles from "@/pages/internal/AdminRoles";
 import AdminUsers from "@/pages/internal/AdminUsers";
+import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
 
 const App = () => (
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="/internal/config/categories" element={<ConfigCategories />} />
             <Route path="/internal/admin/roles" element={<AdminRoles />} />
             <Route path="/internal/admin/users" element={<AdminUsers />} />
+            <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
           </Route>
 
           {/* Catch-all */}

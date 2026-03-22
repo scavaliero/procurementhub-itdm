@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Briefcase, ShoppingCart, FileText,
-  Settings, ShieldCheck, LogOut, Users, Menu,
+  Settings, ShieldCheck, LogOut, Users, Menu, ScrollText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +40,7 @@ const configNav = [
 const adminNav = [
   { title: "Ruoli", url: "/internal/admin/roles", icon: ShieldCheck },
   { title: "Utenti", url: "/internal/admin/users", icon: Users },
+  { title: "Audit Log", url: "/internal/admin/audit-logs", icon: ScrollText, grant: "view_audit_logs" },
 ];
 
 function InternalSidebarContent() {
@@ -49,10 +50,12 @@ function InternalSidebarContent() {
   const { hasGrant } = useGrants();
 
   const showConfig = hasGrant("manage_document_types");
-  const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users");
+  const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users") || hasGrant("view_audit_logs");
 
-  const renderItems = (items: typeof mainNav) =>
-    items.map((item) => {
+  const renderItems = (items: typeof adminNav) =>
+    items
+      .filter((item) => !("grant" in item) || !item.grant || hasGrant(item.grant))
+      .map((item) => {
       const active = location.pathname.startsWith(item.url);
       return (
         <SidebarMenuItem key={item.url}>
