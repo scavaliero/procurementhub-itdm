@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
 import { categoryService } from "@/services/categoryService";
+import { contactService } from "@/services/contactService";
 import { notificationService } from "@/services/notificationService";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,12 @@ export default function SupplierOnboarding() {
     enabled: !!supplier,
   });
 
+  const { data: existingContacts } = useQuery({
+    queryKey: ["supplier-contacts", supplier?.id],
+    queryFn: () => contactService.list(supplier!.id),
+    enabled: !!supplier,
+  });
+
   // Step 1 state
   const [companyData, setCompanyData] = useState<Partial<Supplier>>({});
   const [address, setAddress] = useState<Record<string, string>>({});
@@ -64,6 +71,7 @@ export default function SupplierOnboarding() {
   const [contacts, setContacts] = useState<Contact[]>([
     { nome: "", cognome: "", ruolo: "", email: "", phone: "" },
   ]);
+  const [contactsInitDone, setContactsInitDone] = useState(false);
 
   // Step 3 state
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
@@ -86,6 +94,38 @@ export default function SupplierOnboarding() {
     initDone[1](true);
   }
 
+  // Init contacts from DB
+  useEffect(() => {
+    if (existingContacts && existingContacts.length > 0 && !contactsInitDone) {
+      setContacts(
+        existingContacts.map((c) => ({
+          nome: c.first_name,
+          cognome: c.last_name || "",
+          ruolo: c.role || "",
+          email: c.email,
+          phone: c.phone || "",
+        }))
+      );
+      setContactsInitDone(true);
+    }
+  }, [existingContacts, contactsInitDone]);
+
+  const saveContactsToDB = async () => {
+    if (!supplier || !profile) return;
+    const validContacts = contacts.filter((c) => c.nome && c.email);
+    await contactService.upsertAll(
+      supplier.id,
+      profile.tenant_id,
+      validContacts.map((c) => ({
+        first_name: c.nome,
+        last_name: c.cognome || undefined,
+        role: c.ruolo || undefined,
+        email: c.email,
+        phone: c.phone || undefined,
+      }))
+    );
+  };
+
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
       if (!supplier) return;
@@ -93,6 +133,7 @@ export default function SupplierOnboarding() {
         ...companyData,
         legal_address: address as any,
       } as any);
+      await saveContactsToDB();
     },
     onError: () => toast.error("Errore nel salvataggio bozza"),
   });
@@ -109,6 +150,8 @@ export default function SupplierOnboarding() {
         ...companyData,
         legal_address: address as any,
       } as any);
+      // Save contacts
+      await saveContactsToDB();
       // Save categories
       await vendorService.setSupplierCategories(supplier.id, selectedCats);
       // Update status
