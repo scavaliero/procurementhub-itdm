@@ -93,7 +93,7 @@ export default function SupplierDashboard() {
   });
 
   const isLoading = loadingStatus || loadingDocs || loadingInvites || loadingBids;
-  const statusInfo = supplierStatusLabels[supplierInfo?.status ?? ""] ?? {
+  const statusInfo = SUPPLIER_STATUS_CONFIG[supplierInfo?.status ?? ""] ?? {
     label: supplierInfo?.status ?? "—",
     variant: "outline" as const,
   };

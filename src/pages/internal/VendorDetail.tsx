@@ -53,21 +53,7 @@ import type {
 } from "@/types";
 
 /* ── Status display config ── */
-const STATUS_LABELS: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  pre_registered: { label: "Pre-registrato", variant: "outline" },
-  pending_review: { label: "In revisione", variant: "secondary" },
-  enabled: { label: "Abilitato", variant: "secondary" },
-  in_accreditation: { label: "In accreditamento", variant: "secondary" },
-  in_approval: { label: "In approvazione", variant: "secondary" },
-  accredited: { label: "Accreditato", variant: "default" },
-  suspended: { label: "Sospeso", variant: "destructive" },
-  rejected: { label: "Rifiutato", variant: "destructive" },
-  revoked: { label: "Revocato", variant: "destructive" },
-  blacklisted: { label: "Blacklist", variant: "destructive" },
-};
+const STATUS_LABELS = SUPPLIER_STATUS_CONFIG;
 
 const DOC_LABELS: Record<
   string,
