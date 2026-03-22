@@ -208,7 +208,7 @@ export default function InternalVendors() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <MetricCard
           label="Pre-registrati"
           count={statusCounts["pre_registered"] || 0}
@@ -216,12 +216,21 @@ export default function InternalVendors() {
           color="bg-slate-500"
         />
         <MetricCard
-          label="In approvazione"
-          count={
-            (statusCounts["in_accreditation"] || 0) +
-            (statusCounts["in_approval"] || 0)
-          }
-          icon={Users}
+          label="In revisione"
+          count={statusCounts["pending_review"] || 0}
+          icon={Eye}
+          color="bg-blue-500"
+        />
+        <MetricCard
+          label="Abilitati"
+          count={statusCounts["enabled"] || 0}
+          icon={Unlock}
+          color="bg-sky-500"
+        />
+        <MetricCard
+          label="In accreditamento"
+          count={statusCounts["in_accreditation"] || 0}
+          icon={ClipboardCheck}
           color="bg-amber-500"
         />
         <MetricCard
