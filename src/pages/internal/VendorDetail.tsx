@@ -585,6 +585,22 @@ export default function InternalVendorDetail() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Action buttons inline */}
+              {actions.length > 0 && (
+                <div className="flex flex-wrap gap-3 pt-2">
+                  {actions.map((a) => (
+                    <Button
+                      key={a.key}
+                      variant={a.variant}
+                      onClick={a.onClick}
+                    >
+                      <a.icon className="h-4 w-4 mr-2" />
+                      {a.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* ── Tab Documenti ── */}
