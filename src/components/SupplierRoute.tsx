@@ -40,6 +40,16 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
 
   // ── pending_review: waiting screen, no access ──
   if (status === "pending_review") {
+    const submittedDate = supplier?.updated_at
+      ? new Date(supplier.updated_at).toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <Card className="max-w-lg w-full">
@@ -47,14 +57,18 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Clock className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold">Richiesta in revisione</h2>
+            <h2 className="text-xl font-semibold">Richiesta inviata</h2>
             <p className="text-muted-foreground text-sm">
-              I tuoi dati aziendali sono stati inviati e sono in fase di revisione
-              da parte dell'amministratore. Riceverai una notifica quando la tua
-              richiesta sarà elaborata.
+              La tua richiesta di registrazione è stata inviata
+              {submittedDate && <> in data <strong>{submittedDate}</strong></>} ed
+              è attualmente in fase di valutazione da parte dell'amministratore.
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Riceverai una notifica via email quando la tua richiesta sarà elaborata.
+              Non è necessaria alcuna ulteriore azione da parte tua.
             </p>
             <Badge variant="secondary" className="text-sm">
-              Stato: In attesa di revisione
+              Stato: In valutazione
             </Badge>
           </CardContent>
         </Card>
