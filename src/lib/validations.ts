@@ -23,7 +23,8 @@ function isValidItalianVAT(vat: string): boolean {
  * Validazione Codice Fiscale italiano (16 caratteri alfanumerici, pattern strutturale).
  */
 function isValidItalianFC(fc: string): boolean {
-  return /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i.test(fc);
+  // Accetta sia il formato persona fisica (16 alfanumerici) sia P.IVA (11 cifre) per le aziende
+  return /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i.test(fc) || /^\d{11}$/.test(fc);
 }
 
 const phoneRegex = /^(\+39\s?)?(\d{2,4}[\s.-]?\d{4,8})$/;
