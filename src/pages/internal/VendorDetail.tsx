@@ -398,6 +398,26 @@ export default function InternalVendorDetail() {
           },
         });
         break;
+      case "reject":
+        if (!dialogMessage.trim()) {
+          toast.error("Inserisci il motivo del rifiuto");
+          return;
+        }
+        // Ban user if checkbox is checked
+        if (banUser) {
+          try {
+            await supabase.functions.invoke("ban-supplier-user", {
+              body: { supplier_id: id, ban: true },
+            });
+          } catch (e) {
+            console.error("Ban error:", e);
+          }
+        }
+        statusMutation.mutate({
+          toStatus: "rejected",
+          reason: dialogMessage,
+        });
+        break;
     }
   };
 
@@ -408,6 +428,7 @@ export default function InternalVendorDetail() {
     suspend: "Sospendi fornitore",
     revoke: "Revoca fornitore",
     reactivate: "Riattiva fornitore",
+    reject: "Rifiuta registrazione",
   };
 
   return (
