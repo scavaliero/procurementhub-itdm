@@ -260,10 +260,12 @@ export default function InternalVendorDetail() {
     onClick: () => void;
   }[] = [];
 
-  if (supplier.status === "pre_registered" && canReview) {
+  // pre_registered: waiting for onboarding completion — no admin actions yet
+  // pending_review: admin reviews onboarding data
+  if (supplier.status === "pending_review" && canReview) {
     actions.push({
       key: "enable",
-      label: "Abilita accreditamento",
+      label: "Abilita fase documenti",
       icon: Unlock,
       variant: "default",
       onClick: () => setActionDialog({ type: "enable" }),
