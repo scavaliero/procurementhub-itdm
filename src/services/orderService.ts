@@ -26,7 +26,23 @@ export interface CreateOrderParams {
   issuedBy: string;
 }
 
+export type OrderDetail = Order & {
+  suppliers: Pick<Supplier, "id" | "company_name"> | null;
+  opportunities: { id: string; title: string; code: string | null } | null;
+};
+
 export const orderService = {
+  /** Get single order by ID */
+  async getById(orderId: string): Promise<OrderDetail> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, suppliers(id, company_name), opportunities(id, title, code)")
+      .eq("id", orderId)
+      .single();
+    if (error) throw error;
+    return data as OrderDetail;
+  },
+
   /** Get award data for order pre-fill */
   async getAwardForOrder(opportunityId: string) {
     const { data, error } = await supabase
