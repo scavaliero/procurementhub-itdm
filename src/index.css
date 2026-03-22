@@ -35,16 +35,21 @@
     --input: 220 18% 88%;
     --ring: 214 85% 34%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 20%;
-    --sidebar-primary: 214 85% 34%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 95%;
-    --sidebar-accent-foreground: 220 20% 20%;
-    --sidebar-border: 220 18% 90%;
-    --sidebar-ring: 214 85% 34%;
+    /* Section accent (red-orange left border like HUB) */
+    --section-accent: 4 80% 52%;
+    /* Section accent green for secondary sections */
+    --section-accent-green: 168 100% 25%;
+
+    --sidebar-background: 214 85% 22%;
+    --sidebar-foreground: 214 20% 92%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 214 85% 22%;
+    --sidebar-accent: 214 70% 28%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214 60% 30%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
@@ -55,5 +60,16 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .section-accent-bar {
+    @apply border-l-[3px] pl-3;
+    border-left-color: hsl(var(--section-accent));
+  }
+  .section-accent-bar-green {
+    @apply border-l-[3px] pl-3;
+    border-left-color: hsl(var(--section-accent-green));
   }
 }
