@@ -8,21 +8,36 @@ export const authService = {
     if (error) throw error;
 
     // Log login event asynchronously (don't block login flow)
+    this.logAuthEvent(data.user?.id ?? null, email, "login").catch(() => {});
+
+    return data;
+  },
+
+  async logAuthEvent(userId: string | null, email: string, eventType: "login" | "logout") {
     try {
       const profile = await this.getCurrentProfile();
-      if (profile) {
-        const { error: auditErr } = await supabase.from("audit_logs").insert([{
-          tenant_id: profile.tenant_id,
-          entity_type: "auth",
-          entity_id: data.user?.id ?? null,
-          event_type: "login",
-          user_id: data.user?.id ?? null,
-          user_email: email,
-          new_state: { method: "password" } as unknown as Json,
-        }]);
-        if (auditErr) console.error("Audit login error:", auditErr);
+      if (!profile) {
+        console.warn(`Audit ${eventType}: no profile found`);
+        return;
       }
-    } catch (e) { console.error("Audit login exception:", e); }
+      const { error: auditErr } = await supabase.from("audit_logs").insert([{
+        tenant_id: profile.tenant_id,
+        entity_type: "auth",
+        entity_id: userId,
+        event_type: eventType,
+        user_id: userId,
+        user_email: email,
+        new_state: (eventType === "login" ? { method: "password" } : undefined) as unknown as Json ?? null,
+      }]);
+      if (auditErr) {
+        console.error(`Audit ${eventType} insert error:`, auditErr);
+      } else {
+        console.info(`Audit ${eventType} logged for ${email}`);
+      }
+    } catch (e) {
+      console.error(`Audit ${eventType} exception:`, e);
+    }
+  },
 
     return data;
   },
