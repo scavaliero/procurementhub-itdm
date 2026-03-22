@@ -337,7 +337,31 @@ export default function InternalVendorDetail() {
     if (!actionDialog) return;
     switch (actionDialog.type) {
       case "enable":
-        statusMutation.mutate({ toStatus: "enabled" });
+        statusMutation.mutate({ toStatus: "enabled" }, {
+          onSuccess: async () => {
+            // Send activation email to supplier user
+            try {
+              const profile = supplierProfiles[0];
+              if (profile) {
+                const loginUrl = `${window.location.origin}/login`;
+                await supabase.functions.invoke("send-notification", {
+                  body: {
+                    event_type: "supplier_enabled",
+                    recipient_id: profile.id,
+                    tenant_id: supplier!.tenant_id,
+                    variables: {
+                      company_name: supplier!.company_name,
+                      contact_name: profile.full_name,
+                      login_url: loginUrl,
+                    },
+                  },
+                });
+              }
+            } catch (e) {
+              console.error("Activation email error:", e);
+            }
+          },
+        });
         break;
       case "approve": {
         // Check all uploaded documents are approved
