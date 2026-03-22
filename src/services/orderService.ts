@@ -107,19 +107,23 @@ export const orderService = {
       new_state: { status, amount: params.amount },
     });
 
-    // Notify supplier
-    const { data: supplierProfiles } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("supplier_id", params.supplierId)
-      .limit(1);
+    // Notify supplier (non-blocking)
+    try {
+      const { data: supplierProfiles } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("supplier_id", params.supplierId)
+        .limit(1);
 
-    if (supplierProfiles?.[0]) {
-      await notificationService.send({
-        event_type: "order_issued",
-        recipient_id: supplierProfiles[0].id,
-        tenant_id: params.tenantId,
-      });
+      if (supplierProfiles?.[0]) {
+        await notificationService.send({
+          event_type: "order_issued",
+          recipient_id: supplierProfiles[0].id,
+          tenant_id: params.tenantId,
+        });
+      }
+    } catch (e) {
+      console.warn("Notification send failed (non-blocking):", e);
     }
 
     return order as Order;
