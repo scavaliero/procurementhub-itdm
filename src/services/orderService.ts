@@ -60,6 +60,7 @@ export const orderService = {
         end_date: params.endDate,
         milestones: (params.milestones as unknown as Json) || [],
         contract_conditions: params.contractConditions || null,
+        issued_by: params.issuedBy,
         status,
       })
       .select()

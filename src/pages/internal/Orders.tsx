@@ -1,14 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useNavigate } from "react-router-dom";
 import { orderService } from "@/services/orderService";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useGrants } from "@/hooks/useGrants";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { toast } from "sonner";
 import { format } from "date-fns";
+import { CheckCircle, XCircle } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza",
@@ -33,13 +37,35 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function InternalOrders() {
   const { profile } = useAuth();
+  const { hasGrant } = useGrants();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["internal-orders"],
     queryFn: () => orderService.list(profile?.tenant_id ?? ""),
     enabled: !!profile,
   });
+
+  const approveMutation = useMutation({
+    mutationFn: (orderId: string) => orderService.approveOrder(orderId, profile!.tenant_id, profile!.id),
+    onSuccess: () => {
+      toast.success("Ordine approvato e emesso");
+      qc.invalidateQueries({ queryKey: ["internal-orders"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (orderId: string) => orderService.rejectOrderByAdmin(orderId, profile!.tenant_id),
+    onSuccess: () => {
+      toast.success("Ordine rifiutato");
+      qc.invalidateQueries({ queryKey: ["internal-orders"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const canManage = hasGrant("manage_orders");
 
   if (isLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
@@ -64,6 +90,7 @@ export default function InternalOrders() {
                   <TableHead>Stato</TableHead>
                   <TableHead className="text-right">Importo (€)</TableHead>
                   <TableHead>Data</TableHead>
+                  {canManage && <TableHead className="text-center">Azioni</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,6 +124,32 @@ export default function InternalOrders() {
                     <TableCell className="text-sm text-muted-foreground">
                       {o.created_at ? format(new Date(o.created_at), "dd/MM/yyyy") : "—"}
                     </TableCell>
+                    {canManage && (
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                        {o.status === "pending_approval" ? (
+                          <div className="flex gap-1 justify-center">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
+                              onClick={() => approveMutation.mutate(o.id)}
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approva
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
+                              onClick={() => rejectMutation.mutate(o.id)}
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" /> Rifiuta
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
