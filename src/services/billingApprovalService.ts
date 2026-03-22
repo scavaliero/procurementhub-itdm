@@ -203,8 +203,8 @@ export const billingApprovalService = {
             event_type: "billing_pending_approval",
             recipient_id: a.user_id,
             tenant_id: tenantId,
-            link_url: `/internal/billing-approvals/${billing.id}`,
-            related_entity_id: billing.id,
+            link_url: `/internal/billing-approvals/${billingId}`,
+            related_entity_id: billingId,
             related_entity_type: "billing_approval",
             variables: billingVars,
           });
