@@ -373,6 +373,20 @@ export default function InternalVendorDetail() {
         }
         statusMutation.mutate({ toStatus: "revoked" });
         break;
+      case "reactivate":
+        if (!dialogMessage.trim()) {
+          toast.error("Inserisci il motivo della riattivazione");
+          return;
+        }
+        statusMutation.mutate({
+          toStatus: "accredited",
+          reason: dialogMessage,
+          extraUpdate: {
+            suspension_reason: null,
+            suspended_at: null,
+          },
+        });
+        break;
     }
   };
 
@@ -382,6 +396,7 @@ export default function InternalVendorDetail() {
     integrate: "Richiedi integrazione",
     suspend: "Sospendi fornitore",
     revoke: "Revoca fornitore",
+    reactivate: "Riattiva fornitore",
   };
 
   return (
