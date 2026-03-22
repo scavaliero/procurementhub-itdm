@@ -585,6 +585,22 @@ export default function InternalVendorDetail() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Action buttons inline */}
+              {actions.length > 0 && (
+                <div className="flex flex-wrap gap-3 pt-2">
+                  {actions.map((a) => (
+                    <Button
+                      key={a.key}
+                      variant={a.variant}
+                      onClick={a.onClick}
+                    >
+                      <a.icon className="h-4 w-4 mr-2" />
+                      {a.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* ── Tab Documenti ── */}
@@ -763,25 +779,6 @@ export default function InternalVendorDetail() {
           </Tabs>
         </div>
 
-        {/* Sidebar actions */}
-        {actions.length > 0 && (
-          <div className="w-full lg:w-64 shrink-0 space-y-2">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3">
-              Azioni
-            </h3>
-            {actions.map((a) => (
-              <Button
-                key={a.key}
-                variant={a.variant}
-                className="w-full justify-start"
-                onClick={a.onClick}
-              >
-                <a.icon className="h-4 w-4 mr-2" />
-                {a.label}
-              </Button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Action Dialog ── */}
