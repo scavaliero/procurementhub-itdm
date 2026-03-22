@@ -251,8 +251,8 @@ export default function InternalBillingApprovals() {
       ) : (
         <Card className="card-top-billing">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-            <Table>
+            <div className="overflow-x-auto -mx-4 sm:-mx-0">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Codice</TableHead>
