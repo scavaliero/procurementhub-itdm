@@ -254,6 +254,22 @@ export default function SupplierOnboarding() {
                 />
               </div>
             </div>
+            <Separator className="my-2" />
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Dati dal profilo di registrazione</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Referente</Label>
+                <Input value={profileName} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={profileEmail} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Telefono</Label>
+                <Input value={profilePhone || "—"} disabled className="bg-muted" />
+              </div>
+            </div>
             <div className="space-y-1.5">
               <Label>Indirizzo sede legale</Label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
