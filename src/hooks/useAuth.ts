@@ -45,7 +45,7 @@ export function useAuth() {
   return {
     user,
     profile: profile ?? null,
-    isLoading: isLoading || (!!user && profileLoading),
+    isLoading: isLoading || (!!user && profileLoading && !profileError),
     signOut,
   };
 }
