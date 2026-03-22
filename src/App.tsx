@@ -36,6 +36,7 @@ import InternalOpportunityNew from "@/pages/internal/OpportunityNew";
 import InternalOpportunityDetail from "@/pages/internal/OpportunityDetail";
 import InternalOpportunityEvaluation from "@/pages/internal/OpportunityEvaluation";
 import InternalOrders from "@/pages/internal/Orders";
+import InternalOrderDetail from "@/pages/internal/OrderDetail";
 import InternalCreateOrder from "@/pages/internal/CreateOrder";
 import InternalContractDetail from "@/pages/internal/ContractDetail";
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
@@ -103,6 +104,7 @@ const App = () => (
             <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
             <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
             <Route path="/internal/orders" element={<InternalOrders />} />
+            <Route path="/internal/orders/:id" element={<InternalOrderDetail />} />
             <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
             <Route path="/internal/notifications" element={<InternalNotifications />} />

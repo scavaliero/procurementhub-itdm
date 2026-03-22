@@ -98,17 +98,7 @@ export default function InternalOrders() {
                   <TableRow
                     key={o.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={async () => {
-                      try {
-                        const { contractService } = await import("@/services/contractService");
-                        const contract = await contractService.getByOrderId(o.id);
-                        if (contract) {
-                          navigate(`/internal/contracts/${contract.id}`);
-                        }
-                      } catch {
-                        // No contract yet
-                      }
-                    }}
+                    onClick={() => navigate(`/internal/orders/${o.id}`)}
                   >
                     <TableCell className="font-mono text-sm">{o.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{o.subject}</TableCell>
