@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     const today = new Date().toISOString().split("T")[0];
@@ -31,181 +31,174 @@ Deno.serve(async (req) => {
       .gte("expiry_date", today)
       .lte("expiry_date", in30days);
 
-    if (expErr) {
-      console.error("Error fetching expiring docs:", expErr);
-      throw expErr;
-    }
+    if (expErr) throw expErr;
 
     console.log(`Found ${expiringDocs?.length || 0} documents expiring within 30 days`);
 
-    // Group by supplier to send one notification per supplier
+    // Group by supplier
     const expiringBySupplier = new Map<string, { count: number; tenantId: string }>();
     for (const doc of expiringDocs || []) {
       const existing = expiringBySupplier.get(doc.supplier_id);
-      if (existing) {
-        existing.count++;
-      } else {
-        expiringBySupplier.set(doc.supplier_id, { count: 1, tenantId: doc.tenant_id });
-      }
+      if (existing) existing.count++;
+      else expiringBySupplier.set(doc.supplier_id, { count: 1, tenantId: doc.tenant_id });
     }
 
-    // Send expiry warning notifications
+    // Send expiry warning notifications (non-blocking)
     for (const [supplierId, { count, tenantId }] of expiringBySupplier) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, email, full_name")
-        .eq("supplier_id", supplierId)
-        .limit(1)
-        .maybeSingle();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("supplier_id", supplierId)
+          .limit(1)
+          .maybeSingle();
+        if (!profile) continue;
 
-      if (!profile) continue;
+        // Avoid duplicate notification today
+        const { data: existing } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("recipient_id", profile.id)
+          .eq("event_type", "document_expiry_warning")
+          .gte("created_at", `${today}T00:00:00`)
+          .limit(1);
+        if (existing && existing.length > 0) continue;
 
-      // Check if we already notified today (avoid spam)
-      const { data: existing } = await supabase
-        .from("notifications")
-        .select("id")
-        .eq("recipient_id", profile.id)
-        .eq("event_type", "document_expiry_warning")
-        .gte("created_at", `${today}T00:00:00`)
-        .limit(1);
-
-      if (existing && existing.length > 0) continue;
-
-      // Send notification
-      await supabase.functions.invoke("send-notification", {
-        body: {
-          event_type: "document_expiry_warning",
-          recipient_id: profile.id,
-          tenant_id: tenantId,
-          variables: {
-            count: String(count),
-            full_name: profile.full_name,
-          },
-        },
-      });
-
-      console.log(`Sent expiry warning to supplier ${supplierId} (${count} docs)`);
-    }
-
-    // ─── 2. Expired documents → set supplier status back to pending ───
-    const { data: expiredDocs, error: expiredErr } = await supabase
-      .from("uploaded_documents")
-      .select("id, supplier_id, document_type_id, tenant_id")
-      .eq("status", "approved")
-      .is("deleted_at", null)
-      .lt("expiry_date", today);
-
-    if (expiredErr) {
-      console.error("Error fetching expired docs:", expiredErr);
-      throw expiredErr;
-    }
-
-    console.log(`Found ${expiredDocs?.length || 0} expired documents`);
-
-    // Mark expired documents
-    const expiredIds = (expiredDocs || []).map((d) => d.id);
-    if (expiredIds.length > 0) {
-      // We can't batch update with .in() and set status, so update one by one
-      // Actually we can - just update all matching IDs
-      // But first, let's only process mandatory docs
-    }
-
-    // Get unique supplier IDs with expired docs
-    const suppliersWithExpired = new Set<string>();
-    const expiredSupplierTenant = new Map<string, string>();
-    for (const doc of expiredDocs || []) {
-      // Check if this is a mandatory document
-      const { data: docType } = await supabase
-        .from("document_types")
-        .select("is_mandatory")
-        .eq("id", doc.document_type_id)
-        .maybeSingle();
-
-      if (docType?.is_mandatory) {
-        suppliersWithExpired.add(doc.supplier_id);
-        expiredSupplierTenant.set(doc.supplier_id, doc.tenant_id);
-      }
-    }
-
-    // For each supplier with expired mandatory docs, revert to pending
-    for (const supplierId of suppliersWithExpired) {
-      const tenantId = expiredSupplierTenant.get(supplierId)!;
-
-      // Check current status - only revert if currently accredited
-      const { data: supplier } = await supabase
-        .from("suppliers")
-        .select("status")
-        .eq("id", supplierId)
-        .maybeSingle();
-
-      if (!supplier || supplier.status !== "accredited") continue;
-
-      // Update supplier status to pending
-      const { error: updErr } = await supabase
-        .from("suppliers")
-        .update({ status: "pending" })
-        .eq("id", supplierId);
-
-      if (updErr) {
-        console.error(`Error updating supplier ${supplierId}:`, updErr);
-        continue;
-      }
-
-      // Insert status history
-      await supabase.from("supplier_status_history").insert({
-        supplier_id: supplierId,
-        from_status: "accredited",
-        to_status: "pending",
-        reason: "Documenti obbligatori scaduti",
-      });
-
-      // Audit log
-      await supabase.from("audit_logs").insert({
-        tenant_id: tenantId,
-        entity_type: "suppliers",
-        entity_id: supplierId,
-        event_type: "status_change",
-        old_state: { status: "accredited" },
-        new_state: { status: "pending", reason: "Documenti obbligatori scaduti" },
-      });
-
-      // Notify supplier
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("supplier_id", supplierId)
-        .limit(1)
-        .maybeSingle();
-
-      if (profile) {
         await supabase.functions.invoke("send-notification", {
           body: {
-            event_type: "supplier_suspended_expired_docs",
+            event_type: "document_expiry_warning",
             recipient_id: profile.id,
             tenant_id: tenantId,
-            variables: {
-              full_name: profile.full_name,
-            },
+            variables: { count: String(count), full_name: profile.full_name },
           },
         });
+        console.log(`Sent expiry warning to supplier ${supplierId} (${count} docs)`);
+      } catch (e) {
+        console.error(`Warning notification error for ${supplierId}:`, e);
       }
+    }
 
-      console.log(`Supplier ${supplierId} reverted to pending (expired docs)`);
+    // ─── 2. Expired mandatory documents → mark doc as expired, revert supplier to pending ───
+    // Fetch expired approved docs joined with mandatory document_types in one query
+    const { data: expiredDocs, error: expiredErr } = await supabase
+      .from("uploaded_documents")
+      .select("id, supplier_id, document_type_id, tenant_id, document_types!inner(is_mandatory)")
+      .eq("status", "approved")
+      .is("deleted_at", null)
+      .lt("expiry_date", today)
+      .eq("document_types.is_mandatory", true);
+
+    if (expiredErr) throw expiredErr;
+
+    console.log(`Found ${expiredDocs?.length || 0} expired mandatory documents`);
+
+    // Mark all expired docs as 'expired'
+    const expiredIds = (expiredDocs || []).map((d: any) => d.id);
+    if (expiredIds.length > 0) {
+      const { error: markErr } = await supabase
+        .from("uploaded_documents")
+        .update({ status: "expired" })
+        .in("id", expiredIds);
+      if (markErr) console.error("Error marking docs expired:", markErr);
+    }
+
+    // Collect unique suppliers to revert
+    const suppliersToRevert = new Map<string, string>();
+    for (const doc of expiredDocs || []) {
+      if (!suppliersToRevert.has(doc.supplier_id)) {
+        suppliersToRevert.set(doc.supplier_id, doc.tenant_id);
+      }
+    }
+
+    let revertedCount = 0;
+
+    for (const [supplierId, tenantId] of suppliersToRevert) {
+      try {
+        // Only revert if currently accredited or in_approval
+        const { data: supplier } = await supabase
+          .from("suppliers")
+          .select("status")
+          .eq("id", supplierId)
+          .maybeSingle();
+
+        if (!supplier || !["accredited", "in_approval", "in_accreditation"].includes(supplier.status)) {
+          continue;
+        }
+
+        const fromStatus = supplier.status;
+
+        const { error: updErr } = await supabase
+          .from("suppliers")
+          .update({ status: "pending" })
+          .eq("id", supplierId);
+
+        if (updErr) {
+          console.error(`Error updating supplier ${supplierId}:`, updErr);
+          continue;
+        }
+
+        // Status history
+        await supabase.from("supplier_status_history").insert({
+          supplier_id: supplierId,
+          from_status: fromStatus,
+          to_status: "pending",
+          reason: "Documenti obbligatori scaduti (automatico)",
+        });
+
+        // Audit log
+        await supabase.from("audit_logs").insert({
+          tenant_id: tenantId,
+          entity_type: "suppliers",
+          entity_id: supplierId,
+          event_type: "status_change",
+          old_state: { status: fromStatus },
+          new_state: { status: "pending", reason: "Documenti obbligatori scaduti" },
+        });
+
+        // Notify supplier (non-blocking)
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .eq("supplier_id", supplierId)
+            .limit(1)
+            .maybeSingle();
+
+          if (profile) {
+            await supabase.functions.invoke("send-notification", {
+              body: {
+                event_type: "supplier_suspended_expired_docs",
+                recipient_id: profile.id,
+                tenant_id: tenantId,
+                variables: { full_name: profile.full_name },
+              },
+            });
+          }
+        } catch (e) {
+          console.error(`Notification error for ${supplierId}:`, e);
+        }
+
+        revertedCount++;
+        console.log(`Supplier ${supplierId} reverted from ${fromStatus} to pending (expired docs)`);
+      } catch (e) {
+        console.error(`Error processing supplier ${supplierId}:`, e);
+      }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        expired_docs_marked: expiredIds.length,
         expiring_warnings_sent: expiringBySupplier.size,
-        suppliers_reverted: suppliersWithExpired.size,
+        suppliers_reverted: revertedCount,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("check-document-expiry error:", err);
     return new Response(
-      JSON.stringify({ error: "internal_error", message: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "internal_error", message: err?.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
