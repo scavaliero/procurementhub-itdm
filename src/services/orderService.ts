@@ -107,19 +107,23 @@ export const orderService = {
       new_state: { status, amount: params.amount },
     });
 
-    // Notify supplier
-    const { data: supplierProfiles } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("supplier_id", params.supplierId)
-      .limit(1);
+    // Notify supplier (non-blocking)
+    try {
+      const { data: supplierProfiles } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("supplier_id", params.supplierId)
+        .limit(1);
 
-    if (supplierProfiles?.[0]) {
-      await notificationService.send({
-        event_type: "order_issued",
-        recipient_id: supplierProfiles[0].id,
-        tenant_id: params.tenantId,
-      });
+      if (supplierProfiles?.[0]) {
+        await notificationService.send({
+          event_type: "order_issued",
+          recipient_id: supplierProfiles[0].id,
+          tenant_id: params.tenantId,
+        });
+      }
+    } catch (e) {
+      console.warn("Notification send failed (non-blocking):", e);
     }
 
     return order as Order;
@@ -241,19 +245,23 @@ export const orderService = {
       .single();
     if (error) throw error;
 
-    // Notify supplier
-    const { data: supplierProfiles } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("supplier_id", order.supplier_id)
-      .limit(1);
+    // Notify supplier (non-blocking)
+    try {
+      const { data: supplierProfiles } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("supplier_id", order.supplier_id)
+        .limit(1);
 
-    if (supplierProfiles?.[0]) {
-      await notificationService.send({
-        event_type: "order_issued",
-        recipient_id: supplierProfiles[0].id,
-        tenant_id: tenantId,
-      });
+      if (supplierProfiles?.[0]) {
+        await notificationService.send({
+          event_type: "order_issued",
+          recipient_id: supplierProfiles[0].id,
+          tenant_id: tenantId,
+        });
+      }
+    } catch (e) {
+      console.warn("Notification send failed (non-blocking):", e);
     }
 
     await auditService.log({

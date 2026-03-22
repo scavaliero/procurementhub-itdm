@@ -48,9 +48,8 @@ const STATUS_TRANSITIONS: Record<string, { next: string; label: string; icon: an
   collecting_bids: [
     { next: "evaluating", label: "Chiudi raccolta e valuta", icon: ClipboardList, variant: "default" },
   ],
-  evaluating: [
-    { next: "awarded", label: "Segna come aggiudicata", icon: Award, variant: "default" },
-  ],
+  // "evaluating" → "awarded" is handled ONLY via the evaluation page "Seleziona vincitore"
+  // which creates the awards record. No direct status button here.
   awarded: [
     { next: "closed", label: "Chiudi opportunità", icon: CheckCircle, variant: "outline" },
   ],
@@ -122,7 +121,7 @@ export default function InternalOpportunityDetail() {
       </div>
 
       {/* Action buttons */}
-      {canChangeStatus && transitions.length > 0 && (
+      {canChangeStatus && (
         <div className="flex flex-wrap gap-2">
           {transitions.map((t) => {
             const Icon = t.icon;
@@ -146,7 +145,7 @@ export default function InternalOpportunityDetail() {
             </Button>
           )}
 
-          {/* Link to create order */}
+          {/* Link to create order — only if awarded */}
           {opp.status === "awarded" && (
             <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
               <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
