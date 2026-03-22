@@ -149,8 +149,6 @@ export default function AuditLogs() {
     setPage(0);
   }
 
-  const [exporting, setExporting] = useState(false);
-
   async function handleExport() {
     setExporting(true);
     try {
