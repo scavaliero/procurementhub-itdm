@@ -737,11 +737,14 @@ export default function InternalVendorDetail() {
           </DialogHeader>
 
           {(actionDialog?.type === "integrate" ||
-            actionDialog?.type === "suspend") && (
+            actionDialog?.type === "suspend" ||
+            actionDialog?.type === "reactivate") && (
             <div className="space-y-2">
               <Label>
                 {actionDialog.type === "suspend"
                   ? "Motivo sospensione *"
+                  : actionDialog.type === "reactivate"
+                  ? "Motivo riattivazione *"
                   : "Messaggio *"}
               </Label>
               <Textarea
