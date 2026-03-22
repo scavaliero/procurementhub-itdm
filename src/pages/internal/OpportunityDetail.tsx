@@ -145,7 +145,7 @@ export default function InternalOpportunityDetail() {
             </Button>
           )}
 
-          {/* Link to create order */}
+          {/* Link to create order — only if awarded */}
           {opp.status === "awarded" && (
             <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
               <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
