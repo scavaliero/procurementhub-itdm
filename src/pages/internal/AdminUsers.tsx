@@ -170,9 +170,9 @@ export default function AdminUsers() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedUser(p)}>
+                        <DropdownMenuItem onClick={() => setRoleUser(p)}>
                           <ShieldCheck className="h-4 w-4 mr-2" />
-                          Dettagli & Ruoli
+                          Gestisci Ruolo
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleAction("resend_invite", p)}>
                           <Mail className="h-4 w-4 mr-2" />
