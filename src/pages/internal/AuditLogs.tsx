@@ -107,6 +107,7 @@ export default function AuditLogs() {
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState("all");
   const [eventFilter, setEventFilter] = useState("all");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(0);
