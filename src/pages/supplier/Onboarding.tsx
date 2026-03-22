@@ -150,6 +150,8 @@ export default function SupplierOnboarding() {
         ...companyData,
         legal_address: address as any,
       } as any);
+      // Save contacts
+      await saveContactsToDB();
       // Save categories
       await vendorService.setSupplierCategories(supplier.id, selectedCats);
       // Update status
