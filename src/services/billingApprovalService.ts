@@ -115,10 +115,10 @@ export const billingApprovalService = {
 
   /** Submit for approval (draft -> pending_approval) with server-side RB-08 check */
   async submitForApproval(billingId: string, tenantId: string) {
-    // 1. Read the billing to get contract_id and amount
+    // 1. Read the billing to get contract_id, amount and supplier info
     const { data: billing, error: readErr } = await supabase
       .from("billing_approvals")
-      .select("contract_id, amount")
+      .select("contract_id, amount, code, supplier_id, suppliers(company_name)")
       .eq("id", billingId)
       .single();
     if (readErr) throw readErr;
@@ -146,6 +146,12 @@ export const billingApprovalService = {
       new_state: { status: "pending_approval" },
     });
 
+    const billingVars = {
+      billing_code: billing.code || "",
+      amount: String(billing.amount),
+      company_name: (billing.suppliers as any)?.company_name || "",
+    };
+
     // Notify approvers
     const { data: approvers } = await supabase
       .from("user_effective_grants")
@@ -159,6 +165,7 @@ export const billingApprovalService = {
             event_type: "billing_pending_approval",
             recipient_id: a.user_id,
             tenant_id: tenantId,
+            variables: billingVars,
           });
         }
       }
