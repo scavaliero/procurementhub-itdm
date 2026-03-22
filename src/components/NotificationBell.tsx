@@ -126,7 +126,9 @@ export function NotificationBell() {
                 </div>
                 {n.body && (
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                    {n.body}
+                    {stripHtml(n.body)}
+                  </p>
+                )}
                   </p>
                 )}
                 {n.created_at && (

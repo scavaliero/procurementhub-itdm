@@ -115,7 +115,7 @@ export function NotificationList() {
                 </div>
                 {n.body && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {n.body}
+                    {stripHtml(n.body)}
                   </p>
                 )}
               </div>
