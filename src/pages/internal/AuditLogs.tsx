@@ -64,6 +64,7 @@ const ENTITY_LABELS: Record<string, string> = {
   user: "Utente",
   user_roles: "Ruoli utente",
   role_grants: "Permessi ruolo",
+  profile: "Profilo",
 };
 
 const ENTITY_COLORS: Record<string, string> = {
