@@ -3,14 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const eventLabels: Record<string, string> = {
   order_issued: "Nuovo ordine",
   order_accepted: "Ordine accettato",
   order_rejected: "Ordine rifiutato",
-  billing_pending_approval: "Benestare in attesa",
+  billing_pending_approval: "Benestare in attesa di approvazione",
   billing_approved: "Benestare approvato",
   billing_rejected: "Benestare rifiutato",
   opportunity_invited: "Invito opportunità",
@@ -20,21 +20,64 @@ const eventLabels: Record<string, string> = {
   document_approved: "Documento approvato",
   document_rejected: "Documento respinto",
   document_expiry_warning: "Documento in scadenza",
+  supplier_enabled: "Account abilitato",
+  supplier_suspended: "Account sospeso",
+  pre_registration: "Richiesta di accesso",
+  accreditation_approved: "Accreditamento approvato",
 };
 
-function cleanText(input: string): string {
-  return input
-    .replace(/\{\{[^}]+\}\}/g, "")
+/**
+ * Replace {{variable}} placeholders, then remove lines/segments
+ * where the variable was empty, so we don't get orphan labels
+ * like "Fornitore: " or "Importo: €".
+ */
+function renderTemplate(
+  htmlTemplate: string,
+  vars: Record<string, string>,
+): string {
+  // Step 1: replace placeholders — mark empty ones with a sentinel
+  const EMPTY = "\x00EMPTY\x00";
+  const rendered = htmlTemplate.replace(
+    /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g,
+    (_match, key: string) => {
+      const val = vars[key];
+      return val && val.trim() ? val : EMPTY;
+    },
+  );
+
+  // Step 2: remove HTML elements that only contain the EMPTY sentinel
+  // e.g. <strong>EMPTY</strong> → ""
+  let cleaned = rendered.replace(
+    /<(strong|em|b|i|span|a)\b[^>]*>\s*\x00EMPTY\x00\s*<\/\1>/gi,
+    "",
+  );
+
+  // Step 3: remove lines/paragraphs that contain EMPTY
+  // e.g. <p>Fornitore: </p> or <p>Importo: € </p>
+  cleaned = cleaned.replace(
+    /<(p|li|div)\b[^>]*>[^<]*\x00EMPTY\x00[^<]*<\/\1>/gi,
+    "",
+  );
+
+  // Step 4: remove any remaining sentinels
+  cleaned = cleaned.replace(/\x00EMPTY\x00/g, "");
+
+  // Step 5: collapse multiple empty paragraphs and whitespace
+  cleaned = cleaned
+    .replace(/<(p|div)\b[^>]*>\s*<\/\1>/gi, "")
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return cleaned;
 }
 
 function htmlToPlainText(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/\s*(p|div|h[1-6]|li|tr)\s*>/gi, "\n")
+    .replace(/<\/\s*(h[1-6])\s*>/gi, "\n\n")
+    .replace(/<\/\s*(p|div|tr)\s*>/gi, "\n")
+    .replace(/<\/\s*li\s*>/gi, "\n")
     .replace(/<li\b[^>]*>/gi, "• ")
     .replace(/<[^>]*>/g, "")
     .replace(/&amp;/g, "&")
@@ -42,6 +85,7 @@ function htmlToPlainText(html: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/gi, " ")
     .replace(/\u00a0/g, " ")
     .replace(/\n[ \t]+/g, "\n")
     .replace(/[ \t]{2,}/g, " ")
@@ -70,20 +114,29 @@ Deno.serve(async (req) => {
         : {};
 
     const vars: Record<string, string> = Object.fromEntries(
-      Object.entries(rawVars).map(([key, val]) => [key, val == null ? "" : String(val)]),
+      Object.entries(rawVars).map(([key, val]) => [
+        key,
+        val == null ? "" : String(val),
+      ]),
     );
 
-    // Backward-compatible aliases across old/new template placeholders
-    if (!vars.company_name && vars.supplier_name) vars.company_name = vars.supplier_name;
-    if (!vars.supplier_name && vars.company_name) vars.supplier_name = vars.company_name;
-    if (!vars.bids_deadline && vars.deadline) vars.bids_deadline = vars.deadline;
-    if (!vars.deadline && vars.bids_deadline) vars.deadline = vars.bids_deadline;
-    if (!vars.contact_name && vars.full_name) vars.contact_name = vars.full_name;
-    if (!vars.full_name && vars.contact_name) vars.full_name = vars.contact_name;
+    // Backward-compatible aliases
+    if (!vars.company_name && vars.supplier_name)
+      vars.company_name = vars.supplier_name;
+    if (!vars.supplier_name && vars.company_name)
+      vars.supplier_name = vars.company_name;
+    if (!vars.bids_deadline && vars.deadline)
+      vars.bids_deadline = vars.deadline;
+    if (!vars.deadline && vars.bids_deadline)
+      vars.deadline = vars.bids_deadline;
+    if (!vars.contact_name && vars.full_name)
+      vars.contact_name = vars.full_name;
+    if (!vars.full_name && vars.contact_name)
+      vars.full_name = vars.contact_name;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     // 1. Fetch email template
@@ -97,38 +150,45 @@ Deno.serve(async (req) => {
 
     if (tplErr) throw tplErr;
 
-    // If no template, still insert in-app notification but skip email
+    // If no template, still insert in-app notification with fallback
     if (!template) {
       if (recipient_id) {
-        const fallbackTitle = eventLabels[event_type] || `Notifica: ${event_type}`;
+        const fallbackTitle =
+          eventLabels[event_type] || `Notifica: ${event_type}`;
         const fallbackBody =
           vars.message ||
           vars.subject ||
           vars.opportunity_title ||
-          vars.billing_code ||
           vars.order_code ||
+          vars.billing_code ||
           event_type;
         await supabase.from("notifications").insert({
           tenant_id,
           recipient_id,
           event_type,
-          title: cleanText(fallbackTitle),
-          body: cleanText(fallbackBody),
+          title: fallbackTitle,
+          body: fallbackBody,
           is_read: false,
         });
       }
       return new Response(
-        JSON.stringify({ success: true, email_sent: false, reason: "template_not_found" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: true,
+          email_sent: false,
+          reason: "template_not_found",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 2. Resolve recipient email
-    let toEmail: string;
+    let toEmail: string | undefined;
     let recipientName: string | null = null;
 
     if (recipient_email) {
-      // Direct email provided (e.g. fixed procurement address)
       toEmail = recipient_email;
     } else if (recipient_id) {
       const { data: profile, error: profErr } = await supabase
@@ -141,7 +201,10 @@ Deno.serve(async (req) => {
       if (!profile) {
         return new Response(
           JSON.stringify({ error: "recipient_not_found" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
       toEmail = profile.email;
@@ -149,23 +212,26 @@ Deno.serve(async (req) => {
     } else {
       return new Response(
         JSON.stringify({ error: "no_recipient" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
-    // 3. Replace {{ variables }} in subject and html_body
-    const replaceVars = (text: string) =>
-      text.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => vars[key] ?? "");
+    // 3. Render subject and body from template
+    const renderedSubject = renderTemplate(template.subject, vars);
+    const subject =
+      renderedSubject || eventLabels[event_type] || `Notifica: ${event_type}`;
 
-    const subject = cleanText(replaceVars(template.subject)) || eventLabels[event_type] || `Notifica: ${event_type}`;
-    const html_body = cleanText(replaceVars(template.html_body));
+    const renderedHtmlBody = renderTemplate(template.html_body, vars);
 
     // 4. Send email via Resend
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const fromEmail = Deno.env.get("FROM_EMAIL") || "noreply@vendorhub.it";
     let emailSent = false;
 
-    if (resendKey) {
+    if (resendKey && toEmail) {
       const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -176,7 +242,7 @@ Deno.serve(async (req) => {
           from: fromEmail,
           to: [toEmail],
           subject,
-          html: html_body,
+          html: renderedHtmlBody,
         }),
       });
 
@@ -184,16 +250,14 @@ Deno.serve(async (req) => {
       if (!emailRes.ok) {
         const errBody = await emailRes.text();
         console.error("Resend error:", errBody);
-        // Still insert notification even if email fails
       }
-    } else {
+    } else if (!resendKey) {
       console.error("RESEND_API_KEY not configured, skipping email send");
     }
 
-    // 5. Insert notification (only if we have a recipient_id for in-app notification)
+    // 5. Insert in-app notification
     if (recipient_id) {
-      // Convert HTML to plain text for in-app notification body
-      const plainBody = htmlToPlainText(html_body);
+      const plainBody = htmlToPlainText(renderedHtmlBody);
 
       const { error: notifErr } = await supabase.from("notifications").insert({
         tenant_id,
@@ -211,13 +275,19 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, email_sent: emailSent }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (err) {
     console.error("send-notification error:", err);
     return new Response(
       JSON.stringify({ error: "internal_error", message: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
