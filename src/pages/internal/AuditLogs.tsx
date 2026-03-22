@@ -47,6 +47,7 @@ const EVENT_LABELS: Record<string, string> = {
   user_activated: "Utente attivato",
   user_deactivated: "Utente disattivato",
   invite_resent: "Invito reinviato",
+  profile_updated: "Profilo modificato",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
