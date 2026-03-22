@@ -92,6 +92,7 @@ interface AuditLog {
   entity_id: string | null;
   user_email: string | null;
   user_id: string | null;
+  user_role: string | null;
   old_state: Record<string, unknown> | null;
   new_state: Record<string, unknown> | null;
 }
