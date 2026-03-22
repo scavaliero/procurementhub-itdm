@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
           email: normalizedEmail,
           password,
           user_metadata: { full_name: contactName },
-          email_confirm: true,
+          email_confirm: false,
         });
         if (retryErr) throw retryErr;
         createdUserId = retryAuth.user?.id ?? null;

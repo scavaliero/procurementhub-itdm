@@ -60,7 +60,7 @@ export default function RegisterPage() {
       if (result?.resent) {
         toast.success("Email di conferma re-inviata. Controlla la tua casella di posta.");
       } else {
-        toast.success("Registrazione completata! La tua richiesta è stata inoltrata. Riceverai una email quando l'amministratore abiliterà il tuo account.");
+        toast.success("Registrazione completata! Controlla la tua email per confermare l'account e accedere al portale.");
       }
       navigate("/login");
     },
