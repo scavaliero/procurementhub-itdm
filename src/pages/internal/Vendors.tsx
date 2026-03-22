@@ -78,7 +78,7 @@ function MetricCard({
   color: string;
 }) {
   return (
-    <Card>
+    <Card className="card-top-suppliers">
       <CardContent className="pt-5 pb-4 flex items-center gap-3">
         <div className={`rounded-lg p-2.5 ${color}`}>
           <Icon className="h-5 w-5 text-white" />
