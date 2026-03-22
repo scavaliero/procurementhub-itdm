@@ -115,6 +115,7 @@ const App = () => (
             <Route path="/internal/config/categories" element={<ConfigCategories />} />
             <Route path="/internal/admin/roles" element={<AdminRoles />} />
             <Route path="/internal/admin/users" element={<AdminUsers />} />
+            <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
           </Route>
 
           {/* Catch-all */}

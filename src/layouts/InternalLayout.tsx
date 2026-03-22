@@ -40,6 +40,7 @@ const configNav = [
 const adminNav = [
   { title: "Ruoli", url: "/internal/admin/roles", icon: ShieldCheck },
   { title: "Utenti", url: "/internal/admin/users", icon: Users },
+  { title: "Audit Log", url: "/internal/admin/audit-logs", icon: ScrollText, grant: "view_audit_logs" },
 ];
 
 function InternalSidebarContent() {
