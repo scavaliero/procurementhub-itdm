@@ -103,12 +103,25 @@ Deno.serve(async (req) => {
 
     // 5. Insert notification (only if we have a recipient_id for in-app notification)
     if (recipient_id) {
+      // Strip HTML tags for in-app notification body
+      const plainBody = html_body
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n")
+        .replace(/<[^>]*>/g, "")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
       const { error: notifErr } = await supabase.from("notifications").insert({
         tenant_id,
         recipient_id,
         event_type,
         title: subject,
-        body: html_body,
+        body: plainBody,
         is_read: false,
       });
 
