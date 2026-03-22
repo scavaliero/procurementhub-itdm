@@ -15,10 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { it } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza",
@@ -52,8 +56,8 @@ export default function InternalBillingApprovals() {
 
   // Create form state
   const [selectedContract, setSelectedContract] = useState("");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
+  const [periodStart, setPeriodStart] = useState<Date | undefined>();
+  const [periodEnd, setPeriodEnd] = useState<Date | undefined>();
   const [amount, setAmount] = useState<number>(0);
   const [activityDesc, setActivityDesc] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -105,8 +109,8 @@ export default function InternalBillingApprovals() {
         contractId: selectedContract,
         orderId: selectedContractData.order_id,
         supplierId: selectedContractData.supplier_id,
-        periodStart,
-        periodEnd,
+        periodStart: periodStart ? format(periodStart, "yyyy-MM-dd") : "",
+        periodEnd: periodEnd ? format(periodEnd, "yyyy-MM-dd") : "",
         amount,
         activityDescription: activityDesc,
         createdBy: profile.id,
@@ -137,8 +141,8 @@ export default function InternalBillingApprovals() {
         contractId: selectedContract,
         orderId: selectedContractData.order_id,
         supplierId: selectedContractData.supplier_id,
-        periodStart,
-        periodEnd,
+        periodStart: periodStart ? format(periodStart, "yyyy-MM-dd") : "",
+        periodEnd: periodEnd ? format(periodEnd, "yyyy-MM-dd") : "",
         amount,
         activityDescription: activityDesc,
         createdBy: profile.id,
@@ -188,8 +192,8 @@ export default function InternalBillingApprovals() {
   function resetCreateForm() {
     setShowCreate(false);
     setSelectedContract("");
-    setPeriodStart("");
-    setPeriodEnd("");
+    setPeriodStart(undefined);
+    setPeriodEnd(undefined);
     setAmount(0);
     setActivityDesc("");
     setAttachments([]);
@@ -332,11 +336,31 @@ export default function InternalBillingApprovals() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Periodo inizio *</Label>
-                <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodStart && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {periodStart ? format(periodStart, "dd/MM/yyyy") : "Seleziona data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Periodo fine *</Label>
-                <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodEnd && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {periodEnd ? format(periodEnd, "dd/MM/yyyy") : "Seleziona data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => periodStart ? date < periodStart : false} />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
