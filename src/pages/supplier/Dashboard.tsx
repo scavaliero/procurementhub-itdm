@@ -163,11 +163,11 @@ export default function SupplierDashboard() {
             to="/supplier/opportunities"
           />
           <KpiCard
-            title="Benestari"
+            title="Benestare"
             value="→"
             icon={FileCheck}
             to="/supplier/billing-approvals"
-            subtitle="Visualizza benestari approvati"
+            subtitle="Visualizza benestare approvati"
           />
         </div>
       )}
