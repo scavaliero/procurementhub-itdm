@@ -29,6 +29,30 @@ export const vendorService = {
     return { userId: data.userId, supplierId: data.supplierId };
   },
 
+  async getSupplier(id: string): Promise<Supplier | null> {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data as Supplier | null;
+  },
+
+  async getMySupplier(): Promise<Supplier | null> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("supplier_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profile?.supplier_id) return null;
+    return this.getSupplier(profile.supplier_id);
+  },
+
   async updateSupplier(id: string, updates: Partial<Supplier>) {
     const { data, error } = await supabase
       .from("suppliers")
