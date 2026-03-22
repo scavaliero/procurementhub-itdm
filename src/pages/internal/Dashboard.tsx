@@ -210,7 +210,7 @@ export default function InternalDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} />
             <KpiCard
-              title="Benestari in approvazione"
+              title="Benestare in approvazione"
               value={pendingBillings}
               icon={FileText}
               alert={pendingBillings > 0}
