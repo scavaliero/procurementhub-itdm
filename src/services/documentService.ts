@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { auditService } from "@/services/auditService";
 import type { DocumentType, UploadedDocument } from "@/types";
 
 export const documentService = {
@@ -103,6 +104,43 @@ export const documentService = {
       .select()
       .single();
     if (error) throw error;
+
+    // Auto-transition: enabled → in_accreditation on first upload
+    try {
+      const { data: supplier } = await supabase
+        .from("suppliers")
+        .select("id, status, tenant_id")
+        .eq("id", params.supplierId)
+        .single();
+
+      if (supplier && supplier.status === "enabled") {
+        await supabase
+          .from("suppliers")
+          .update({ status: "in_accreditation" })
+          .eq("id", supplier.id);
+
+        await supabase
+          .from("supplier_status_history")
+          .insert({
+            supplier_id: supplier.id,
+            from_status: "enabled",
+            to_status: "in_accreditation",
+            reason: "Primo documento caricato dal fornitore",
+          });
+
+        await auditService.log({
+          tenant_id: supplier.tenant_id,
+          entity_type: "supplier",
+          entity_id: supplier.id,
+          event_type: "status_change",
+          old_state: { status: "enabled" },
+          new_state: { status: "in_accreditation" },
+        });
+      }
+    } catch {
+      // Non-blocking: don't fail the upload if transition fails
+    }
+
     return data as UploadedDocument;
   },
 
