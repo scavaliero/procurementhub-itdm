@@ -33,8 +33,8 @@ export default function InternalCreateOrder() {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState<number>(0);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [contractConditions, setContractConditions] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
