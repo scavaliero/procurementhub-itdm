@@ -207,7 +207,10 @@ export default function InternalBillingApprovals() {
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Benestare" }]} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Benestare di Fatturazione</h1>
+        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
+          <span className="text-base">📄</span>
+          Benestare di Fatturazione
+        </h2>
         {canCreate && (
           <Button onClick={() => setShowCreate(true)} className="gap-2">
             <Plus className="h-4 w-4" /> Nuovo benestare

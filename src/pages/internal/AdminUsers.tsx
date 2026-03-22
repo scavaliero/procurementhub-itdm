@@ -101,7 +101,10 @@ export default function AdminUsers() {
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Gestione Utenti" }]} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Gestione Utenti</h1>
+        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar">
+          <span className="text-base">👥</span>
+          Gestione Utenti
+        </h2>
         <Button onClick={() => setInviteOpen(true)}>
           <Plus className="h-4 w-4 mr-1" /> Invita Utente
         </Button>
