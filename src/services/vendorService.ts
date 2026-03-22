@@ -34,6 +34,20 @@ export const vendorService = {
     const tenantId = tenants?.id;
     if (!tenantId) throw new Error("Nessun tenant configurato");
 
+    // 1. Create profile first (without supplier_id) so current_tenant_id() works for RLS
+    const { error: profErr } = await supabase
+      .from("profiles")
+      .insert({
+        id: userId,
+        email: params.email,
+        full_name: params.contact_name,
+        phone: params.phone || null,
+        user_type: "supplier",
+        tenant_id: tenantId,
+      });
+    if (profErr) throw profErr;
+
+    // 2. Now current_tenant_id() works — insert supplier
     const { data: supplier, error: supErr } = await supabase
       .from("suppliers")
       .insert({
@@ -46,18 +60,12 @@ export const vendorService = {
       .single();
     if (supErr) throw supErr;
 
-    const { error: profErr } = await supabase
+    // 3. Link supplier to profile
+    const { error: linkErr } = await supabase
       .from("profiles")
-      .insert({
-        id: userId,
-        email: params.email,
-        full_name: params.contact_name,
-        phone: params.phone || null,
-        user_type: "supplier",
-        supplier_id: supplier.id,
-        tenant_id: tenantId,
-      });
-    if (profErr) throw profErr;
+      .update({ supplier_id: supplier.id })
+      .eq("id", userId);
+    if (linkErr) console.error("Profile-supplier link error:", linkErr);
 
     // Assign "Fornitore" role
     const { data: supplierRole } = await supabase
