@@ -744,6 +744,7 @@ export default function InternalVendorDetail() {
             setActionDialog(null);
             setDialogMessage("");
             setRevokeConfirm("");
+            setBanUser(false);
           }
         }}
       >
