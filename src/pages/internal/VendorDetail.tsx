@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { supabase } from "@/integrations/supabase/client";
 import { maskIBAN } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
