@@ -244,6 +244,9 @@ export const orderService = {
         event_type: "order_rejected",
         recipient_id: opp.issued_by,
         tenant_id: tenantId,
+        link_url: `/internal/orders/${orderId}`,
+        related_entity_id: orderId,
+        related_entity_type: "order",
         variables: {
           order_code: opp.code || "",
           subject: opp.subject || "",
