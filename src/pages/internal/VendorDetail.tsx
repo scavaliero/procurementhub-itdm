@@ -767,17 +767,25 @@ export default function InternalVendorDetail() {
                 Il fornitore verrà accreditato e potrà partecipare alle gare.
               </DialogDescription>
             )}
+            {actionDialog?.type === "reject" && (
+              <DialogDescription>
+                La registrazione verrà rifiutata. Puoi anche bloccare l'utente per impedire future registrazioni.
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           {(actionDialog?.type === "integrate" ||
             actionDialog?.type === "suspend" ||
-            actionDialog?.type === "reactivate") && (
+            actionDialog?.type === "reactivate" ||
+            actionDialog?.type === "reject") && (
             <div className="space-y-2">
               <Label>
                 {actionDialog.type === "suspend"
                   ? "Motivo sospensione *"
                   : actionDialog.type === "reactivate"
                   ? "Motivo riattivazione *"
+                  : actionDialog.type === "reject"
+                  ? "Motivo del rifiuto *"
                   : "Messaggio *"}
               </Label>
               <Textarea
@@ -785,6 +793,19 @@ export default function InternalVendorDetail() {
                 onChange={(e) => setDialogMessage(e.target.value)}
                 rows={3}
               />
+            </div>
+          )}
+
+          {actionDialog?.type === "reject" && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ban-user"
+                checked={banUser}
+                onCheckedChange={(checked) => setBanUser(!!checked)}
+              />
+              <Label htmlFor="ban-user" className="text-sm font-normal cursor-pointer">
+                Blocca l'utente (impedisce future registrazioni con questa email)
+              </Label>
             </div>
           )}
 
