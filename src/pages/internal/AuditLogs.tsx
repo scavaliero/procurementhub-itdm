@@ -16,8 +16,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { CalendarIcon, Search, Filter, Eye, RotateCcw } from "lucide-react";
+import { CalendarIcon, Search, Filter, Eye, RotateCcw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { exportService } from "@/services/exportService";
+import { toast } from "sonner";
 
 const EVENT_LABELS: Record<string, string> = {
   opportunity_created: "Opportunità creata",
@@ -97,6 +99,7 @@ export default function AuditLogs() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(0);
   const [detailLog, setDetailLog] = useState<AuditLog | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["audit-logs", search, entityFilter, eventFilter, dateFrom, dateTo, page],
@@ -146,6 +149,46 @@ export default function AuditLogs() {
     setPage(0);
   }
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      let q = supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5000);
+
+      if (search.trim()) {
+        q = q.or(`user_email.ilike.%${search.trim()}%,event_type.ilike.%${search.trim()}%,entity_type.ilike.%${search.trim()}%`);
+      }
+      if (entityFilter !== "all") q = q.eq("entity_type", entityFilter);
+      if (eventFilter !== "all") q = q.eq("event_type", eventFilter);
+      if (dateFrom) q = q.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
+      if (dateTo) q = q.lte("created_at", format(dateTo, "yyyy-MM-dd") + "T23:59:59");
+
+      const { data: logs, error } = await q;
+      if (error) throw error;
+      if (!logs?.length) { toast.info("Nessun evento da esportare"); return; }
+
+      const csv = exportService.generateCsv(logs as Record<string, unknown>[], [
+        { key: "created_at", header: "Data/Ora", formatter: (v) => v ? format(new Date(v as string), "dd/MM/yyyy HH:mm:ss") : "" },
+        { key: "user_email", header: "Utente", formatter: (v) => String(v ?? "Sistema") },
+        { key: "entity_type", header: "Entità", formatter: (v) => ENTITY_LABELS[v as string] ?? String(v ?? "") },
+        { key: "event_type", header: "Evento", formatter: (v) => EVENT_LABELS[v as string] ?? String(v ?? "") },
+        { key: "entity_id", header: "ID Entità", formatter: (v) => String(v ?? "") },
+        { key: "old_state", header: "Stato precedente", formatter: (v) => v ? JSON.stringify(v) : "" },
+        { key: "new_state", header: "Stato nuovo", formatter: (v) => v ? JSON.stringify(v) : "" },
+      ]);
+
+      exportService.downloadCsv(csv, `audit-log-${format(new Date(), "yyyy-MM-dd")}.csv`);
+      toast.success(`${logs.length} eventi esportati`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Errore durante l'esportazione");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!canView) {
     return (
       <div className="p-6">
@@ -167,9 +210,15 @@ export default function AuditLogs() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Audit Log</h1>
-        <span className="text-sm text-muted-foreground">
-          {data?.total ?? 0} eventi registrati
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {data?.total ?? 0} eventi registrati
+          </span>
+          <Button variant="outline" size="sm" disabled={exporting} onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            {exporting ? "Esportazione..." : "Esporta CSV"}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
