@@ -244,6 +244,9 @@ export const billingApprovalService = {
           event_type: "billing_approved",
           recipient_id: profiles[0].id,
           tenant_id: tenantId,
+          link_url: `/supplier/billing-approvals`,
+          related_entity_id: billingId,
+          related_entity_type: "billing_approval",
           variables: {
             billing_code: billing.code || "",
             amount: String(billing.amount),
