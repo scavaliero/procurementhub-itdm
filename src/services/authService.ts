@@ -8,7 +8,7 @@ export const authService = {
     if (error) throw error;
 
     // Log login event asynchronously (don't block login flow)
-    this.logAuthEvent(data.user?.id ?? null, email, "login").catch(() => {});
+    this.logAuthEvent(data.user?.id ?? null, email, "login").catch((e) => console.error("Audit login fire-and-forget error:", e));
 
     return data;
   },
