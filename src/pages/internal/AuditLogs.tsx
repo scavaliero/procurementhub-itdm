@@ -246,37 +246,34 @@ export default function AuditLogs() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <h1 className="text-xl font-bold">Audit Log</h1>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            {data?.total ?? 0} eventi registrati
+            {data?.total ?? 0} eventi
           </span>
           <Button variant="outline" size="sm" disabled={exporting} onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            {exporting ? "Esportazione..." : "Esporta CSV"}
+            {exporting ? "..." : "CSV"}
           </Button>
         </div>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-4 pb-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cerca per email, evento, entità..."
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                />
-              </div>
-            </div>
-
+        <CardContent className="pt-4 pb-4 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cerca per email, evento, entità..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
             <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Entità" />
               </SelectTrigger>
               <SelectContent>
@@ -288,7 +285,7 @@ export default function AuditLogs() {
             </Select>
 
             <Select value={eventFilter} onValueChange={(v) => { setEventFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Evento" />
               </SelectTrigger>
               <SelectContent>
@@ -300,7 +297,7 @@ export default function AuditLogs() {
             </Select>
 
             <Select value={userTypeFilter} onValueChange={(v) => { setUserTypeFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Tipo utente" />
               </SelectTrigger>
               <SelectContent>
@@ -322,8 +319,8 @@ export default function AuditLogs() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                   {dateFrom ? format(dateFrom, "dd/MM/yy") : "Da"}
                 </Button>
               </PopoverTrigger>
@@ -334,8 +331,8 @@ export default function AuditLogs() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                   {dateTo ? format(dateTo, "dd/MM/yy") : "A"}
                 </Button>
               </PopoverTrigger>
@@ -344,7 +341,7 @@ export default function AuditLogs() {
               </PopoverContent>
             </Popover>
 
-            <Button variant="ghost" size="icon" onClick={resetFilters} title="Azzera filtri">
+            <Button variant="ghost" size="icon" onClick={resetFilters} title="Azzera filtri" className="justify-self-start">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
