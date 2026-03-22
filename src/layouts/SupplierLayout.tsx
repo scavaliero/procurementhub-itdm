@@ -26,7 +26,7 @@ const supplierNav = [
   { title: "Documenti", url: "/supplier/documents", icon: FileText },
   { title: "Opportunità", url: "/supplier/opportunities", icon: Briefcase },
   { title: "Ordini", url: "/supplier/orders", icon: ShoppingCart },
-  { title: "Benestari", url: "/supplier/billing-approvals", icon: FileText },
+  { title: "Benestare", url: "/supplier/billing-approvals", icon: FileText },
 ];
 
 function SupplierSidebarContent() {

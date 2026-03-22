@@ -29,7 +29,7 @@ const mainNav = [
   { title: "Fornitori", url: "/internal/vendors", icon: Building2 },
   { title: "Opportunità", url: "/internal/opportunities", icon: Briefcase },
   { title: "Ordini", url: "/internal/orders", icon: ShoppingCart },
-  { title: "Benestari", url: "/internal/billing-approvals", icon: FileText },
+  { title: "Benestare", url: "/internal/billing-approvals", icon: FileText },
 ];
 
 const configNav = [
