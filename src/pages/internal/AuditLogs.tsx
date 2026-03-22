@@ -152,6 +152,28 @@ export default function AuditLogs() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch user types from profiles for display
+  const { data: userTypesMap } = useQuery({
+    queryKey: ["audit-user-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_type");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      data.forEach((p) => { map[p.id] = p.user_type; });
+      return map;
+    },
+    enabled: canView && !!profile,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  function getUserType(log: AuditLog): string | null {
+    if (log.user_role) return log.user_role;
+    if (log.user_id && userTypesMap?.[log.user_id]) return userTypesMap[log.user_id];
+    return null;
+  }
+
   function resetFilters() {
     setSearch("");
     setEntityFilter("all");
