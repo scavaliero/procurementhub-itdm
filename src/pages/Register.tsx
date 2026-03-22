@@ -114,6 +114,11 @@ export default function RegisterPage() {
                 maxLength={16}
                 {...register("fiscal_code")}
               />
+              {errors.fiscal_code && (
+                <p className="text-xs text-destructive">
+                  {errors.fiscal_code.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
