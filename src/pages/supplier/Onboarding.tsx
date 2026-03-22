@@ -39,6 +39,11 @@ export default function SupplierOnboarding() {
     enabled: !!profile,
   });
 
+  // Profile data (email, phone, full_name from registration)
+  const profileEmail = profile?.email || "";
+  const profilePhone = profile?.phone || "";
+  const profileName = profile?.full_name || "";
+
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => categoryService.list(),
