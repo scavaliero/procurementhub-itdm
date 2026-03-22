@@ -248,7 +248,7 @@ export default function InternalDashboard() {
       <section className="space-y-4">
         <SectionHeader icon="📌" title="Attività Recenti" variant="green" />
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-sm">
+          <Card className="shadow-sm card-top-activity">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
               <CardTitle className="text-sm font-semibold">Ultime opportunità</CardTitle>
               <Link
