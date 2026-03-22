@@ -199,7 +199,10 @@ export default function InternalVendors() {
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Albo Fornitori" }]} />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Albo Fornitori</h1>
+        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar">
+          <span className="text-base">🏢</span>
+          Albo Fornitori
+        </h2>
         {hasGrant("export_data") && (
           <Button variant="outline" onClick={handleExportCsv} className="gap-2">
             <Download className="h-4 w-4" /> Esporta CSV
