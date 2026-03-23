@@ -233,13 +233,13 @@ export default function SupplierOpportunityDetail() {
         )}
       </div>
 
-      {/* Excluded notice — can re-submit */}
-      {isExcluded && !deadlinePassed && (
-        <Alert>
+      {/* Excluded notice — irreversible */}
+      {isExcluded && (
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Offerta esclusa</AlertTitle>
           <AlertDescription>
-            La tua offerta precedente è stata esclusa. Puoi presentare una nuova offerta compilando il modulo sottostante.
+            La tua offerta è stata esclusa da questa opportunità. Non è possibile presentare una nuova offerta.
           </AlertDescription>
         </Alert>
       )}
