@@ -101,7 +101,7 @@ export default function SupplierOpportunityDetail() {
         notes: existingBid.notes ?? "",
       });
     }
-  }, [existingBid, reset, isExcluded]);
+  }, [existingBid, reset]);
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
