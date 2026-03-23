@@ -156,7 +156,7 @@ export default function SupplierOpportunityDetail() {
           proposed_conditions: data.proposed_conditions,
           notes: data.notes,
         },
-        bidIdToUse
+        existingBid?.id
       );
 
       // 2. Upload attachments
