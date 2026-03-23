@@ -54,10 +54,9 @@ export default function SupplierOpportunityDetail() {
 
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
   
-  // Allow new bid if excluded (supplier can re-submit)
   const isExcluded = existingBid?.status === "excluded";
-  const bidEditable = !existingBid || existingBid.status === "draft" || isExcluded;
-  const isSubmitted = !!existingBid && existingBid.status !== "draft" && !isExcluded;
+  const bidEditable = !existingBid || existingBid.status === "draft";
+  const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const formDisabled = isSubmitted || deadlinePassed;
 
   // Budget max from opportunity
