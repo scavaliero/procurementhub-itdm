@@ -373,7 +373,7 @@ export default function InternalOpportunityEvaluation() {
                               </Button>
                             </div>
                           ) : bidStatus === "excluded" ? (
-                            <span className="text-xs text-destructive font-medium">Esclusa</span>
+                            <Badge variant="destructive" className="text-xs">Esclusa (definitiva)</Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
