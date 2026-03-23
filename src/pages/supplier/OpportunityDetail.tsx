@@ -107,7 +107,6 @@ export default function SupplierOpportunityDetail() {
     mutationFn: async () => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       const values = getValues();
-      // For excluded bids, create a new draft (don't try to update the excluded one)
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
@@ -121,7 +120,7 @@ export default function SupplierOpportunityDetail() {
           proposed_conditions: values.proposed_conditions,
           notes: values.notes,
         },
-        isExcluded ? undefined : existingBid?.id
+        existingBid?.id
       );
       return bid;
     },
