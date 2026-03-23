@@ -344,7 +344,8 @@ export default function SupplierOpportunityDetail() {
                 </ul>
               </div>
             )}
-            {!["RB04", "RB01", "RB01_EXPIRED", "RB02"].includes(validationResult.code ?? "") && validationResult.message}
+            {validationResult.code === "RB05" && validationResult.message}
+            {!["RB04", "RB01", "RB01_EXPIRED", "RB02", "RB05"].includes(validationResult.code ?? "") && validationResult.message}
           </AlertDescription>
         </Alert>
       )}
