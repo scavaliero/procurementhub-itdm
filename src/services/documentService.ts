@@ -75,6 +75,7 @@ export const documentService = {
     tenantId: string;
     file: File;
     expiryDate?: string;
+    issueDate?: string;
     needsManualReview: boolean;
   }): Promise<UploadedDocument> {
     const fileExt = params.file.name.split(".").pop();
