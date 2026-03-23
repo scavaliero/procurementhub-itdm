@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -37,6 +38,8 @@ const BID_STATUS_LABELS: Record<string, string> = {
   accepted: "Accettata",
   rejected: "Respinta",
   withdrawn: "Ritirata",
+  winning: "Vincitrice",
+  not_awarded: "Non aggiudicata",
 };
 
 const BID_STATUS_COLORS: Record<string, string> = {
@@ -46,6 +49,8 @@ const BID_STATUS_COLORS: Record<string, string> = {
   admitted: "bg-emerald-100 text-emerald-700",
   admitted_with_reserve: "bg-amber-100 text-amber-700",
   excluded: "bg-red-100 text-red-700",
+  winning: "bg-emerald-100 text-emerald-800",
+  not_awarded: "bg-gray-200 text-gray-600",
 };
 
 export default function InternalOpportunityEvaluation() {
@@ -79,6 +84,8 @@ export default function InternalOpportunityEvaluation() {
     () => (Array.isArray(opp?.evaluation_criteria) ? (opp.evaluation_criteria as unknown as CriterionDef[]) : []),
     [opp]
   );
+
+  const budgetMax = opp?.budget_max ?? null;
 
   // Initialize scores from existing evaluations
   useMemo(() => {
@@ -147,21 +154,23 @@ export default function InternalOpportunityEvaluation() {
 
   // Admitted bids for award selection
   const admittedBids = useMemo(() => {
-    const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number }[] = [];
+    const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number; exceedsBudget: boolean }[] = [];
     invitations.forEach((inv: EvaluationInvitation) => {
       const bid = inv.bids?.[0];
       if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
+        const amount = Number(bid.total_amount ?? 0);
         result.push({
           bidId: bid.id,
           supplierId: inv.supplier_id,
           supplierName: inv.suppliers?.company_name ?? "—",
-          totalAmount: Number(bid.total_amount ?? 0),
+          totalAmount: amount,
           score: computeTotal(bid.id),
+          exceedsBudget: budgetMax != null && amount > budgetMax,
         });
       }
     });
     return result;
-  }, [invitations, computeTotal]);
+  }, [invitations, computeTotal, budgetMax]);
 
   const allSubmittedBidIds = useMemo(() => {
     return invitations
@@ -173,11 +182,18 @@ export default function InternalOpportunityEvaluation() {
   const canCreateOrder = hasGrant("manage_orders");
   const isAwarded = opp?.status === "awarded";
 
+  // Selected winner budget check
+  const selectedWinnerData = admittedBids.find((b) => b.bidId === selectedWinner);
+  const winnerExceedsBudget = selectedWinnerData?.exceedsBudget ?? false;
+
   const awardMutation = useMutation({
     mutationFn: async () => {
       if (!profile || !selectedWinner) throw new Error("Dati mancanti");
       const winner = admittedBids.find((b) => b.bidId === selectedWinner);
       if (!winner) throw new Error("Offerta non trovata");
+      if (winner.exceedsBudget) {
+        throw new Error(`L'offerta di ${winner.supplierName} (€ ${winner.totalAmount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax?.toLocaleString("it-IT")}). Non è possibile aggiudicare.`);
+      }
       await bidService.awardOpportunity({
         opportunityId: opportunityId!,
         winningBidId: winner.bidId,
@@ -208,6 +224,8 @@ export default function InternalOpportunityEvaluation() {
   }
 
   const canEvaluate = hasGrant("evaluate_bids");
+  // Disable evaluation actions after award
+  const actionsDisabled = isAwarded;
 
   return (
     <div className="p-6 space-y-6">
@@ -220,6 +238,9 @@ export default function InternalOpportunityEvaluation() {
           <div>
             <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
             <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
+            {budgetMax != null && (
+              <p className="text-xs text-muted-foreground">Budget massimo: € {budgetMax.toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
+            )}
           </div>
         </div>
         {canAward && !isAwarded && admittedBids.length > 0 && (
@@ -261,7 +282,7 @@ export default function InternalOpportunityEvaluation() {
                     </TableHead>
                   ))}
                   <TableHead className="text-center font-bold">Totale</TableHead>
-                  {canEvaluate && <TableHead className="text-center">Azioni</TableHead>}
+                  {canEvaluate && !actionsDisabled && <TableHead className="text-center">Azioni</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -271,6 +292,8 @@ export default function InternalOpportunityEvaluation() {
                   const bidStatus = bid?.status ?? "no_bid";
                   const hasBid = !!bid && bid.status !== "draft";
                   const total = bidId ? computeTotal(bidId) : 0;
+                  const bidAmount = Number(bid?.total_amount ?? 0);
+                  const overBudget = budgetMax != null && bidAmount > budgetMax && hasBid;
 
                   return (
                     <TableRow key={inv.id}>
@@ -282,13 +305,14 @@ export default function InternalOpportunityEvaluation() {
                           {BID_STATUS_LABELS[bidStatus] ?? bidStatus}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {hasBid ? `€ ${Number(bid.total_amount ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : "—"}
+                      <TableCell className={`text-right font-mono ${overBudget ? "text-destructive font-bold" : ""}`}>
+                        {hasBid ? `€ ${bidAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : "—"}
+                        {overBudget && <span className="block text-[10px]">⚠ Supera budget</span>}
                       </TableCell>
                       <TableCell className="text-center">{hasBid ? bid.execution_days ?? "—" : "—"}</TableCell>
                       {criteria.map((c) => (
                         <TableCell key={c.name} className="text-center">
-                          {hasBid && canEvaluate && bidId ? (
+                          {hasBid && canEvaluate && bidId && !actionsDisabled ? (
                             <Input
                               type="number"
                               min={0}
@@ -297,6 +321,8 @@ export default function InternalOpportunityEvaluation() {
                               value={scores[bidId]?.[c.name] ?? ""}
                               onChange={(e) => setScore(bidId, c.name, Math.min(c.max_score, Math.max(0, Number(e.target.value))))}
                             />
+                          ) : hasBid && bidId ? (
+                            <span>{scores[bidId]?.[c.name] ?? "—"}</span>
                           ) : (
                             "—"
                           )}
@@ -305,9 +331,9 @@ export default function InternalOpportunityEvaluation() {
                       <TableCell className="text-center font-bold">
                         {hasBid && bidId ? total.toFixed(2) : "—"}
                       </TableCell>
-                      {canEvaluate && (
+                      {canEvaluate && !actionsDisabled && (
                         <TableCell>
-                          {hasBid && bidId ? (
+                          {hasBid && bidId && bidStatus !== "excluded" ? (
                             <div className="flex items-center gap-1 justify-center">
                               <Button
                                 variant="ghost"
@@ -346,6 +372,8 @@ export default function InternalOpportunityEvaluation() {
                                 <X className="h-3.5 w-3.5" />
                               </Button>
                             </div>
+                          ) : bidStatus === "excluded" ? (
+                            <span className="text-xs text-destructive font-medium">Esclusa</span>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
@@ -409,12 +437,21 @@ export default function InternalOpportunityEvaluation() {
                 </SelectTrigger>
                 <SelectContent>
                   {admittedBids.map((b) => (
-                    <SelectItem key={b.bidId} value={b.bidId}>
+                    <SelectItem key={b.bidId} value={b.bidId} disabled={b.exceedsBudget}>
                       {b.supplierName} — € {b.totalAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })} (punteggio: {b.score.toFixed(2)})
+                      {b.exceedsBudget && " ⚠ Supera budget"}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {winnerExceedsBudget && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Questa offerta supera il budget massimo. Non è possibile aggiudicarla.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Motivazione aggiudicazione *</Label>
@@ -431,7 +468,7 @@ export default function InternalOpportunityEvaluation() {
               Annulla
             </Button>
             <Button
-              disabled={!selectedWinner || !awardJustification.trim() || awardMutation.isPending}
+              disabled={!selectedWinner || !awardJustification.trim() || awardMutation.isPending || winnerExceedsBudget}
               onClick={() => awardMutation.mutate()}
             >
               Conferma aggiudicazione
