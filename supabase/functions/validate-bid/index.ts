@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // 1. Fetch opportunity
     const { data: opp, error: oppErr } = await supabase
       .from("opportunities")
-      .select("id, bids_deadline, status, category_id")
+      .select("id, bids_deadline, status, category_id, budget_max")
       .eq("id", opportunity_id)
       .maybeSingle();
 

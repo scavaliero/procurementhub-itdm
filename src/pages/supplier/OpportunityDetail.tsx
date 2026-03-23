@@ -354,7 +354,7 @@ export default function SupplierOpportunityDetail() {
       <Card className="card-top-opportunities">
         <CardHeader>
           <CardTitle className="text-lg">
-            {isSubmitted ? "Offerta inviata" : isExcluded ? "Presenta nuova offerta" : existingBid ? "Modifica offerta" : "Presenta offerta"}
+            {isSubmitted ? (isExcluded ? "Offerta esclusa" : "Offerta inviata") : existingBid ? "Modifica offerta" : "Presenta offerta"}
           </CardTitle>
         </CardHeader>
         <CardContent>
