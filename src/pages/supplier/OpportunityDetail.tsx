@@ -327,7 +327,8 @@ export default function SupplierOpportunityDetail() {
             {validationResult.code === "RB01" && "Categoria non qualificata"}
             {validationResult.code === "RB01_EXPIRED" && "Qualifica categoria scaduta"}
             {validationResult.code === "RB02" && "Documenti mancanti"}
-            {!["RB04", "RB01", "RB01_EXPIRED", "RB02"].includes(validationResult.code ?? "") && "Errore di validazione"}
+            {validationResult.code === "RB05" && "Importo superiore al budget"}
+            {!["RB04", "RB01", "RB01_EXPIRED", "RB02", "RB05"].includes(validationResult.code ?? "") && "Errore di validazione"}
           </AlertTitle>
           <AlertDescription>
             {validationResult.code === "RB04" && "Scadenza raggiunta. Non è possibile inviare l'offerta."}
