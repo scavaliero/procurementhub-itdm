@@ -86,7 +86,7 @@ export const billingApprovalService = {
     return data as any[];
   },
 
-  /** List for supplier (only approved+) */
+  /** List for supplier (only approved+) — with order info and residual */
   async listForSupplier(supplierId: string) {
     const { data, error } = await supabase
       .from("billing_approvals")
@@ -96,6 +96,30 @@ export const billingApprovalService = {
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data as any[];
+  },
+
+  /** List for supplier with order code and residual amount */
+  async listForSupplierWithOrder(supplierId: string) {
+    const { data, error } = await supabase
+      .from("billing_approvals")
+      .select("*, suppliers(company_name), orders(code, subject, amount)")
+      .eq("supplier_id", supplierId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    // Enrich with residual from contract_economic_summary
+    const enriched = await Promise.all(
+      (data || []).map(async (b: any) => {
+        try {
+          const summary = await this.getResidual(b.contract_id);
+          return { ...b, residual_amount: summary?.residual_amount ?? null };
+        } catch {
+          return { ...b, residual_amount: null };
+        }
+      })
+    );
+    return enriched;
   },
 
   /** Get contract economic summary for residual check */

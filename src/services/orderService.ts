@@ -144,7 +144,7 @@ export const orderService = {
     return order as Order;
   },
 
-  /** List orders for internal */
+  /** List orders for internal — with billing totals */
   async list(tenantId: string) {
     const { data, error } = await supabase
       .from("orders")
@@ -153,6 +153,33 @@ export const orderService = {
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data as OrderWithSupplier[];
+  },
+
+  /** List orders with billing info (billed total + residual) */
+  async listWithBillingInfo(tenantId: string) {
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select("*, suppliers(company_name)")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    // Get all approved billing totals per order
+    const { data: billings } = await supabase
+      .from("billing_approvals")
+      .select("order_id, amount, status")
+      .is("deleted_at", null)
+      .in("status", ["approved", "invoiced", "closed"]);
+
+    const billedByOrder: Record<string, number> = {};
+    (billings || []).forEach((b: any) => {
+      billedByOrder[b.order_id] = (billedByOrder[b.order_id] || 0) + Number(b.amount);
+    });
+
+    return (orders || []).map((o: any) => ({
+      ...o,
+      billed_total: billedByOrder[o.id] || 0,
+    }));
   },
 
   /** List orders for a supplier */
