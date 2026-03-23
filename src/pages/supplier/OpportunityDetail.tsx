@@ -91,7 +91,7 @@ export default function SupplierOpportunityDetail() {
 
   // Pre-fill form with existing bid data
   useEffect(() => {
-    if (existingBid && !isExcluded) {
+    if (existingBid && existingBid.status === "draft") {
       reset({
         total_amount: existingBid.total_amount ?? undefined,
         technical_description: existingBid.technical_description ?? "",
