@@ -394,6 +394,12 @@ export default function InternalOpportunityEvaluation() {
           <DialogHeader>
             <DialogTitle>Escludi offerta — {excludeDialog?.supplierName}</DialogTitle>
           </DialogHeader>
+          <Alert variant="destructive" className="mt-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Attenzione:</strong> l'esclusione è irreversibile. Il fornitore verrà notificato e non potrà presentare una nuova offerta per questa opportunità.
+            </AlertDescription>
+          </Alert>
           <div className="space-y-3">
             <Label>Motivazione esclusione *</Label>
             <Textarea

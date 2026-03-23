@@ -140,8 +140,7 @@ export default function SupplierOpportunityDetail() {
         throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax.toLocaleString("it-IT")})`);
       }
 
-      // 1. Save/update draft first (for excluded, create new)
-      const bidIdToUse = isExcluded ? undefined : existingBid?.id;
+      // 1. Save/update draft first
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
