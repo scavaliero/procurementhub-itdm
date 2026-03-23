@@ -21,17 +21,6 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, Send, Upload, Trash2, AlertTriangle, CheckCircle, FileText } from "lucide-react";
 import { format } from "date-fns";
 
-const bidSchema = z.object({
-  total_amount: z.coerce.number().positive("Importo obbligatorio"),
-  technical_description: z.string().min(10, "Descrizione tecnica obbligatoria (min 10 caratteri)"),
-  execution_days: z.coerce.number().int().positive("Giorni di esecuzione obbligatori"),
-  bid_validity_date: z.string().min(1, "Data validità obbligatoria"),
-  proposed_conditions: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type BidFormData = z.infer<typeof bidSchema>;
-
 export default function SupplierOpportunityDetail() {
   const { id: opportunityId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,9 +53,32 @@ export default function SupplierOpportunityDetail() {
   });
 
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
-  const bidEditable = !existingBid || existingBid.status === "draft";
-  const isSubmitted = !!existingBid && existingBid.status !== "draft";
+  
+  // Allow new bid if excluded (supplier can re-submit)
+  const isExcluded = existingBid?.status === "excluded";
+  const bidEditable = !existingBid || existingBid.status === "draft" || isExcluded;
+  const isSubmitted = !!existingBid && existingBid.status !== "draft" && !isExcluded;
   const formDisabled = isSubmitted || deadlinePassed;
+
+  // Budget max from opportunity
+  const budgetMax = opp?.budget_max ?? null;
+
+  const bidSchema = useMemo(() => {
+    let amountSchema = z.coerce.number().positive("Importo obbligatorio");
+    if (budgetMax) {
+      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare il budget massimo di € ${budgetMax.toLocaleString("it-IT")}`);
+    }
+    return z.object({
+      total_amount: amountSchema,
+      technical_description: z.string().min(10, "Descrizione tecnica obbligatoria (min 10 caratteri)"),
+      execution_days: z.coerce.number().int().positive("Giorni di esecuzione obbligatori"),
+      bid_validity_date: z.string().min(1, "Data validità obbligatoria"),
+      proposed_conditions: z.string().optional(),
+      notes: z.string().optional(),
+    });
+  }, [budgetMax]);
+
+  type BidFormData = z.infer<typeof bidSchema>;
 
   const {
     register,
@@ -80,7 +92,7 @@ export default function SupplierOpportunityDetail() {
 
   // Pre-fill form with existing bid data
   useEffect(() => {
-    if (existingBid) {
+    if (existingBid && !isExcluded) {
       reset({
         total_amount: existingBid.total_amount ?? undefined,
         technical_description: existingBid.technical_description ?? "",
@@ -90,12 +102,13 @@ export default function SupplierOpportunityDetail() {
         notes: existingBid.notes ?? "",
       });
     }
-  }, [existingBid, reset]);
+  }, [existingBid, reset, isExcluded]);
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       const values = getValues();
+      // For excluded bids, create a new draft (don't try to update the excluded one)
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
@@ -109,7 +122,7 @@ export default function SupplierOpportunityDetail() {
           proposed_conditions: values.proposed_conditions,
           notes: values.notes,
         },
-        existingBid?.id
+        isExcluded ? undefined : existingBid?.id
       );
       return bid;
     },
@@ -124,40 +137,28 @@ export default function SupplierOpportunityDetail() {
     mutationFn: async (data: BidFormData) => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
 
-      // 1. Save/update draft first
-      let bid = existingBid;
-      if (!bid) {
-        bid = await bidService.saveDraft(
-          {
-            opportunity_id: opportunityId,
-            supplier_id: supplierId,
-            tenant_id: profile.tenant_id,
-            invitation_id: invitation?.id,
-            total_amount: data.total_amount,
-            technical_description: data.technical_description,
-            execution_days: data.execution_days,
-            bid_validity_date: data.bid_validity_date,
-            proposed_conditions: data.proposed_conditions,
-            notes: data.notes,
-          }
-        );
-      } else {
-        bid = await bidService.saveDraft(
-          {
-            opportunity_id: opportunityId,
-            supplier_id: supplierId,
-            tenant_id: profile.tenant_id,
-            invitation_id: invitation?.id,
-            total_amount: data.total_amount,
-            technical_description: data.technical_description,
-            execution_days: data.execution_days,
-            bid_validity_date: data.bid_validity_date,
-            proposed_conditions: data.proposed_conditions,
-            notes: data.notes,
-          },
-          bid.id
-        );
+      // Budget validation
+      if (budgetMax && data.total_amount > budgetMax) {
+        throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax.toLocaleString("it-IT")})`);
       }
+
+      // 1. Save/update draft first (for excluded, create new)
+      const bidIdToUse = isExcluded ? undefined : existingBid?.id;
+      const bid = await bidService.saveDraft(
+        {
+          opportunity_id: opportunityId,
+          supplier_id: supplierId,
+          tenant_id: profile.tenant_id,
+          invitation_id: invitation?.id,
+          total_amount: data.total_amount,
+          technical_description: data.technical_description,
+          execution_days: data.execution_days,
+          bid_validity_date: data.bid_validity_date,
+          proposed_conditions: data.proposed_conditions,
+          notes: data.notes,
+        },
+        bidIdToUse
+      );
 
       // 2. Upload attachments
       for (const file of attachments) {
@@ -217,12 +218,14 @@ export default function SupplierOpportunityDetail() {
             existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
             existingBid.status === "submitted" ? "bg-blue-100 text-blue-700" :
             existingBid.status === "not_awarded" ? "bg-amber-100 text-amber-700" :
+            existingBid.status === "excluded" ? "bg-red-100 text-red-700" :
             "bg-muted text-muted-foreground"
           }>
             <CheckCircle className="h-3 w-3 mr-1" />
             {existingBid.status === "winning" ? "Aggiudicata" :
              existingBid.status === "submitted" ? "Offerta inviata" :
              existingBid.status === "not_awarded" ? "Non aggiudicata" :
+             existingBid.status === "excluded" ? "Esclusa" :
              existingBid.status}
           </Badge>
         )}
@@ -231,7 +234,18 @@ export default function SupplierOpportunityDetail() {
         )}
       </div>
 
-      {/* Opportunity details */}
+      {/* Excluded notice — can re-submit */}
+      {isExcluded && !deadlinePassed && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Offerta esclusa</AlertTitle>
+          <AlertDescription>
+            La tua offerta precedente è stata esclusa. Puoi presentare una nuova offerta compilando il modulo sottostante.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Opportunity details — now with economic info */}
       <Card className="card-top-opportunities">
         <CardHeader><CardTitle className="text-lg">Dettagli Opportunità</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -245,6 +259,43 @@ export default function SupplierOpportunityDetail() {
               {opp.bids_deadline ? format(new Date(opp.bids_deadline), "dd/MM/yyyy HH:mm") : "—"}
             </p>
           </div>
+          {/* Economic details */}
+          {opp.budget_estimated != null && (
+            <div>
+              <p className="text-sm text-muted-foreground">Budget stimato</p>
+              <p className="text-sm font-medium">€ {Number(opp.budget_estimated).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
+            </div>
+          )}
+          {opp.budget_max != null && (
+            <div>
+              <p className="text-sm text-muted-foreground">Budget massimo</p>
+              <p className="text-sm font-medium font-mono text-destructive">€ {Number(opp.budget_max).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
+            </div>
+          )}
+          {opp.estimated_duration_days != null && (
+            <div>
+              <p className="text-sm text-muted-foreground">Durata stimata</p>
+              <p className="text-sm font-medium">{opp.estimated_duration_days} giorni</p>
+            </div>
+          )}
+          {opp.start_date && (
+            <div>
+              <p className="text-sm text-muted-foreground">Data inizio prevista</p>
+              <p className="text-sm font-medium">{format(new Date(opp.start_date), "dd/MM/yyyy")}</p>
+            </div>
+          )}
+          {opp.end_date && (
+            <div>
+              <p className="text-sm text-muted-foreground">Data fine prevista</p>
+              <p className="text-sm font-medium">{format(new Date(opp.end_date), "dd/MM/yyyy")}</p>
+            </div>
+          )}
+          {opp.geographic_area && (
+            <div>
+              <p className="text-sm text-muted-foreground">Area geografica</p>
+              <p className="text-sm font-medium">{opp.geographic_area}</p>
+            </div>
+          )}
           {opp.description && (
             <div className="md:col-span-2">
               <p className="text-sm text-muted-foreground">Descrizione</p>
@@ -304,7 +355,7 @@ export default function SupplierOpportunityDetail() {
       <Card className="card-top-opportunities">
         <CardHeader>
           <CardTitle className="text-lg">
-            {isSubmitted ? "Offerta inviata" : existingBid ? "Modifica offerta" : "Presenta offerta"}
+            {isSubmitted ? "Offerta inviata" : isExcluded ? "Presenta nuova offerta" : existingBid ? "Modifica offerta" : "Presenta offerta"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -315,8 +366,15 @@ export default function SupplierOpportunityDetail() {
             <fieldset disabled={formDisabled} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Importo totale (€) *</Label>
-                  <Input type="number" step="0.01" {...register("total_amount")} />
+                  <Label>
+                    Importo totale (€) *
+                    {budgetMax && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (max € {budgetMax.toLocaleString("it-IT")})
+                      </span>
+                    )}
+                  </Label>
+                  <Input type="number" step="0.01" max={budgetMax ?? undefined} {...register("total_amount")} />
                   {errors.total_amount && <p className="text-sm text-destructive mt-1">{errors.total_amount.message}</p>}
                 </div>
                 <div>

@@ -89,6 +89,7 @@ const App = () => (
             <Route path="/supplier/opportunities/:id" element={<SupplierOpportunityDetail />} />
             <Route path="/supplier/orders" element={<SupplierOrders />} />
             <Route path="/supplier/billing-approvals" element={<SupplierBillingApprovals />} />
+            <Route path="/supplier/billing-approvals/:id" element={<SupplierBillingApprovals />} />
             <Route path="/supplier/notifications" element={<SupplierNotifications />} />
             <Route path="/supplier/profile" element={<SupplierProfile />} />
             <Route path="/supplier/change-password" element={<ChangePassword />} />

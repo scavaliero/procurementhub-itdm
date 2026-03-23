@@ -49,7 +49,9 @@ function DocumentCard({
 }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const issueDateRef = useRef<HTMLInputElement>(null);
   const expiryRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: (docId: string) => documentService.deleteDocument(docId),
@@ -60,27 +62,37 @@ function DocumentCard({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const expiryDate = expiryRef.current?.value;
-      if (!expiryDate) {
-        throw new Error("La data di scadenza è obbligatoria");
-      }
+  const handleUpload = async (file: File) => {
+    const requiresExpiry = docType.requires_expiry ?? false;
+    const expiryDate = expiryRef.current?.value || undefined;
+    const issueDate = issueDateRef.current?.value || undefined;
+
+    if (requiresExpiry && !expiryDate) {
+      toast.error("La data di scadenza è obbligatoria per questo documento");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
       await documentService.uploadDocument({
         supplierId,
         documentTypeId: docType.id,
         tenantId,
         file,
         expiryDate,
+        issueDate,
         needsManualReview: docType.needs_manual_review ?? true,
       });
-    },
-    onSuccess: () => {
       toast.success(`${docType.name} caricato`);
       qc.invalidateQueries({ queryKey: ["supplier-documents"] });
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
+    } catch (err: any) {
+      toast.error(err.message || "Errore nel caricamento");
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   const isExpiringSoon = uploaded?.status === "approved" && uploaded?.expiry_date &&
     new Date(uploaded.expiry_date) > new Date() &&
@@ -174,11 +186,17 @@ function DocumentCard({
 
             {(!uploaded || uploaded.status !== "rejected") && (
               <>
-                <div className="space-y-1">
-                  <Label className="text-xs">
-                    Data scadenza <span className="text-destructive">*</span>
-                  </Label>
-                  <Input ref={expiryRef} type="date" className="h-8 text-xs" required />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Data emissione</Label>
+                    <Input ref={issueDateRef} type="date" className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">
+                      Data scadenza {docType.requires_expiry && <span className="text-destructive">*</span>}
+                    </Label>
+                    <Input ref={expiryRef} type="date" className="h-8 text-xs" required={!!docType.requires_expiry} />
+                  </div>
                 </div>
                 <div>
                   <input
@@ -194,7 +212,7 @@ function DocumentCard({
                           toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
                           return;
                         }
-                        uploadMutation.mutate(file);
+                        handleUpload(file);
                       }
                     }}
                   />
@@ -202,11 +220,11 @@ function DocumentCard({
                     size="sm"
                     variant={isExpired || isExpiringSoon ? "default" : "outline"}
                     className="w-full"
-                    disabled={uploadMutation.isPending}
+                    disabled={isUploading}
                     onClick={() => fileRef.current?.click()}
                   >
                     <Upload className="h-3.5 w-3.5 mr-1" />
-                    {uploadMutation.isPending
+                    {isUploading
                       ? "Caricamento…"
                       : isExpired
                       ? "Sostituisci documento scaduto"

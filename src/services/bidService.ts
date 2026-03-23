@@ -273,7 +273,7 @@ export const bidService = {
     });
   },
 
-  /** Update bid status (admit, exclude, etc.) */
+  /** Update bid status (admit, exclude, etc.) — notifies supplier on exclusion */
   async updateBidStatus(bidId: string, status: string, tenantId: string, reason?: string) {
     const { error } = await supabase
       .from("bids")
@@ -288,6 +288,47 @@ export const bidService = {
       event_type: "bid_status_changed",
       new_state: { status, reason },
     });
+
+    // Notify supplier on exclusion
+    if (status === "excluded") {
+      try {
+        const { data: bid } = await supabase
+          .from("bids")
+          .select("supplier_id, opportunity_id")
+          .eq("id", bidId)
+          .single();
+        if (bid) {
+          const { data: opp } = await supabase
+            .from("opportunities")
+            .select("title, code")
+            .eq("id", bid.opportunity_id)
+            .single();
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("supplier_id", bid.supplier_id)
+            .limit(1)
+            .maybeSingle();
+          if (profileData) {
+            await notificationService.send({
+              event_type: "bid_excluded",
+              recipient_id: profileData.id,
+              tenant_id: tenantId,
+              link_url: `/supplier/opportunities/${bid.opportunity_id}`,
+              related_entity_id: bid.opportunity_id,
+              related_entity_type: "opportunity",
+              variables: {
+                opportunity_title: opp?.title || "",
+                opportunity_code: opp?.code || "",
+                reason: reason || "Nessuna motivazione fornita",
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Non-blocking exclusion notification error:", e);
+      }
+    }
   },
 
   /** Award opportunity to a winning bid */

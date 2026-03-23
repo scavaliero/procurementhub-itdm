@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CheckCircle, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza",
@@ -43,7 +44,7 @@ export default function InternalOrders() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["internal-orders"],
-    queryFn: () => orderService.list(profile?.tenant_id ?? ""),
+    queryFn: () => orderService.listWithBillingInfo(profile?.tenant_id ?? ""),
     enabled: !!profile,
   });
 
@@ -92,59 +93,76 @@ export default function InternalOrders() {
                   <TableHead>Fornitore</TableHead>
                   <TableHead>Stato</TableHead>
                   <TableHead className="text-right">Importo (€)</TableHead>
+                  <TableHead className="text-right">Fatturato (€)</TableHead>
+                  <TableHead className="text-right">Residuo (€)</TableHead>
                   <TableHead>Data</TableHead>
                   {canManage && <TableHead className="text-center">Azioni</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((o: any) => (
-                  <TableRow
-                    key={o.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/internal/orders/${o.id}`)}
-                  >
-                    <TableCell className="font-mono text-sm">{o.code ?? "—"}</TableCell>
-                    <TableCell className="font-medium">{o.subject}</TableCell>
-                    <TableCell>{o.suppliers?.company_name ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={STATUS_COLORS[o.status] ?? ""}>
-                        {STATUS_LABELS[o.status] ?? o.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      € {Number(o.amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {o.created_at ? format(new Date(o.created_at), "dd/MM/yyyy") : "—"}
-                    </TableCell>
-                    {canManage && (
-                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                        {o.status === "pending_approval" ? (
-                          <div className="flex gap-1 justify-center">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              disabled={approveMutation.isPending || rejectMutation.isPending}
-                              onClick={() => approveMutation.mutate(o.id)}
-                            >
-                              <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approva
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              disabled={approveMutation.isPending || rejectMutation.isPending}
-                              onClick={() => rejectMutation.mutate(o.id)}
-                            >
-                              <XCircle className="h-3.5 w-3.5 mr-1" /> Rifiuta
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                {orders.map((o: any) => {
+                  const billedTotal = o.billed_total ?? 0;
+                  const residual = Number(o.amount) - billedTotal;
+                  // Auto-display as completed if fully billed
+                  const effectiveStatus = (billedTotal >= Number(o.amount) && ["accepted", "in_progress"].includes(o.status))
+                    ? "completed"
+                    : o.status;
+
+                  return (
+                    <TableRow
+                      key={o.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/internal/orders/${o.id}`)}
+                    >
+                      <TableCell className="font-mono text-sm">{o.code ?? "—"}</TableCell>
+                      <TableCell className="font-medium">{o.subject}</TableCell>
+                      <TableCell>{o.suppliers?.company_name ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className={STATUS_COLORS[effectiveStatus] ?? ""}>
+                          {STATUS_LABELS[effectiveStatus] ?? effectiveStatus}
+                        </Badge>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
+                      <TableCell className="text-right font-mono">
+                        € {Number(o.amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        € {billedTotal.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono ${residual <= 0 ? "text-emerald-600" : ""}`}>
+                        € {residual.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {o.created_at ? format(new Date(o.created_at), "dd/MM/yyyy") : "—"}
+                      </TableCell>
+                      {canManage && (
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          {o.status === "pending_approval" ? (
+                            <div className="flex gap-1 justify-center">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                disabled={approveMutation.isPending || rejectMutation.isPending}
+                                onClick={() => approveMutation.mutate(o.id)}
+                              >
+                                <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approva
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={approveMutation.isPending || rejectMutation.isPending}
+                                onClick={() => rejectMutation.mutate(o.id)}
+                              >
+                                <XCircle className="h-3.5 w-3.5 mr-1" /> Rifiuta
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

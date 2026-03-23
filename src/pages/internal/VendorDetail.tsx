@@ -338,10 +338,17 @@ export default function InternalVendorDetail() {
           toast.error(`Impossibile approvare: ${pending.length} documenti non ancora approvati.`);
           return;
         }
-        statusMut.mutate({
-          toStatus: "accredited",
-          extraUpdate: { accredited_at: new Date().toISOString() },
-        });
+        statusMut.mutate(
+          {
+            toStatus: "accredited",
+            extraUpdate: { accredited_at: new Date().toISOString() },
+          },
+          {
+            onSuccess: () => {
+              toast.success(`Il fornitore "${supplier.company_name}" è stato accreditato`);
+            },
+          }
+        );
         break;
       }
 
