@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // 1. Fetch opportunity
     const { data: opp, error: oppErr } = await supabase
       .from("opportunities")
-      .select("id, bids_deadline, status, category_id")
+      .select("id, bids_deadline, status, category_id, budget_max")
       .eq("id", opportunity_id)
       .maybeSingle();
 
@@ -99,7 +99,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 5. All checks passed
+    // 5. RB-05: Check budget max
+    if (opp.budget_max) {
+      const { data: bid } = await supabase
+        .from("bids")
+        .select("total_amount")
+        .eq("opportunity_id", opportunity_id)
+        .eq("supplier_id", supplier_id)
+        .eq("status", "draft")
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (bid && bid.total_amount != null && Number(bid.total_amount) > Number(opp.budget_max)) {
+        return jsonResponse({
+          valid: false,
+          code: "RB05",
+          message: `L'importo dell'offerta (€ ${Number(bid.total_amount).toLocaleString("it-IT")}) supera il budget massimo (€ ${Number(opp.budget_max).toLocaleString("it-IT")})`,
+          budget_max: opp.budget_max,
+          bid_amount: bid.total_amount,
+        });
+      }
+    }
+
+    // 6. All checks passed
     return jsonResponse({ valid: true });
   } catch (err) {
     console.error("validate-bid error:", err);

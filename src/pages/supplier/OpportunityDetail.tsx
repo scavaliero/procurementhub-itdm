@@ -54,10 +54,9 @@ export default function SupplierOpportunityDetail() {
 
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
   
-  // Allow new bid if excluded (supplier can re-submit)
   const isExcluded = existingBid?.status === "excluded";
-  const bidEditable = !existingBid || existingBid.status === "draft" || isExcluded;
-  const isSubmitted = !!existingBid && existingBid.status !== "draft" && !isExcluded;
+  const bidEditable = !existingBid || existingBid.status === "draft";
+  const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const formDisabled = isSubmitted || deadlinePassed;
 
   // Budget max from opportunity
@@ -92,7 +91,7 @@ export default function SupplierOpportunityDetail() {
 
   // Pre-fill form with existing bid data
   useEffect(() => {
-    if (existingBid && !isExcluded) {
+    if (existingBid && existingBid.status === "draft") {
       reset({
         total_amount: existingBid.total_amount ?? undefined,
         technical_description: existingBid.technical_description ?? "",
@@ -102,13 +101,12 @@ export default function SupplierOpportunityDetail() {
         notes: existingBid.notes ?? "",
       });
     }
-  }, [existingBid, reset, isExcluded]);
+  }, [existingBid, reset]);
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       const values = getValues();
-      // For excluded bids, create a new draft (don't try to update the excluded one)
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
@@ -122,7 +120,7 @@ export default function SupplierOpportunityDetail() {
           proposed_conditions: values.proposed_conditions,
           notes: values.notes,
         },
-        isExcluded ? undefined : existingBid?.id
+        existingBid?.id
       );
       return bid;
     },
@@ -142,8 +140,7 @@ export default function SupplierOpportunityDetail() {
         throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax.toLocaleString("it-IT")})`);
       }
 
-      // 1. Save/update draft first (for excluded, create new)
-      const bidIdToUse = isExcluded ? undefined : existingBid?.id;
+      // 1. Save/update draft first
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
@@ -157,7 +154,7 @@ export default function SupplierOpportunityDetail() {
           proposed_conditions: data.proposed_conditions,
           notes: data.notes,
         },
-        bidIdToUse
+        existingBid?.id
       );
 
       // 2. Upload attachments
@@ -234,13 +231,13 @@ export default function SupplierOpportunityDetail() {
         )}
       </div>
 
-      {/* Excluded notice — can re-submit */}
-      {isExcluded && !deadlinePassed && (
-        <Alert>
+      {/* Excluded notice — irreversible */}
+      {isExcluded && (
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Offerta esclusa</AlertTitle>
           <AlertDescription>
-            La tua offerta precedente è stata esclusa. Puoi presentare una nuova offerta compilando il modulo sottostante.
+            La tua offerta è stata esclusa da questa opportunità. Non è possibile presentare una nuova offerta.
           </AlertDescription>
         </Alert>
       )}
@@ -330,7 +327,8 @@ export default function SupplierOpportunityDetail() {
             {validationResult.code === "RB01" && "Categoria non qualificata"}
             {validationResult.code === "RB01_EXPIRED" && "Qualifica categoria scaduta"}
             {validationResult.code === "RB02" && "Documenti mancanti"}
-            {!["RB04", "RB01", "RB01_EXPIRED", "RB02"].includes(validationResult.code ?? "") && "Errore di validazione"}
+            {validationResult.code === "RB05" && "Importo superiore al budget"}
+            {!["RB04", "RB01", "RB01_EXPIRED", "RB02", "RB05"].includes(validationResult.code ?? "") && "Errore di validazione"}
           </AlertTitle>
           <AlertDescription>
             {validationResult.code === "RB04" && "Scadenza raggiunta. Non è possibile inviare l'offerta."}
@@ -346,7 +344,8 @@ export default function SupplierOpportunityDetail() {
                 </ul>
               </div>
             )}
-            {!["RB04", "RB01", "RB01_EXPIRED", "RB02"].includes(validationResult.code ?? "") && validationResult.message}
+            {validationResult.code === "RB05" && validationResult.message}
+            {!["RB04", "RB01", "RB01_EXPIRED", "RB02", "RB05"].includes(validationResult.code ?? "") && validationResult.message}
           </AlertDescription>
         </Alert>
       )}
@@ -355,7 +354,7 @@ export default function SupplierOpportunityDetail() {
       <Card className="card-top-opportunities">
         <CardHeader>
           <CardTitle className="text-lg">
-            {isSubmitted ? "Offerta inviata" : isExcluded ? "Presenta nuova offerta" : existingBid ? "Modifica offerta" : "Presenta offerta"}
+            {isSubmitted ? (isExcluded ? "Offerta esclusa" : "Offerta inviata") : existingBid ? "Modifica offerta" : "Presenta offerta"}
           </CardTitle>
         </CardHeader>
         <CardContent>
