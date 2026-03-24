@@ -170,8 +170,8 @@ export default function InternalOpportunityDetail() {
               ✓ Ordine già generato
             </Badge>
           )}
-        </div>
-      )}
+        )}
+      </div>
 
       <Tabs defaultValue="details">
         <TabsList>
