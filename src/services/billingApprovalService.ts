@@ -29,7 +29,7 @@ export const billingApprovalService = {
   async getById(id: string) {
     const { data, error } = await supabase
       .from("billing_approvals")
-      .select("*, suppliers(company_name)")
+      .select("*, suppliers(id, company_name), orders(id, code, subject, amount, opportunity_id, opportunities(id, code, title))")
       .eq("id", id)
       .is("deleted_at", null)
       .single();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { billingApprovalService } from "@/services/billingApprovalService";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, Trash2, Check, X, CalendarIcon, Send } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Check, X, CalendarIcon, Send, ExternalLink, Building2, FileText, MapPin } from "lucide-react";
 import { BillingAttachments } from "@/components/billing/BillingAttachments";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -362,6 +362,62 @@ export default function BillingApprovalDetail() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Reference cards: Ordine, Opportunità, Fornitore */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {billing.orders && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Ordine
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-medium text-sm">{billing.orders.subject}</p>
+                <p className="text-xs text-muted-foreground font-mono">{billing.orders.code}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Importo: € {Number(billing.orders.amount ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                </p>
+                <Link to={`/internal/orders/${billing.order_id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
+                  Vedi ordine <ExternalLink className="h-3 w-3" />
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {billing.orders?.opportunities && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MapPin className="h-4 w-4" /> Opportunità
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-medium text-sm">{billing.orders.opportunities.title}</p>
+                <p className="text-xs text-muted-foreground font-mono">{billing.orders.opportunities.code}</p>
+                <Link to={`/internal/opportunities/${billing.orders.opportunities.id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
+                  Vedi opportunità <ExternalLink className="h-3 w-3" />
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {billing.suppliers && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Building2 className="h-4 w-4" /> Fornitore
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-medium text-sm">{billing.suppliers.company_name}</p>
+                <Link to={`/internal/vendors/${billing.supplier_id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
+                  Vedi scheda fornitore <ExternalLink className="h-3 w-3" />
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <BillingAttachments billingId={id!} canEdit={canEdit} />
