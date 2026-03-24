@@ -45,6 +45,12 @@ export default function InternalCreateOrder() {
     enabled: !!opportunityId,
   });
 
+  const { data: orderExists = false } = useQuery({
+    queryKey: ["order-exists-for-opp", opportunityId],
+    queryFn: () => orderService.existsForOpportunity(opportunityId!),
+    enabled: !!opportunityId,
+  });
+
   // Pre-fill from award data — runs once
   useEffect(() => {
     if (award?.bids && !prefilled.current) {
@@ -96,6 +102,10 @@ export default function InternalCreateOrder() {
 
   if (isLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
+  }
+
+  if (orderExists) {
+    return <EmptyState title="Ordine già generato" description="È già stato generato un ordine per questa opportunità. Non è possibile crearne un altro." />;
   }
 
   if (!award) {

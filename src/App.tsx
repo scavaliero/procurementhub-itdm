@@ -39,7 +39,7 @@ import InternalOpportunityEvaluation from "@/pages/internal/OpportunityEvaluatio
 import InternalOrders from "@/pages/internal/Orders";
 import InternalOrderDetail from "@/pages/internal/OrderDetail";
 import InternalCreateOrder from "@/pages/internal/CreateOrder";
-import InternalContractDetail from "@/pages/internal/ContractDetail";
+// ContractDetail is now integrated into OrderDetail
 import InternalBillingApprovals from "@/pages/internal/BillingApprovals";
 import InternalBillingApprovalDetail from "@/pages/internal/BillingApprovalDetail";
 import ConfigDocumentTypes from "@/pages/internal/ConfigDocumentTypes";
@@ -113,7 +113,7 @@ const App = () => (
             <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
             <Route path="/internal/orders" element={<InternalOrders />} />
             <Route path="/internal/orders/:id" element={<InternalOrderDetail />} />
-            <Route path="/internal/contracts/:id" element={<InternalContractDetail />} />
+            {/* Contract detail is now part of order detail */}
             <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
             <Route path="/internal/billing-approvals/:id" element={<InternalBillingApprovalDetail />} />
             <Route path="/internal/notifications" element={<InternalNotifications />} />

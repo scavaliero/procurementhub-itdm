@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { opportunityService } from "@/services/opportunityService";
 import { invitationService } from "@/services/invitationService";
+import { orderService } from "@/services/orderService";
 import { auditService } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
@@ -74,6 +75,12 @@ export default function InternalOpportunityDetail() {
     enabled: !!id,
   });
 
+  const { data: hasOrder = false } = useQuery({
+    queryKey: ["order-exists-for-opp", id],
+    queryFn: () => orderService.existsForOpportunity(id!),
+    enabled: !!id,
+  });
+
   const statusMutation = useMutation({
     mutationFn: async (nextStatus: string) => {
       const updated = await opportunityService.update(id!, { status: nextStatus } as any);
@@ -101,7 +108,7 @@ export default function InternalOpportunityDetail() {
 
   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
-  const canChangeStatus = hasGrant("create_opportunity") || hasGrant("approve_opportunity");
+  const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
   const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
 
   return (
@@ -145,11 +152,16 @@ export default function InternalOpportunityDetail() {
             </Button>
           )}
 
-          {/* Link to create order — only if awarded */}
-          {opp.status === "awarded" && (
+          {/* Link to create order — only if awarded and no order exists yet */}
+          {opp.status === "awarded" && !hasOrder && (
             <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
               <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
             </Button>
+          )}
+          {hasOrder && (
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
+              ✓ Ordine già generato
+            </Badge>
           )}
         </div>
       )}
