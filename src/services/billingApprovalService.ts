@@ -74,6 +74,18 @@ export const billingApprovalService = {
     return data as any[];
   },
 
+  /** List billing approvals by order ID */
+  async listByOrderId(orderId: string) {
+    const { data, error } = await supabase
+      .from("billing_approvals")
+      .select("*, suppliers(company_name)")
+      .eq("order_id", orderId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as any[];
+  },
+
   /** List pending approvals */
   async listPending() {
     const { data, error } = await supabase
