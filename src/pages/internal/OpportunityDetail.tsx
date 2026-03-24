@@ -152,11 +152,16 @@ export default function InternalOpportunityDetail() {
             </Button>
           )}
 
-          {/* Link to create order — only if awarded */}
-          {opp.status === "awarded" && (
+          {/* Link to create order — only if awarded and no order exists yet */}
+          {opp.status === "awarded" && !hasOrder && (
             <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
               <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
             </Button>
+          )}
+          {hasOrder && (
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
+              ✓ Ordine già generato
+            </Badge>
           )}
         </div>
       )}

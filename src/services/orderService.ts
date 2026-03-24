@@ -32,6 +32,17 @@ export type OrderDetail = Order & {
 };
 
 export const orderService = {
+  /** Check if an order exists for an opportunity */
+  async existsForOpportunity(opportunityId: string): Promise<boolean> {
+    const { count, error } = await supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("opportunity_id", opportunityId)
+      .is("deleted_at", null);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  },
+
   /** Get single order by ID */
   async getById(orderId: string): Promise<OrderDetail> {
     const { data, error } = await supabase
