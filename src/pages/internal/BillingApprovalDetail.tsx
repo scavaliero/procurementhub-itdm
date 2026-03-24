@@ -377,40 +377,20 @@ export default function BillingApprovalDetail() {
           </Card>
         </div>
 
-        {/* Reference cards: Ordine, Opportunità, Fornitore */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {billing.orders && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Ordine
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-medium text-sm">{billing.orders.subject}</p>
-                <p className="text-xs text-muted-foreground font-mono">{billing.orders.code}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Importo: € {Number(billing.orders.amount ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}
-                </p>
-                <Link to={`/internal/orders/${billing.order_id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
-                  Vedi ordine <ExternalLink className="h-3 w-3" />
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
+        {/* Reference cards: Opportunità, Fornitore */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {billing.orders?.opportunities && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <MapPin className="h-4 w-4" /> Opportunità
+                  <MapPin className="h-4 w-4" /> Opportunità collegata
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="font-medium text-sm">{billing.orders.opportunities.title}</p>
                 <p className="text-xs text-muted-foreground font-mono">{billing.orders.opportunities.code}</p>
                 <Link to={`/internal/opportunities/${billing.orders.opportunities.id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
-                  Vedi opportunità <ExternalLink className="h-3 w-3" />
+                  Vai al dettaglio opportunità <ExternalLink className="h-3 w-3" />
                 </Link>
               </CardContent>
             </Card>
@@ -426,7 +406,7 @@ export default function BillingApprovalDetail() {
               <CardContent>
                 <p className="font-medium text-sm">{billing.suppliers.company_name}</p>
                 <Link to={`/internal/vendors/${billing.supplier_id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
-                  Vedi scheda fornitore <ExternalLink className="h-3 w-3" />
+                  Vai alla scheda fornitore <ExternalLink className="h-3 w-3" />
                 </Link>
               </CardContent>
             </Card>
