@@ -129,7 +129,13 @@ export default function InternalOpportunityDetail() {
       </div>
 
       {/* Action buttons */}
-      {canChangeStatus && (
+      <div className="flex flex-wrap gap-2">
+        {canEdit && (
+          <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/edit`)}>
+            <Pencil className="mr-2 h-4 w-4" /> Modifica
+          </Button>
+        )}
+        {canChangeStatus && (
         <div className="flex flex-wrap gap-2">
           {transitions.map((t) => {
             const Icon = t.icon;
