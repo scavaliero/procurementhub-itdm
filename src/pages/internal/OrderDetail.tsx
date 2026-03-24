@@ -87,6 +87,12 @@ export default function InternalOrderDetail() {
     enabled: !!id,
   });
 
+  const { data: billingApprovals = [] } = useQuery({
+    queryKey: ["billing-by-order", id],
+    queryFn: () => billingApprovalService.listByOrderId(id!),
+    enabled: !!id,
+  });
+
   const canManage = hasGrant("manage_orders");
 
   // Order mutations
