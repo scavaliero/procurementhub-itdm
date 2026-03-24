@@ -104,6 +104,10 @@ export default function InternalCreateOrder() {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
   }
 
+  if (orderExists) {
+    return <EmptyState title="Ordine già generato" description="È già stato generato un ordine per questa opportunità. Non è possibile crearne un altro." />;
+  }
+
   if (!award) {
     return <EmptyState title="Aggiudicazione non trovata" description="Questa opportunità non è ancora stata aggiudicata." />;
   }
