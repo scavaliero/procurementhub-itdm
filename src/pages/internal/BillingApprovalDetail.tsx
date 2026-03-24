@@ -322,41 +322,54 @@ export default function BillingApprovalDetail() {
 
           <Card className="card-top-billing">
             <CardHeader>
-              <CardTitle className="text-base">Informazioni contratto</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Ordine di riferimento
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {residualData ? (
+              {billing.orders ? (
                 <>
+                  <InfoRow label="Codice ordine" value={billing.orders.code ?? "—"} />
+                  <InfoRow label="Oggetto" value={billing.orders.subject ?? "—"} />
                   <InfoRow
-                    label="Importo autorizzato"
-                    value={`€ ${Number(residualData.current_authorized_amount ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
-                  />
-                  <InfoRow
-                    label="Totale fatturato approvato"
-                    value={`€ ${Number(residualData.approved_billing_total ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
-                  />
-                  <InfoRow
-                    label="Residuo disponibile"
-                    value={`€ ${residualAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
+                    label="Importo ordine"
+                    value={`€ ${Number(billing.orders.amount ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
                     bold
                   />
-                  {Number(residualData.pending_approval_amount ?? 0) > 0 && (
-                    <InfoRow
-                      label="In attesa di approvazione"
-                      value={`€ ${Number(residualData.pending_approval_amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })} (${residualData.pending_approval_count} benestare)`}
-                    />
+                  {residualData && (
+                    <>
+                      <Separator />
+                      <InfoRow
+                        label="Fatturato approvato"
+                        value={`€ ${Number(residualData.approved_billing_total ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
+                      />
+                      <InfoRow
+                        label="Residuo disponibile"
+                        value={`€ ${residualAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}`}
+                        bold
+                      />
+                      {Number(residualData.pending_approval_amount ?? 0) > 0 && (
+                        <InfoRow
+                          label="In attesa di approvazione"
+                          value={`€ ${Number(residualData.pending_approval_amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })} (${residualData.pending_approval_count})`}
+                        />
+                      )}
+                    </>
                   )}
+                  <Link to={`/internal/orders/${billing.order_id}`} className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-2">
+                    Vai al dettaglio ordine <ExternalLink className="h-3 w-3" />
+                  </Link>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Dati contratto non disponibili</p>
+                <p className="text-sm text-muted-foreground">Ordine non disponibile</p>
               )}
 
-              {billing.approved_by && (
+              {billing.approved_by && billing.approved_at && (
                 <>
                   <Separator />
                   <InfoRow
                     label="Approvato il"
-                    value={billing.approved_at ? format(new Date(billing.approved_at), "dd/MM/yyyy HH:mm", { locale: it }) : "—"}
+                    value={format(new Date(billing.approved_at), "dd/MM/yyyy HH:mm", { locale: it })}
                   />
                 </>
               )}
