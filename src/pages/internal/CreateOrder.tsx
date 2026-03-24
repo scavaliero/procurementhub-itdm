@@ -45,6 +45,12 @@ export default function InternalCreateOrder() {
     enabled: !!opportunityId,
   });
 
+  const { data: orderExists = false } = useQuery({
+    queryKey: ["order-exists-for-opp", opportunityId],
+    queryFn: () => orderService.existsForOpportunity(opportunityId!),
+    enabled: !!opportunityId,
+  });
+
   // Pre-fill from award data — runs once
   useEffect(() => {
     if (award?.bids && !prefilled.current) {
