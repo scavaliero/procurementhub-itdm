@@ -17,6 +17,7 @@ const eventLabels: Record<string, string> = {
   opportunity_awarded: "Esito opportunità",
   bid_submitted: "Nuova offerta ricevuta",
   onboarding_completed: "Onboarding completato",
+  opportunity_updated: "Opportunità modificata",
   document_approved: "Documento approvato",
   document_rejected: "Documento respinto",
   document_expiry_warning: "Documento in scadenza",
