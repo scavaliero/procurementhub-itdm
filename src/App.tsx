@@ -35,6 +35,7 @@ import InternalVendorDetail from "@/pages/internal/VendorDetail";
 import InternalOpportunities from "@/pages/internal/Opportunities";
 import InternalOpportunityNew from "@/pages/internal/OpportunityNew";
 import InternalOpportunityDetail from "@/pages/internal/OpportunityDetail";
+import InternalOpportunityEdit from "@/pages/internal/OpportunityEdit";
 import InternalOpportunityEvaluation from "@/pages/internal/OpportunityEvaluation";
 import InternalOrders from "@/pages/internal/Orders";
 import InternalOrderDetail from "@/pages/internal/OrderDetail";
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/internal/opportunities" element={<InternalOpportunities />} />
             <Route path="/internal/opportunities/new" element={<InternalOpportunityNew />} />
             <Route path="/internal/opportunities/:id" element={<InternalOpportunityDetail />} />
+            <Route path="/internal/opportunities/:id/edit" element={<InternalOpportunityEdit />} />
             <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
             <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
             <Route path="/internal/orders" element={<InternalOrders />} />

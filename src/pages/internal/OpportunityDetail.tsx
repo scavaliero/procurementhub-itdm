@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -108,6 +108,7 @@ export default function InternalOpportunityDetail() {
 
   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
+  const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
   const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
   const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
 
@@ -128,43 +129,46 @@ export default function InternalOpportunityDetail() {
       </div>
 
       {/* Action buttons */}
-      {canChangeStatus && (
-        <div className="flex flex-wrap gap-2">
-          {transitions.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Button
-                key={t.next}
-                variant={t.variant ?? "default"}
-                disabled={statusMutation.isPending}
-                onClick={() => statusMutation.mutate(t.next)}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {t.label}
-              </Button>
-            );
-          })}
-
-          {/* Link to evaluation page */}
-          {["collecting_bids", "evaluating"].includes(opp.status) && (
-            <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/evaluation`)}>
-              <ClipboardList className="mr-2 h-4 w-4" /> Vai alla valutazione
+      <div className="flex flex-wrap gap-2">
+        {canEdit && (
+          <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/edit`)}>
+            <Pencil className="mr-2 h-4 w-4" /> Modifica
+          </Button>
+        )}
+        {canChangeStatus && transitions.map((t) => {
+          const Icon = t.icon;
+          return (
+            <Button
+              key={t.next}
+              variant={t.variant ?? "default"}
+              disabled={statusMutation.isPending}
+              onClick={() => statusMutation.mutate(t.next)}
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              {t.label}
             </Button>
-          )}
+          );
+        })}
 
-          {/* Link to create order — only if awarded and no order exists yet */}
-          {opp.status === "awarded" && !hasOrder && (
-            <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
-            </Button>
-          )}
-          {hasOrder && (
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
-              ✓ Ordine già generato
-            </Badge>
-          )}
-        </div>
-      )}
+        {/* Link to evaluation page */}
+        {canChangeStatus && ["collecting_bids", "evaluating"].includes(opp.status) && (
+          <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/evaluation`)}>
+            <ClipboardList className="mr-2 h-4 w-4" /> Vai alla valutazione
+          </Button>
+        )}
+
+        {/* Link to create order — only if awarded and no order exists yet */}
+        {canChangeStatus && opp.status === "awarded" && !hasOrder && (
+          <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
+            <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
+          </Button>
+        )}
+        {hasOrder && (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
+            ✓ Ordine già generato
+          </Badge>
+        )}
+      </div>
 
       <Tabs defaultValue="details">
         <TabsList>

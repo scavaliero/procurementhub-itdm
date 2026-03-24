@@ -151,4 +151,40 @@ export const opportunityService = {
     if (error) throw error;
     return data ?? [];
   },
+
+  /** Notify all invited suppliers that the opportunity has been updated */
+  async notifyInvitedSuppliersOfUpdate(params: {
+    opportunityId: string;
+    tenantId: string;
+    opportunityTitle: string;
+    opportunityCode: string;
+    invitations: { supplier_id: string }[];
+  }) {
+    const uniqueSupplierIds = [...new Set(params.invitations.map((i) => i.supplier_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, supplier_id")
+      .in("supplier_id", uniqueSupplierIds);
+
+    if (!profiles) return;
+
+    for (const sp of profiles) {
+      try {
+        await notificationService.send({
+          event_type: "opportunity_updated",
+          recipient_id: sp.id,
+          tenant_id: params.tenantId,
+          link_url: `/supplier/opportunities/${params.opportunityId}`,
+          related_entity_id: params.opportunityId,
+          related_entity_type: "opportunity",
+          variables: {
+            opportunity_title: params.opportunityTitle,
+            opportunity_code: params.opportunityCode,
+          },
+        });
+      } catch (e) {
+        console.warn("Non-blocking notification error:", e);
+      }
+    }
+  },
 };
