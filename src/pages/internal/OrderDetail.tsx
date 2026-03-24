@@ -413,6 +413,8 @@ export default function InternalOrderDetail() {
               </Card>
             </>
           )}
+        </TabsContent>
+
         {/* ===== TAB BENESTARE ===== */}
         <TabsContent value="billing" className="space-y-4 mt-4">
           {billingApprovals.length === 0 ? (
