@@ -24,15 +24,26 @@ export const contractService = {
     return data as ContractWithRelations;
   },
 
-  /** Get contract by order ID */
+  /** Get contract by order ID with full relations */
   async getByOrderId(orderId: string) {
     const { data, error } = await supabase
       .from("contracts")
-      .select("*")
+      .select("*, suppliers(company_name)")
       .eq("order_id", orderId)
       .single();
     if (error) throw error;
-    return data as Contract;
+    return data as Contract & { suppliers: { company_name: string } | null };
+  },
+
+  /** Get economic summary by order ID */
+  async getEconomicSummaryByOrderId(orderId: string): Promise<ContractEconomicSummary | null> {
+    const { data, error } = await supabase
+      .from("contract_economic_summary")
+      .select("*")
+      .eq("order_id", orderId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as ContractEconomicSummary | null;
   },
 
   /** Get economic summary */
