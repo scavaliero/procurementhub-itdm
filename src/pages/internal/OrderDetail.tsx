@@ -211,6 +211,9 @@ export default function InternalOrderDetail() {
           <TabsTrigger value="contract">
             <Calendar className="h-4 w-4 mr-1.5" /> Contratto
           </TabsTrigger>
+          <TabsTrigger value="billing">
+            <Receipt className="h-4 w-4 mr-1.5" /> Benestare {billingApprovals.length > 0 && <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">{billingApprovals.length}</Badge>}
+          </TabsTrigger>
         </TabsList>
 
         {/* ===== TAB ORDINE ===== */}
