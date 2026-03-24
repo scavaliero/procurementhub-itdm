@@ -413,6 +413,66 @@ export default function InternalOrderDetail() {
               </Card>
             </>
           )}
+        {/* ===== TAB BENESTARE ===== */}
+        <TabsContent value="billing" className="space-y-4 mt-4">
+          {billingApprovals.length === 0 ? (
+            <EmptyState title="Nessun benestare" description="Non sono ancora stati emessi benestare per questo ordine." />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Receipt className="h-4 w-4" /> Elenco Benestare ({billingApprovals.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Codice</TableHead>
+                        <TableHead>Periodo</TableHead>
+                        <TableHead className="text-right">Importo</TableHead>
+                        <TableHead>Stato</TableHead>
+                        <TableHead>Attività</TableHead>
+                        <TableHead className="text-right">Azioni</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {billingApprovals.map((b: any) => (
+                        <TableRow key={b.id}>
+                          <TableCell className="font-mono text-xs">{b.code ?? "—"}</TableCell>
+                          <TableCell className="text-sm whitespace-nowrap">{fmtDate(b.period_start)} — {fmtDate(b.period_end)}</TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">{fmtCurrency(b.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={
+                              b.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                              b.status === "pending_approval" ? "bg-amber-100 text-amber-700" :
+                              b.status === "rejected" ? "bg-red-100 text-red-700" :
+                              b.status === "draft" ? "bg-muted text-muted-foreground" :
+                              ""
+                            }>
+                              {b.status === "approved" ? "Approvato" :
+                               b.status === "pending_approval" ? "In approvazione" :
+                               b.status === "rejected" ? "Rifiutato" :
+                               b.status === "draft" ? "Bozza" : b.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm max-w-[200px] truncate">{b.activity_description ?? "—"}</TableCell>
+                          <TableCell className="text-right">
+                            <Link to={`/internal/billing-approvals/${b.id}`}>
+                              <Button variant="ghost" size="sm">
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
