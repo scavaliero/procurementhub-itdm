@@ -110,6 +110,7 @@ const App = () => (
             <Route path="/internal/opportunities" element={<InternalOpportunities />} />
             <Route path="/internal/opportunities/new" element={<InternalOpportunityNew />} />
             <Route path="/internal/opportunities/:id" element={<InternalOpportunityDetail />} />
+            <Route path="/internal/opportunities/:id/edit" element={<InternalOpportunityEdit />} />
             <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
             <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
             <Route path="/internal/orders" element={<InternalOrders />} />
