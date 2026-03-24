@@ -135,41 +135,38 @@ export default function InternalOpportunityDetail() {
             <Pencil className="mr-2 h-4 w-4" /> Modifica
           </Button>
         )}
-        {canChangeStatus && (
-        <div className="flex flex-wrap gap-2">
-          {transitions.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Button
-                key={t.next}
-                variant={t.variant ?? "default"}
-                disabled={statusMutation.isPending}
-                onClick={() => statusMutation.mutate(t.next)}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {t.label}
-              </Button>
-            );
-          })}
-
-          {/* Link to evaluation page */}
-          {["collecting_bids", "evaluating"].includes(opp.status) && (
-            <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/evaluation`)}>
-              <ClipboardList className="mr-2 h-4 w-4" /> Vai alla valutazione
+        {canChangeStatus && transitions.map((t) => {
+          const Icon = t.icon;
+          return (
+            <Button
+              key={t.next}
+              variant={t.variant ?? "default"}
+              disabled={statusMutation.isPending}
+              onClick={() => statusMutation.mutate(t.next)}
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              {t.label}
             </Button>
-          )}
+          );
+        })}
 
-          {/* Link to create order — only if awarded and no order exists yet */}
-          {opp.status === "awarded" && !hasOrder && (
-            <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
-            </Button>
-          )}
-          {hasOrder && (
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
-              ✓ Ordine già generato
-            </Badge>
-          )}
+        {/* Link to evaluation page */}
+        {canChangeStatus && ["collecting_bids", "evaluating"].includes(opp.status) && (
+          <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${id}/evaluation`)}>
+            <ClipboardList className="mr-2 h-4 w-4" /> Vai alla valutazione
+          </Button>
+        )}
+
+        {/* Link to create order — only if awarded and no order exists yet */}
+        {canChangeStatus && opp.status === "awarded" && !hasOrder && (
+          <Button variant="default" onClick={() => navigate(`/internal/opportunities/${id}/create-order`)}>
+            <ShoppingCart className="mr-2 h-4 w-4" /> Genera ordine
+          </Button>
+        )}
+        {hasOrder && (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 py-1.5 px-3">
+            ✓ Ordine già generato
+          </Badge>
         )}
       </div>
 
