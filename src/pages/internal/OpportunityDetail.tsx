@@ -75,6 +75,12 @@ export default function InternalOpportunityDetail() {
     enabled: !!id,
   });
 
+  const { data: hasOrder = false } = useQuery({
+    queryKey: ["order-exists-for-opp", id],
+    queryFn: () => orderService.existsForOpportunity(id!),
+    enabled: !!id,
+  });
+
   const statusMutation = useMutation({
     mutationFn: async (nextStatus: string) => {
       const updated = await opportunityService.update(id!, { status: nextStatus } as any);
