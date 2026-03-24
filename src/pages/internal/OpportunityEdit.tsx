@@ -106,7 +106,7 @@ export default function InternalOpportunityEdit() {
         participation_conditions: opp.participation_conditions || "",
         operational_notes: opp.operational_notes || "",
       });
-      const ec = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria as Criterion[] : [];
+      const ec = Array.isArray(opp.evaluation_criteria) ? (opp.evaluation_criteria as unknown as Criterion[]) : [];
       setCriteria(ec);
     }
   }, [opp, reset]);
