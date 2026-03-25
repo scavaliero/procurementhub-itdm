@@ -60,7 +60,7 @@ export default function InternalOpportunityNew() {
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
-  const [attachments, setAttachments] = useState<File[]>([]);
+  
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
 
