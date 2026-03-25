@@ -18,7 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink, Paperclip } from "lucide-react";
+import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
