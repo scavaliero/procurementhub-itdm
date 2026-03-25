@@ -279,7 +279,7 @@ export default function InternalOpportunityEvaluation() {
                         <div className="text-[10px] text-muted-foreground">{c.weight_pct}% (max {c.max_score})</div>
                       </TableHead>
                     ))}
-                    <TableHead className="text-center font-bold">Totale</TableHead>
+                    {/* Totale column removed */}
                     {canEvaluate && !actionsDisabled && <TableHead className="text-center">Azioni</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -296,7 +296,7 @@ export default function InternalOpportunityEvaluation() {
                           <TableCell className="text-right">—</TableCell>
                           <TableCell className="text-center">—</TableCell>
                           {criteria.map((c) => <TableCell key={c.name} className="text-center">—</TableCell>)}
-                          <TableCell className="text-center font-bold">—</TableCell>
+                          {/* Totale removed */}
                           {canEvaluate && !actionsDisabled && <TableCell />}
                         </TableRow>
                       );
@@ -316,7 +316,7 @@ export default function InternalOpportunityEvaluation() {
                       <React.Fragment key={`${inv.id}-${bid.id}`}>
                         <TableRow key={`${inv.id}-bid-${bid.id}`} className={`${isExpanded ? "border-b-0" : ""} ${isWithdrawnBid ? "opacity-50" : ""}`}>
                           <TableCell className="w-8 px-2">
-                            {hasBid && bidId && !isWithdrawnBid && (
+                            {hasBid && bidId && (
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedBid(isExpanded ? null : bidId)}>
                                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               </Button>
@@ -354,9 +354,7 @@ export default function InternalOpportunityEvaluation() {
                               )}
                             </TableCell>
                           ))}
-                          <TableCell className="text-center font-bold">
-                            {hasBid && bidId ? total.toFixed(2) : "—"}
-                          </TableCell>
+                          {/* Totale removed */}
                           {canEvaluate && !actionsDisabled && (
                             <TableCell>
                               {hasBid && bidId && (() => {
@@ -437,8 +435,8 @@ export default function InternalOpportunityEvaluation() {
                         </TableRow>
                         {/* Expanded bid detail */}
                         {isExpanded && bidId && (
-                          <TableRow key={`${inv.id}-detail-${bid.id}`}>
-                            <TableCell colSpan={6 + criteria.length + (canEvaluate && !actionsDisabled ? 1 : 0)} className="bg-muted/30 p-0">
+                          <TableRow key={`${inv.id}-detail-${bid.id}`} className={isWithdrawnBid ? "opacity-50" : ""}>
+                            <TableCell colSpan={5 + criteria.length + (canEvaluate && !actionsDisabled ? 1 : 0)} className="bg-muted/30 p-0">
                               <BidDetailPanel bidId={bidId} bid={bid!} />
                             </TableCell>
                           </TableRow>
