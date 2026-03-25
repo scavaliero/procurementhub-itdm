@@ -323,7 +323,8 @@ export default function InternalOpportunityEvaluation() {
                             )}
                           </TableCell>
                           <TableCell className="sticky left-0 bg-background font-medium">
-                            {inv.suppliers?.company_name ?? "—"}
+                            <div>{inv.suppliers?.company_name ?? "—"}</div>
+                            {bids.length > 1 && <span className="text-[10px] text-muted-foreground">v{bid.version ?? bidIdx + 1}</span>}
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className={BID_STATUS_COLORS[bidStatus] ?? "bg-gray-100 text-gray-500"}>
