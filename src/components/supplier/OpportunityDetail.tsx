@@ -186,6 +186,9 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
               </div>
             )}
           </div>
+
+          {/* Allegati opportunità (solo se presenti) */}
+          <OpportunityAttachments opportunityId={opportunityId} readOnly />
         </TabsContent>
 
         {/* TAB OFFERTE */}
