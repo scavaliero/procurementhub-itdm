@@ -233,7 +233,7 @@ export default function InternalOpportunityEvaluation() {
             <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
             <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
             {budgetMax != null && (
-              <p className="text-xs text-muted-foreground">Budget massimo: € {budgetMax.toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground">Offerta massima: € {budgetMax.toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
             )}
           </div>
         </div>
