@@ -285,7 +285,24 @@ export default function InternalOpportunityEvaluation() {
                 </TableHeader>
                 <TableBody>
                   {invitations.map((inv: EvaluationInvitation) => {
-                    const bid = inv.bids?.[0];
+                    const bids = inv.bids ?? [];
+                    if (bids.length === 0) {
+                      // Supplier invited but no bid yet
+                      return (
+                        <TableRow key={inv.id}>
+                          <TableCell className="w-8 px-2" />
+                          <TableCell className="sticky left-0 bg-background font-medium">{inv.suppliers?.company_name ?? "—"}</TableCell>
+                          <TableCell><Badge variant="secondary" className="bg-gray-100 text-gray-500">{BID_STATUS_LABELS["no_bid"] ?? "Nessuna offerta"}</Badge></TableCell>
+                          <TableCell className="text-right">—</TableCell>
+                          <TableCell className="text-center">—</TableCell>
+                          {criteria.map((c) => <TableCell key={c.name} className="text-center">—</TableCell>)}
+                          <TableCell className="text-center font-bold">—</TableCell>
+                          {canEvaluate && !actionsDisabled && <TableCell />}
+                        </TableRow>
+                      );
+                    }
+
+                    return bids.map((bid, bidIdx) => {
                     const bidId = bid?.id;
                     const bidStatus = bid?.status ?? "no_bid";
                     const hasBid = !!bid && bid.status !== "draft";
@@ -293,9 +310,10 @@ export default function InternalOpportunityEvaluation() {
                     const bidAmount = Number(bid?.total_amount ?? 0);
                     const overBudget = budgetMax != null && bidAmount > budgetMax && hasBid;
                     const isExpanded = expandedBid === bidId;
+                    const isWithdrawnBid = bidStatus === "withdrawn";
 
                     return (
-                      <>
+                      <React.Fragment key={`${inv.id}-${bid.id}`}>
                         <TableRow key={inv.id} className={isExpanded ? "border-b-0" : ""}>
                           <TableCell className="w-8 px-2">
                             {hasBid && bidId && (
