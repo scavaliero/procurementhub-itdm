@@ -32,6 +32,14 @@ const step1Schema = z.object({
   end_date: z.string().optional(),
   budget_estimated: z.coerce.number().optional(),
   budget_max: z.coerce.number().optional(),
+}).refine((data) => {
+  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+    return false;
+  }
+  return true;
+}, {
+  message: "L'offerta massima non può superare il budget stimato",
+  path: ["budget_max"],
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
@@ -277,8 +285,9 @@ export default function InternalOpportunityNew() {
                       <Input type="number" step="0.01" {...register("budget_estimated")} />
                     </div>
                     <div>
-                      <Label>Budget massimo (€)</Label>
+                      <Label>Offerta massima (€)</Label>
                       <Input type="number" step="0.01" {...register("budget_max")} />
+                      {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                     </div>
                   </>
                 )}

@@ -37,6 +37,14 @@ const formSchema = z.object({
   budget_max: z.coerce.number().optional(),
   participation_conditions: z.string().optional(),
   operational_notes: z.string().optional(),
+}).refine((data) => {
+  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+    return false;
+  }
+  return true;
+}, {
+  message: "L'offerta massima non può superare il budget stimato",
+  path: ["budget_max"],
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -281,8 +289,9 @@ export default function InternalOpportunityEdit() {
                     <Input type="number" step="0.01" {...register("budget_estimated")} />
                   </div>
                   <div>
-                    <Label>Budget massimo (€)</Label>
+                    <Label>Offerta massima (€)</Label>
                     <Input type="number" step="0.01" {...register("budget_max")} />
+                    {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                   </div>
                 </>
               )}

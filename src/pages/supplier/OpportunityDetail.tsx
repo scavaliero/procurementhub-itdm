@@ -96,7 +96,7 @@ export default function SupplierOpportunityDetail() {
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
     if (budgetMax) {
-      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare il budget massimo di € ${budgetMax.toLocaleString("it-IT")}`);
+      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di € ${budgetMax.toLocaleString("it-IT")}`);
     }
     return z.object({
       total_amount: amountSchema,
@@ -182,7 +182,7 @@ export default function SupplierOpportunityDetail() {
     mutationFn: async (data: BidFormData) => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       if (budgetMax && data.total_amount > budgetMax) {
-        throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax.toLocaleString("it-IT")})`);
+        throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera l'offerta massima (€ ${budgetMax.toLocaleString("it-IT")})`);
       }
 
       const bid = await bidService.saveDraft(
@@ -312,15 +312,9 @@ export default function SupplierOpportunityDetail() {
               {opp.bids_deadline ? format(new Date(opp.bids_deadline), "dd/MM/yyyy HH:mm") : "—"}
             </p>
           </div>
-          {opp.budget_estimated != null && (
-            <div>
-              <p className="text-sm text-muted-foreground">Budget stimato</p>
-              <p className="text-sm font-medium">€ {Number(opp.budget_estimated).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
-            </div>
-          )}
           {opp.budget_max != null && (
             <div>
-              <p className="text-sm text-muted-foreground">Budget massimo</p>
+              <p className="text-sm text-muted-foreground">Offerta massima</p>
               <p className="text-sm font-medium font-mono text-destructive">€ {Number(opp.budget_max).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
             </div>
           )}

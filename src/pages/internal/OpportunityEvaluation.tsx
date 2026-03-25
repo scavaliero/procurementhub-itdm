@@ -187,7 +187,7 @@ export default function InternalOpportunityEvaluation() {
       const winner = admittedBids.find((b) => b.bidId === selectedWinner);
       if (!winner) throw new Error("Offerta non trovata");
       if (winner.exceedsBudget) {
-        throw new Error(`L'offerta di ${winner.supplierName} (€ ${winner.totalAmount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax?.toLocaleString("it-IT")}). Non è possibile aggiudicare.`);
+        throw new Error(`L'offerta di ${winner.supplierName} (€ ${winner.totalAmount.toLocaleString("it-IT")}) supera l'offerta massima (€ ${budgetMax?.toLocaleString("it-IT")}). Non è possibile aggiudicare.`);
       }
       await bidService.awardOpportunity({
         opportunityId: opportunityId!,
@@ -233,7 +233,7 @@ export default function InternalOpportunityEvaluation() {
             <h1 className="text-2xl font-bold">Valutazione Offerte</h1>
             <p className="text-sm text-muted-foreground">{opp.title} — {opp.code}</p>
             {budgetMax != null && (
-              <p className="text-xs text-muted-foreground">Budget massimo: € {budgetMax.toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground">Offerta massima: € {budgetMax.toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
             )}
           </div>
         </div>
@@ -498,7 +498,7 @@ export default function InternalOpportunityEvaluation() {
                 <Alert variant="destructive" className="mt-2">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Questa offerta supera il budget massimo. Non è possibile aggiudicarla.
+                    Questa offerta supera l'offerta massima. Non è possibile aggiudicarla.
                   </AlertDescription>
                 </Alert>
               )}
