@@ -189,42 +189,15 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           </div>
         </TabsContent>
 
-        {/* TAB CRITERI */}
-        <TabsContent value="criteria" className="space-y-6 mt-4">
-          {criteria.length === 0 ? (
-            <EmptyState title="Nessun criterio" description="Non sono stati definiti criteri di valutazione." />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Criteri di valutazione</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {criteria.map((c: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                      <span className="text-sm font-medium">{c.name}</span>
-                      <Badge variant="outline">{c.weight_pct}%</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* TAB OFFERTE */}
+        <TabsContent value="bid" className="space-y-6 mt-4">
+          <SupplierBidSheet
+            opportunityId={opportunityId}
+            invitation={invitation}
+            onClose={() => {}}
+          />
         </TabsContent>
       </Tabs>
-
-      {/* Bid Sheet */}
-      <Sheet open={bidSheetOpen} onOpenChange={setBidSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          {bidSheetOpen && (
-            <SupplierBidSheet
-              opportunityId={opportunityId}
-              invitation={invitation}
-              onClose={() => setBidSheetOpen(false)}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
