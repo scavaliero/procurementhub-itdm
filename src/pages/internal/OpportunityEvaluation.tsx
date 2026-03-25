@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download, RotateCcw } from "lucide-react";
 
 interface CriterionDef {
   name: string;
