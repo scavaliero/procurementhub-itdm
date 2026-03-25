@@ -75,8 +75,23 @@ export default function SupplierOpportunityDetail() {
   const isExcluded = existingBid?.status === "excluded";
   const bidEditable = !existingBid || existingBid.status === "draft";
   const isSubmitted = !!existingBid && existingBid.status !== "draft";
+  const canWithdraw = existingBid?.status === "submitted" && !deadlinePassed;
   const formDisabled = isSubmitted || deadlinePassed;
   const budgetMax = opp?.budget_max ?? null;
+
+  const withdrawMutation = useMutation({
+    mutationFn: async () => {
+      if (!existingBid || !profile || !opportunityId) throw new Error("Dati mancanti");
+      await bidService.withdraw(existingBid.id, profile.tenant_id, opportunityId);
+    },
+    onSuccess: () => {
+      toast.success("Offerta ritirata. Puoi presentare una nuova offerta.");
+      setShowWithdrawConfirm(false);
+      qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
+      reset({ total_amount: undefined, technical_description: "", execution_days: undefined, bid_validity_date: "", proposed_conditions: "", notes: "" });
+    },
+    onError: (err: any) => toast.error(err.message || "Errore nel ritiro"),
+  });
 
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
