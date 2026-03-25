@@ -279,7 +279,7 @@ export default function InternalOpportunityEvaluation() {
                         <div className="text-[10px] text-muted-foreground">{c.weight_pct}% (max {c.max_score})</div>
                       </TableHead>
                     ))}
-                    <TableHead className="text-center font-bold">Totale</TableHead>
+                    {/* Totale column removed */}
                     {canEvaluate && !actionsDisabled && <TableHead className="text-center">Azioni</TableHead>}
                   </TableRow>
                 </TableHeader>
