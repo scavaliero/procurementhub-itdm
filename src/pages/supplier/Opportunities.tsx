@@ -94,8 +94,8 @@ export default function SupplierOpportunities() {
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-muted-foreground">{opp?.code ?? "—"}</span>
-                      <Badge variant="secondary" className={INV_COLORS[inv.status] ?? ""}>
-                        {INV_STATUS[inv.status] ?? inv.status}
+                      <Badge variant="secondary" className={OPP_STATUS_COLORS[opp?.status] ?? ""}>
+                        {OPP_STATUS_LABELS[opp?.status] ?? opp?.status ?? "—"}
                       </Badge>
                     </div>
                     <p className="font-medium truncate">{opp?.title ?? "—"}</p>
