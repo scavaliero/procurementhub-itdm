@@ -103,9 +103,20 @@ export const bidService = {
       if (!data) throw new Error("Impossibile aggiornare l'offerta — verifica che sia ancora in stato bozza");
       return data as Bid;
     } else {
+      // Get max version for this supplier+opportunity to increment
+      const { data: maxVersionRow } = await supabase
+        .from("bids")
+        .select("version")
+        .eq("opportunity_id", params.opportunity_id)
+        .eq("supplier_id", params.supplier_id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextVersion = (maxVersionRow?.version ?? 0) + 1;
+
       const { data, error } = await supabase
         .from("bids")
-        .insert(payload)
+        .insert({ ...payload, version: nextVersion })
         .select()
         .single();
       if (error) throw error;
