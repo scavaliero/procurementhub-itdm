@@ -22,7 +22,7 @@ interface Props {
 
 export default function SupplierOpportunityDetail({ opportunityId, invitation, onBack }: Props) {
   const { profile } = useAuth();
-
+  const supplierId = profile?.supplier_id;
 
   const { data: opp, isLoading } = useQuery({
     queryKey: ["opportunity", opportunityId],
