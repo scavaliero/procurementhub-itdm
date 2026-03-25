@@ -170,6 +170,18 @@ export default function InternalOpportunityEvaluation() {
     return result;
   }, [invitations, computeTotal, budgetMax]);
 
+  const sortedInvitations = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      winning: 0, not_awarded: 1, submitted: 2, admitted: 3,
+      admitted_with_reserve: 4, excluded: 5, withdrawn: 6, draft: 7,
+    };
+    return [...invitations].sort((a, b) => {
+      const aMin = Math.min(...(a.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99), 99);
+      const bMin = Math.min(...(b.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99), 99);
+      return aMin - bMin;
+    });
+  }, [invitations]);
+
   const allSubmittedBidIds = useMemo(() => {
     return invitations
       .flatMap((inv: EvaluationInvitation) => (inv.bids ?? []).filter(b => b.status !== "withdrawn" && b.status !== "draft").map(b => b.id))
