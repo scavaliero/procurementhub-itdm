@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -186,6 +187,39 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
               </div>
             )}
           </div>
+
+          {/* Criteri di valutazione */}
+          {criteria.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" /> Criteri di valutazione
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Criterio</TableHead>
+                      <TableHead className="text-center">Peso %</TableHead>
+                      <TableHead className="text-center">Punteggio max</TableHead>
+                      <TableHead className="text-center">Soglia minima</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {criteria.map((c: any, i: number) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell className="text-center">{c.weight_pct}%</TableCell>
+                        <TableCell className="text-center">{c.max_score}</TableCell>
+                        <TableCell className="text-center">{c.min_score_threshold}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Allegati opportunità (solo se presenti) */}
           <OpportunityAttachments opportunityId={opportunityId} readOnly />
