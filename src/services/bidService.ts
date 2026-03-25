@@ -270,22 +270,44 @@ export const bidService = {
 
   /** Get all bids for an opportunity with supplier info */
   async listForEvaluation(opportunityId: string) {
-    const { data, error } = await supabase
+    // Get invitations with supplier info
+    const { data: invData, error: invErr } = await supabase
       .from("opportunity_invitations")
       .select(`
         id,
         supplier_id,
         status,
-        suppliers(company_name),
-        bids:bids!bids_invitation_id_fkey(
-          id, status, total_amount, execution_days, technical_description,
-          submitted_at, economic_detail, bid_validity_date,
-          bid_evaluations(id, criteria_scores, total_score, evaluator_id, evaluated_at)
-        )
+        suppliers(company_name)
       `)
       .eq("opportunity_id", opportunityId);
-    if (error) throw error;
-    return data as EvaluationInvitation[];
+    if (invErr) throw invErr;
+
+    // Get all non-withdrawn bids for this opportunity
+    const { data: bidsData, error: bidsErr } = await supabase
+      .from("bids")
+      .select(`
+        id, status, total_amount, execution_days, technical_description,
+        submitted_at, economic_detail, bid_validity_date, supplier_id, invitation_id, version,
+        bid_evaluations(id, criteria_scores, total_score, evaluator_id, evaluated_at)
+      `)
+      .eq("opportunity_id", opportunityId)
+      .not("status", "eq", "withdrawn")
+      .is("deleted_at", null)
+      .order("version", { ascending: false });
+    if (bidsErr) throw bidsErr;
+
+    // Map bids to invitations — take the latest active bid per supplier
+    const result = (invData ?? []).map((inv) => {
+      const supplierBids = (bidsData ?? []).filter((b) => b.supplier_id === inv.supplier_id);
+      // Take the first one (highest version due to ordering)
+      const latestBid = supplierBids[0];
+      return {
+        ...inv,
+        bids: latestBid ? [latestBid] : [],
+      };
+    });
+
+    return result as EvaluationInvitation[];
   },
 
   /** Save evaluation for a bid */
