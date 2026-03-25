@@ -14,13 +14,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download, RotateCcw } from "lucide-react";
 
 interface CriterionDef {
   name: string;
@@ -54,12 +55,7 @@ const BID_STATUS_COLORS: Record<string, string> = {
   not_awarded: "bg-gray-200 text-gray-600",
 };
 
-const STATUS_OPTIONS = [
-  { value: "submitted", label: "Inviata" },
-  { value: "under_evaluation", label: "In valutazione" },
-  { value: "admitted", label: "Ammessa" },
-  { value: "admitted_with_reserve", label: "Ammessa con riserva" },
-];
+// Status options removed — replaced by icon-based actions
 
 export default function InternalOpportunityEvaluation() {
   const { id: opportunityId } = useParams<{ id: string }>();
@@ -342,41 +338,79 @@ export default function InternalOpportunityEvaluation() {
                           </TableCell>
                           {canEvaluate && !actionsDisabled && (
                             <TableCell>
-                              {hasBid && bidId && bidStatus !== "excluded" ? (
-                                <div className="flex items-center gap-1 justify-center">
-                                  {/* Status selector — auto-saves evaluation + status */}
-                                  <Select
-                                    value=""
-                                    onValueChange={(newStatus) => {
-                                      actionMutation.mutate({ bidId, status: newStatus });
-                                    }}
-                                  >
-                                    <SelectTrigger className="h-8 w-[140px] text-xs">
-                                      <SelectValue placeholder="Cambia stato" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {STATUS_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                          {opt.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive"
-                                    title="Escludi"
-                                    onClick={() => setExcludeDialog({ bidId, supplierName: inv.suppliers?.company_name ?? "" })}
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              ) : bidStatus === "excluded" ? (
-                                <Badge variant="destructive" className="text-xs">Esclusa (definitiva)</Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
+                              {hasBid && bidId && (() => {
+                                const isSubmitted = bidStatus === "submitted";
+                                const isAdmitted = bidStatus === "admitted" || bidStatus === "admitted_with_reserve";
+                                const isExcluded = bidStatus === "excluded";
+                                const isWinning = bidStatus === "winning" || bidStatus === "not_awarded";
+                                const isWithdrawn = bidStatus === "withdrawn";
+
+                                if (isWinning) return <span className="text-xs text-muted-foreground">—</span>;
+                                if (isExcluded) return <Badge variant="destructive" className="text-xs">Esclusa (definitiva)</Badge>;
+                                if (isWithdrawn) return <Badge variant="secondary" className="text-xs">Ritirata</Badge>;
+
+                                if (isSubmitted) {
+                                  return (
+                                    <TooltipProvider>
+                                      <div className="flex items-center gap-1 justify-center">
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                              onClick={() => actionMutation.mutate({ bidId, status: "admitted" })}
+                                              disabled={actionMutation.isPending}
+                                            >
+                                              <Check className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Ammetti offerta</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                              onClick={() => setExcludeDialog({ bidId, supplierName: inv.suppliers?.company_name ?? "" })}
+                                              disabled={actionMutation.isPending}
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Escludi offerta</TooltipContent>
+                                        </Tooltip>
+                                      </div>
+                                    </TooltipProvider>
+                                  );
+                                }
+
+                                if (isAdmitted) {
+                                  return (
+                                    <TooltipProvider>
+                                      <div className="flex items-center gap-1 justify-center">
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                              onClick={() => actionMutation.mutate({ bidId, status: "submitted" })}
+                                              disabled={actionMutation.isPending}
+                                            >
+                                              <RotateCcw className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Ripristina a "Inviata"</TooltipContent>
+                                        </Tooltip>
+                                      </div>
+                                    </TooltipProvider>
+                                  );
+                                }
+
+                                return <span className="text-xs text-muted-foreground">—</span>;
+                              })()}
                             </TableCell>
                           )}
                         </TableRow>
