@@ -436,16 +436,16 @@ export default function InternalOpportunityEvaluation() {
                         </TableRow>
                         {/* Expanded bid detail */}
                         {isExpanded && bidId && (
-                          <TableRow key={`${inv.id}-detail`}>
+                          <TableRow key={`${inv.id}-detail-${bid.id}`}>
                             <TableCell colSpan={6 + criteria.length + (canEvaluate && !actionsDisabled ? 1 : 0)} className="bg-muted/30 p-0">
                               <BidDetailPanel bidId={bidId} bid={bid!} />
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
+                    });
                   })}
-                </TableBody>
               </Table>
             </CardContent>
           </Card>
