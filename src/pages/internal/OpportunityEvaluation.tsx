@@ -259,25 +259,7 @@ export default function InternalOpportunityEvaluation() {
         )}
       </div>
 
-      {/* Sort bids by status priority */}
-      {(() => {
-        const statusOrder: Record<string, number> = {
-          winning: 0, not_awarded: 1,
-          submitted: 2,
-          admitted: 3, admitted_with_reserve: 4,
-          excluded: 5,
-          withdrawn: 6,
-          draft: 7,
-        };
-        const sortedInvitations = [...invitations].sort((a, b) => {
-          const aBids = a.bids ?? [];
-          const bBids = b.bids ?? [];
-          const aMin = Math.min(...aBids.map((bid: any) => statusOrder[bid?.status] ?? 99));
-          const bMin = Math.min(...bBids.map((bid: any) => statusOrder[bid?.status] ?? 99));
-          return aMin - bMin;
-        });
-        return sortedInvitations;
-      })().length === 0 && invitations.length === 0 ? (
+      {invitations.length === 0 ? (
         <EmptyState title="Nessuna offerta" description="Nessun fornitore ha ancora presentato un'offerta." />
       ) : (
         <div className="space-y-4">
