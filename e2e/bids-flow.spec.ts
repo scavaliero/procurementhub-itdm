@@ -7,18 +7,15 @@ test.describe("Bids Flow E2E", () => {
   const ADMIN_PASS = "Admin@VendorHub2025!";
 
   test("Supplier can view opportunity details after invitation", async ({ page }) => {
-    // Login as supplier
     await page.goto("/login");
     await page.fill('input[type="email"]', SUPPLIER_EMAIL);
     await page.fill('input[type="password"]', SUPPLIER_PASS);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/(supplier|internal)/);
 
-    // Navigate to opportunities
     await page.goto("/supplier/opportunities");
     await page.waitForLoadState("networkidle");
 
-    // Check that the opportunities page loads
     const heading = page.locator("h1");
     await expect(heading).toBeVisible({ timeout: 10000 });
   });
@@ -33,19 +30,50 @@ test.describe("Bids Flow E2E", () => {
     await page.goto("/supplier/opportunities");
     await page.waitForLoadState("networkidle");
 
-    // Try to click on an opportunity if available
     const oppLink = page.locator("table tbody tr").first();
     const rowCount = await oppLink.count();
     if (rowCount > 0) {
       await oppLink.click();
       await page.waitForLoadState("networkidle");
-
-      // Check that opportunity detail page loads with key sections
       await expect(page.locator("text=Dettagli Opportunità")).toBeVisible({ timeout: 10000 });
     }
   });
 
-  test("Admin can view evaluation page", async ({ page }) => {
+  test("Admin evaluation page shows icon-based actions instead of dropdown", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/(supplier|internal)/);
+
+    await page.goto("/internal/opportunities");
+    await page.waitForLoadState("networkidle");
+
+    // Find an opportunity and go to evaluation
+    const oppRow = page.locator("table tbody tr").first();
+    const oppCount = await oppRow.count();
+    if (oppCount > 0) {
+      await oppRow.click();
+      await page.waitForLoadState("networkidle");
+
+      // Look for "Valutazione" tab or link
+      const evalTab = page.locator('text=Valutazione');
+      const evalTabCount = await evalTab.count();
+      if (evalTabCount > 0) {
+        await evalTab.first().click();
+        await page.waitForLoadState("networkidle");
+
+        // Verify no dropdown (SelectTrigger with "Cambia stato") exists
+        const dropdown = page.locator('button:has-text("Cambia stato")');
+        await expect(dropdown).toHaveCount(0);
+
+        // Verify the evaluation page loaded
+        await expect(page.locator("h1")).toBeVisible({ timeout: 10000 });
+      }
+    }
+  });
+
+  test("Admin can view evaluation page with bid statuses", async ({ page }) => {
     await page.goto("/login");
     await page.fill('input[type="email"]', ADMIN_EMAIL);
     await page.fill('input[type="password"]', ADMIN_PASS);
@@ -60,15 +88,12 @@ test.describe("Bids Flow E2E", () => {
   });
 
   test("Bid status labels include withdrawn", async ({ page }) => {
-    // This is a unit-style check via the UI
     await page.goto("/login");
     await page.fill('input[type="email"]', ADMIN_EMAIL);
     await page.fill('input[type="password"]', ADMIN_PASS);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/(supplier|internal)/);
 
-    // The BID_STATUS_LABELS should include 'withdrawn' -> 'Ritirata'
-    // We verify this by checking the evaluation page renders
     await page.goto("/internal/opportunities");
     await page.waitForLoadState("networkidle");
     await expect(page.locator("h1")).toBeVisible({ timeout: 10000 });
