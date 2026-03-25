@@ -693,12 +693,50 @@ export default function InternalVendorDetail() {
                           </ul>
                         </div>
                       )}
-                      {changes.contacts?.length > 0 && (
-                        <div><span className="font-medium">Referenti:</span> {changes.contacts.length} contatti</div>
-                      )}
-                      {changes.categories?.length > 0 && (
-                        <div><span className="font-medium">Categorie:</span> {changes.categories.length} selezionate</div>
-                      )}
+                      {changes.contacts?.length > 0 && (() => {
+                        const dbContacts = (existingContacts || []) as any[];
+                        return (
+                          <div>
+                            <span className="font-medium">Referenti modificati:</span>
+                            <ul className="list-disc ml-4 mt-0.5">
+                              {changes.contacts.map((c: any, idx: number) => {
+                                const existing = dbContacts[idx];
+                                if (!existing) {
+                                  return <li key={idx}>Nuovo: <strong>{c.nome} {c.cognome}</strong> ({c.email})</li>;
+                                }
+                                const diffs: string[] = [];
+                                if (c.nome !== (existing.first_name || existing.nome || "")) diffs.push(`Nome: ${c.nome}`);
+                                if (c.cognome !== (existing.last_name || existing.cognome || "")) diffs.push(`Cognome: ${c.cognome}`);
+                                if (c.ruolo !== (existing.role || existing.ruolo || "")) diffs.push(`Ruolo: ${c.ruolo}`);
+                                if (c.email !== (existing.email || "")) diffs.push(`Email: ${c.email}`);
+                                if (c.phone !== (existing.phone || "")) diffs.push(`Telefono: ${c.phone}`);
+                                if (diffs.length === 0) return null;
+                                return <li key={idx}>{c.nome} {c.cognome}: <strong>{diffs.join(", ")}</strong></li>;
+                              })}
+                              {dbContacts.length > changes.contacts.length && (
+                                <li className="text-destructive">Rimossi {dbContacts.length - changes.contacts.length} referenti</li>
+                              )}
+                            </ul>
+                          </div>
+                        );
+                      })()}
+                      {changes.categories?.length > 0 && (() => {
+                        const catMap = Object.fromEntries(allCategories.map((c: any) => [c.id, c.name]));
+                        const currentCatIds = categories.map((c: any) => c.category_id);
+                        const newCatIds: string[] = changes.categories;
+                        const added = newCatIds.filter((cid: string) => !currentCatIds.includes(cid));
+                        const removed = currentCatIds.filter((cid: string) => !newCatIds.includes(cid));
+                        return (
+                          <div>
+                            <span className="font-medium">Categorie modificate:</span>
+                            <ul className="list-disc ml-4 mt-0.5">
+                              {added.length > 0 && <li className="text-green-700">Aggiunte: <strong>{added.map((cid: string) => catMap[cid] || cid).join(", ")}</strong></li>}
+                              {removed.length > 0 && <li className="text-destructive">Rimosse: <strong>{removed.map((cid: string) => catMap[cid] || cid).join(", ")}</strong></li>}
+                              {added.length === 0 && removed.length === 0 && <li>Nessuna variazione rilevata</li>}
+                            </ul>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Actions for pending requests */}
