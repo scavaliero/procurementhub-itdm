@@ -94,11 +94,12 @@ export default function InternalOpportunityEvaluation() {
   useMemo(() => {
     const initial: Record<string, Record<string, number>> = {};
     invitations.forEach((inv: EvaluationInvitation) => {
-      const bid = inv.bids?.[0];
-      if (bid?.bid_evaluations?.[0]) {
-        const cs = bid.bid_evaluations[0].criteria_scores as Record<string, number>;
-        if (cs) initial[bid.id] = cs;
-      }
+      (inv.bids ?? []).forEach((bid) => {
+        if (bid?.bid_evaluations?.[0]) {
+          const cs = bid.bid_evaluations[0].criteria_scores as Record<string, number>;
+          if (cs) initial[bid.id] = cs;
+        }
+      });
     });
     if (Object.keys(initial).length > 0 && Object.keys(scores).length === 0) {
       setScores(initial);
