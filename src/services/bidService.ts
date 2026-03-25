@@ -58,6 +58,7 @@ export const bidService = {
       .eq("opportunity_id", opportunityId)
       .eq("supplier_id", supplierId)
       .is("deleted_at", null)
+      .not("status", "eq", "withdrawn")
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle();
