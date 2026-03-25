@@ -635,6 +635,93 @@ export default function InternalVendorDetail() {
             </div>
           )}
         </TabsContent>
+
+        {/* ── Tab Richieste Modifica ── */}
+        {changeRequests.length > 0 && (
+          <TabsContent value="changes" className="mt-4 space-y-3">
+            {changeRequests.map((req: any) => {
+              const changes = req.requested_changes || {};
+              const isPending = req.status === "pending";
+              return (
+                <Card key={req.id} className={isPending ? "card-top-docs" : ""}>
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <p className="text-sm font-medium">
+                          Richiesta del {fmtDateTime(req.created_at)}
+                        </p>
+                        {req.review_notes && (
+                          <p className="text-xs text-muted-foreground mt-1">Note: {req.review_notes}</p>
+                        )}
+                      </div>
+                      <Badge variant={req.status === "approved" ? "default" : req.status === "rejected" ? "destructive" : "secondary"}>
+                        {req.status === "pending" ? "In attesa" : req.status === "approved" ? "Approvata" : "Rifiutata"}
+                      </Badge>
+                    </div>
+
+                    {/* Show requested changes summary */}
+                    <div className="text-xs space-y-1 bg-muted/50 rounded p-3">
+                      {changes.company_data && (
+                        <div>
+                          <span className="font-medium">Dati azienda:</span>{" "}
+                          {changes.company_data.company_name && `${changes.company_data.company_name}`}
+                          {changes.company_data.pec && ` · PEC: ${changes.company_data.pec}`}
+                          {changes.company_data.website && ` · Web: ${changes.company_data.website}`}
+                        </div>
+                      )}
+                      {changes.address && (
+                        <div>
+                          <span className="font-medium">Sede:</span>{" "}
+                          {[changes.address.street, changes.address.city, changes.address.province, changes.address.zip].filter(Boolean).join(", ")}
+                        </div>
+                      )}
+                      {changes.contacts?.length > 0 && (
+                        <div><span className="font-medium">Referenti:</span> {changes.contacts.length} contatti</div>
+                      )}
+                      {changes.categories?.length > 0 && (
+                        <div><span className="font-medium">Categorie:</span> {changes.categories.length} selezionate</div>
+                      )}
+                    </div>
+
+                    {/* Actions for pending requests */}
+                    {isPending && hasGrant("manage_users") && (
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await changeRequestService.approve(req.id, currentProfile!.id, supplier.id, changes);
+                              toast.success("Modifiche approvate e applicate");
+                              qc.invalidateQueries({ queryKey: ["supplier-change-requests", id] });
+                              qc.invalidateQueries({ queryKey: ["supplier", id] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approva e applica
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={async () => {
+                            const notes = prompt("Motivo del rifiuto:");
+                            if (!notes) return;
+                            try {
+                              await changeRequestService.reject(req.id, currentProfile!.id, notes);
+                              toast.success("Richiesta rifiutata");
+                              qc.invalidateQueries({ queryKey: ["supplier-change-requests", id] });
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                        >
+                          <XCircle className="h-3.5 w-3.5 mr-1" /> Rifiuta
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* ── Action Dialog ── */}
