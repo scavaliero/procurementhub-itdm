@@ -183,6 +183,7 @@ export default function InternalOpportunityDetail() {
           <TabsTrigger value="criteria">Criteri ({criteria.length})</TabsTrigger>
           <TabsTrigger value="invitations">Inviti ({invitations.length})</TabsTrigger>
           {canInvite && <TabsTrigger value="invite">Invita fornitori</TabsTrigger>}
+          {hasOrder && <TabsTrigger value="order">Ordine</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="details">
