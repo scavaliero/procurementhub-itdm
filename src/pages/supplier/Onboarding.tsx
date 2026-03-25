@@ -205,7 +205,7 @@ export default function SupplierOnboarding() {
         email: c.email || "",
         phone: c.phone || "",
       }));
-      const hasContactChanges = JSON.stringify(validContacts) !== JSON.stringify(existingContacts);
+      const hasContactChanges = JSON.stringify(validContacts) !== JSON.stringify(dbContacts);
 
       if (!hasCompanyChanges && !hasAddressChanges && !hasCatChanges && !hasContactChanges) {
         throw new Error("Nessuna modifica rilevata rispetto ai dati attuali.");
