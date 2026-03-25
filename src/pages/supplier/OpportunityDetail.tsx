@@ -17,8 +17,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Upload, Trash2, AlertTriangle, CheckCircle, FileText } from "lucide-react";
+import { ArrowLeft, Save, Send, Upload, Trash2, AlertTriangle, CheckCircle, FileText, Undo2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function SupplierOpportunityDetail() {
