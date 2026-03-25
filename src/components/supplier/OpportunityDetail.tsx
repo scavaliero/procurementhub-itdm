@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
-import { ArrowLeft, FileText, ClipboardList } from "lucide-react";
+import { ArrowLeft, FileText, ClipboardList, Paperclip } from "lucide-react";
 import SupplierBidSheet from "./BidSheet";
+import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 
 interface Props {
   opportunityId: string;
