@@ -17,8 +17,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Upload, Trash2, AlertTriangle, CheckCircle, FileText } from "lucide-react";
+import { ArrowLeft, Save, Send, Upload, Trash2, AlertTriangle, CheckCircle, FileText, Undo2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function SupplierOpportunityDetail() {
@@ -27,6 +35,7 @@ export default function SupplierOpportunityDetail() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [validationResult, setValidationResult] = useState<ValidateBidResult | null>(null);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const techFileRef = useRef<HTMLInputElement>(null);
   const econFileRef = useRef<HTMLInputElement>(null);
   const [techFile, setTechFile] = useState<File | null>(null);
@@ -66,8 +75,23 @@ export default function SupplierOpportunityDetail() {
   const isExcluded = existingBid?.status === "excluded";
   const bidEditable = !existingBid || existingBid.status === "draft";
   const isSubmitted = !!existingBid && existingBid.status !== "draft";
+  const canWithdraw = existingBid?.status === "submitted" && !deadlinePassed;
   const formDisabled = isSubmitted || deadlinePassed;
   const budgetMax = opp?.budget_max ?? null;
+
+  const withdrawMutation = useMutation({
+    mutationFn: async () => {
+      if (!existingBid || !profile || !opportunityId) throw new Error("Dati mancanti");
+      await bidService.withdraw(existingBid.id, profile.tenant_id, opportunityId);
+    },
+    onSuccess: () => {
+      toast.success("Offerta ritirata. Puoi presentare una nuova offerta.");
+      setShowWithdrawConfirm(false);
+      qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
+      reset({ total_amount: undefined, technical_description: "", execution_days: undefined, bid_validity_date: "", proposed_conditions: "", notes: "" });
+    },
+    onError: (err: any) => toast.error(err.message || "Errore nel ritiro"),
+  });
 
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
@@ -238,6 +262,11 @@ export default function SupplierOpportunityDetail() {
           <h1 className="text-2xl font-bold">{opp.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">{opp.code}</p>
         </div>
+        {canWithdraw && (
+          <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowWithdrawConfirm(true)}>
+            <Undo2 className="h-4 w-4" /> Ritira offerta
+          </Button>
+        )}
         {existingBid && existingBid.status !== "draft" && (
           <Badge className={
             existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
@@ -549,6 +578,29 @@ export default function SupplierOpportunityDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Withdraw confirmation dialog */}
+      <Dialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ritira offerta</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler ritirare la tua offerta? L'offerta ritirata rimarrà nello storico ma non sarà più considerata nella valutazione. Potrai presentare una nuova offerta.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWithdrawConfirm(false)}>Annulla</Button>
+            <Button
+              variant="destructive"
+              disabled={withdrawMutation.isPending}
+              onClick={() => withdrawMutation.mutate()}
+            >
+              <Undo2 className="h-4 w-4 mr-2" />
+              {withdrawMutation.isPending ? "Ritiro in corso…" : "Conferma ritiro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

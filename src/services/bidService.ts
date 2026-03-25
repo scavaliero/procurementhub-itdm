@@ -58,6 +58,7 @@ export const bidService = {
       .eq("opportunity_id", opportunityId)
       .eq("supplier_id", supplierId)
       .is("deleted_at", null)
+      .not("status", "eq", "withdrawn")
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -378,6 +379,58 @@ export const bidService = {
       } catch (e) {
         console.warn("Non-blocking exclusion notification error:", e);
       }
+    }
+  },
+
+  /** Withdraw a submitted bid (supplier action) — keeps history */
+  async withdraw(bidId: string, tenantId: string, opportunityId: string): Promise<void> {
+    const { error } = await supabase
+      .from("bids")
+      .update({ status: "withdrawn" })
+      .eq("id", bidId);
+    if (error) throw error;
+
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "bid",
+      entity_id: bidId,
+      event_type: "bid_withdrawn",
+      new_state: { status: "withdrawn" },
+    });
+
+    // Notify buyer
+    const { data: opp } = await supabase
+      .from("opportunities")
+      .select("created_by, title, code")
+      .eq("id", opportunityId)
+      .single();
+
+    const { data: bid } = await supabase
+      .from("bids")
+      .select("supplier_id")
+      .eq("id", bidId)
+      .single();
+
+    const { data: supplierData } = await supabase
+      .from("suppliers")
+      .select("company_name")
+      .eq("id", bid?.supplier_id ?? "")
+      .single();
+
+    if (opp?.created_by) {
+      await notificationService.send({
+        event_type: "bid_withdrawn",
+        recipient_id: opp.created_by,
+        tenant_id: tenantId,
+        link_url: `/internal/opportunities/${opportunityId}`,
+        related_entity_id: opportunityId,
+        related_entity_type: "opportunity",
+        variables: {
+          opportunity_title: opp.title || "",
+          opportunity_code: opp.code || "",
+          company_name: supplierData?.company_name || "",
+        },
+      });
     }
   },
 
