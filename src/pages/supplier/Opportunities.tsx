@@ -8,14 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import SupplierOpportunitySheet from "@/components/supplier/OpportunitySheet";
-import SupplierBidSheet from "@/components/supplier/BidSheet";
+import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
 const INV_STATUS: Record<string, string> = {
   sent: "Nuovo",
@@ -35,8 +28,7 @@ export default function SupplierOpportunities() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
-  const [bidOppId, setBidOppId] = useState<string | null>(null);
-  const [bidInvitation, setBidInvitation] = useState<any>(null);
+  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
 
   const { data: invitations = [], isLoading } = useQuery({
     queryKey: ["supplier-invitations", profile?.supplier_id],
@@ -54,14 +46,22 @@ export default function SupplierOpportunities() {
       markViewedMutation.mutate(inv.id);
     }
     setSelectedOppId(inv.opportunities?.id ?? inv.opportunity_id);
-    setBidInvitation(inv);
+    setSelectedInvitation(inv);
   };
 
-  const openBidSheet = () => {
-    if (selectedOppId) {
-      setBidOppId(selectedOppId);
-    }
-  };
+  if (selectedOppId) {
+    return (
+      <SupplierOpportunityDetail
+        opportunityId={selectedOppId}
+        invitation={selectedInvitation}
+        onBack={() => {
+          setSelectedOppId(null);
+          setSelectedInvitation(null);
+          qc.invalidateQueries({ queryKey: ["supplier-invitations"] });
+        }}
+      />
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -105,35 +105,6 @@ export default function SupplierOpportunities() {
           })}
         </div>
       )}
-
-      {/* Opportunity Detail Sheet */}
-      <Sheet open={!!selectedOppId} onOpenChange={(open) => { if (!open) setSelectedOppId(null); }}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          {selectedOppId && (
-            <SupplierOpportunitySheet
-              opportunityId={selectedOppId}
-              invitation={bidInvitation}
-              onOpenBid={openBidSheet}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Bid Sheet */}
-      <Sheet open={!!bidOppId} onOpenChange={(open) => { if (!open) setBidOppId(null); }}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          {bidOppId && (
-            <SupplierBidSheet
-              opportunityId={bidOppId}
-              invitation={bidInvitation}
-              onClose={() => {
-                setBidOppId(null);
-                qc.invalidateQueries({ queryKey: ["supplier-invitations"] });
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

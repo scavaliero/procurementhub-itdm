@@ -170,6 +170,18 @@ export default function InternalOpportunityEvaluation() {
     return result;
   }, [invitations, computeTotal, budgetMax]);
 
+  const sortedInvitations = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      winning: 0, not_awarded: 1, submitted: 2, admitted: 3,
+      admitted_with_reserve: 4, excluded: 5, withdrawn: 6, draft: 7,
+    };
+    return [...invitations].sort((a, b) => {
+      const aMin = Math.min(...(a.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99), 99);
+      const bMin = Math.min(...(b.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99), 99);
+      return aMin - bMin;
+    });
+  }, [invitations]);
+
   const allSubmittedBidIds = useMemo(() => {
     return invitations
       .flatMap((inv: EvaluationInvitation) => (inv.bids ?? []).filter(b => b.status !== "withdrawn" && b.status !== "draft").map(b => b.id))
@@ -284,7 +296,7 @@ export default function InternalOpportunityEvaluation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invitations.map((inv: EvaluationInvitation) => {
+                  {sortedInvitations.map((inv: EvaluationInvitation) => {
                     const bids = inv.bids ?? [];
                     if (bids.length === 0) {
                       // Supplier invited but no bid yet
@@ -586,6 +598,12 @@ function BidDetailPanel({ bidId, bid }: { bidId: string; bid: any }) {
           <div>
             <p className="text-xs text-muted-foreground font-medium mb-1">Validità offerta</p>
             <p className="text-sm">{new Date(bid.bid_validity_date).toLocaleDateString("it-IT")}</p>
+          </div>
+        )}
+        {bid.submitted_at && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium mb-1">Data presentazione</p>
+            <p className="text-sm">{new Date(bid.submitted_at).toLocaleDateString("it-IT")} {new Date(bid.submitted_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
         )}
       </div>
