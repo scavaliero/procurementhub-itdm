@@ -121,6 +121,77 @@ export type Database = {
           },
         ]
       }
+      bid_attachments: {
+        Row: {
+          attachment_type: string
+          bid_id: string
+          created_at: string | null
+          file_size_bytes: number | null
+          id: string
+          mime_type: string | null
+          opportunity_id: string
+          original_filename: string
+          storage_path: string
+          supplier_id: string
+          tenant_id: string
+        }
+        Insert: {
+          attachment_type: string
+          bid_id: string
+          created_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          opportunity_id: string
+          original_filename: string
+          storage_path: string
+          supplier_id: string
+          tenant_id: string
+        }
+        Update: {
+          attachment_type?: string
+          bid_id?: string
+          created_at?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          opportunity_id?: string
+          original_filename?: string
+          storage_path?: string
+          supplier_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_attachments_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_attachments_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_attachments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_attachments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bid_evaluations: {
         Row: {
           admin_approved: boolean | null
