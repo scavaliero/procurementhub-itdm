@@ -43,6 +43,18 @@ export const orderService = {
     return (count ?? 0) > 0;
   },
 
+  /** Get order by opportunity ID */
+  async getByOpportunityId(opportunityId: string) {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, suppliers(id, company_name)")
+      .eq("opportunity_id", opportunityId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
   /** Get single order by ID */
   async getById(orderId: string): Promise<OrderDetail> {
     const { data, error } = await supabase
