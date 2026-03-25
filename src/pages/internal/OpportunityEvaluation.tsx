@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -94,11 +94,12 @@ export default function InternalOpportunityEvaluation() {
   useMemo(() => {
     const initial: Record<string, Record<string, number>> = {};
     invitations.forEach((inv: EvaluationInvitation) => {
-      const bid = inv.bids?.[0];
-      if (bid?.bid_evaluations?.[0]) {
-        const cs = bid.bid_evaluations[0].criteria_scores as Record<string, number>;
-        if (cs) initial[bid.id] = cs;
-      }
+      (inv.bids ?? []).forEach((bid) => {
+        if (bid?.bid_evaluations?.[0]) {
+          const cs = bid.bid_evaluations[0].criteria_scores as Record<string, number>;
+          if (cs) initial[bid.id] = cs;
+        }
+      });
     });
     if (Object.keys(initial).length > 0 && Object.keys(scores).length === 0) {
       setScores(initial);
@@ -152,25 +153,26 @@ export default function InternalOpportunityEvaluation() {
   const admittedBids = useMemo(() => {
     const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number; exceedsBudget: boolean }[] = [];
     invitations.forEach((inv: EvaluationInvitation) => {
-      const bid = inv.bids?.[0];
-      if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
-        const amount = Number(bid.total_amount ?? 0);
-        result.push({
-          bidId: bid.id,
-          supplierId: inv.supplier_id,
-          supplierName: inv.suppliers?.company_name ?? "—",
-          totalAmount: amount,
-          score: computeTotal(bid.id),
-          exceedsBudget: budgetMax != null && amount > budgetMax,
-        });
-      }
+      (inv.bids ?? []).forEach((bid) => {
+        if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
+          const amount = Number(bid.total_amount ?? 0);
+          result.push({
+            bidId: bid.id,
+            supplierId: inv.supplier_id,
+            supplierName: inv.suppliers?.company_name ?? "—",
+            totalAmount: amount,
+            score: computeTotal(bid.id),
+            exceedsBudget: budgetMax != null && amount > budgetMax,
+          });
+        }
+      });
     });
     return result;
   }, [invitations, computeTotal, budgetMax]);
 
   const allSubmittedBidIds = useMemo(() => {
     return invitations
-      .map((inv: EvaluationInvitation) => inv.bids?.[0]?.id)
+      .flatMap((inv: EvaluationInvitation) => (inv.bids ?? []).filter(b => b.status !== "withdrawn" && b.status !== "draft").map(b => b.id))
       .filter(Boolean) as string[];
   }, [invitations]);
 
@@ -283,7 +285,24 @@ export default function InternalOpportunityEvaluation() {
                 </TableHeader>
                 <TableBody>
                   {invitations.map((inv: EvaluationInvitation) => {
-                    const bid = inv.bids?.[0];
+                    const bids = inv.bids ?? [];
+                    if (bids.length === 0) {
+                      // Supplier invited but no bid yet
+                      return (
+                        <TableRow key={inv.id}>
+                          <TableCell className="w-8 px-2" />
+                          <TableCell className="sticky left-0 bg-background font-medium">{inv.suppliers?.company_name ?? "—"}</TableCell>
+                          <TableCell><Badge variant="secondary" className="bg-gray-100 text-gray-500">{BID_STATUS_LABELS["no_bid"] ?? "Nessuna offerta"}</Badge></TableCell>
+                          <TableCell className="text-right">—</TableCell>
+                          <TableCell className="text-center">—</TableCell>
+                          {criteria.map((c) => <TableCell key={c.name} className="text-center">—</TableCell>)}
+                          <TableCell className="text-center font-bold">—</TableCell>
+                          {canEvaluate && !actionsDisabled && <TableCell />}
+                        </TableRow>
+                      );
+                    }
+
+                    return bids.map((bid, bidIdx) => {
                     const bidId = bid?.id;
                     const bidStatus = bid?.status ?? "no_bid";
                     const hasBid = !!bid && bid.status !== "draft";
@@ -291,19 +310,21 @@ export default function InternalOpportunityEvaluation() {
                     const bidAmount = Number(bid?.total_amount ?? 0);
                     const overBudget = budgetMax != null && bidAmount > budgetMax && hasBid;
                     const isExpanded = expandedBid === bidId;
+                    const isWithdrawnBid = bidStatus === "withdrawn";
 
                     return (
-                      <>
-                        <TableRow key={inv.id} className={isExpanded ? "border-b-0" : ""}>
+                      <React.Fragment key={`${inv.id}-${bid.id}`}>
+                        <TableRow key={`${inv.id}-bid-${bid.id}`} className={`${isExpanded ? "border-b-0" : ""} ${isWithdrawnBid ? "opacity-50" : ""}`}>
                           <TableCell className="w-8 px-2">
-                            {hasBid && bidId && (
+                            {hasBid && bidId && !isWithdrawnBid && (
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedBid(isExpanded ? null : bidId)}>
                                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               </Button>
                             )}
                           </TableCell>
                           <TableCell className="sticky left-0 bg-background font-medium">
-                            {inv.suppliers?.company_name ?? "—"}
+                            <div>{inv.suppliers?.company_name ?? "—"}</div>
+                            {bids.length > 1 && <span className="text-[10px] text-muted-foreground">v{bid.version ?? bidIdx + 1}</span>}
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className={BID_STATUS_COLORS[bidStatus] ?? "bg-gray-100 text-gray-500"}>
@@ -416,14 +437,15 @@ export default function InternalOpportunityEvaluation() {
                         </TableRow>
                         {/* Expanded bid detail */}
                         {isExpanded && bidId && (
-                          <TableRow key={`${inv.id}-detail`}>
+                          <TableRow key={`${inv.id}-detail-${bid.id}`}>
                             <TableCell colSpan={6 + criteria.length + (canEvaluate && !actionsDisabled ? 1 : 0)} className="bg-muted/30 p-0">
                               <BidDetailPanel bidId={bidId} bid={bid!} />
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
+                    });
                   })}
                 </TableBody>
               </Table>

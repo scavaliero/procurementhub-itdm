@@ -39,6 +39,7 @@ export interface EvaluationInvitation {
     submitted_at: string | null;
     economic_detail: Json | null;
     bid_validity_date: string | null;
+    version: number | null;
     bid_evaluations: Array<{
       id: string;
       criteria_scores: Json;
@@ -282,7 +283,7 @@ export const bidService = {
       .eq("opportunity_id", opportunityId);
     if (invErr) throw invErr;
 
-    // Get all non-withdrawn bids for this opportunity
+    // Get ALL bids for this opportunity (including withdrawn for history)
     const { data: bidsData, error: bidsErr } = await supabase
       .from("bids")
       .select(`
@@ -291,19 +292,16 @@ export const bidService = {
         bid_evaluations(id, criteria_scores, total_score, evaluator_id, evaluated_at)
       `)
       .eq("opportunity_id", opportunityId)
-      .not("status", "eq", "withdrawn")
       .is("deleted_at", null)
       .order("version", { ascending: false });
     if (bidsErr) throw bidsErr;
 
-    // Map bids to invitations — take the latest active bid per supplier
+    // Map ALL bids to invitations
     const result = (invData ?? []).map((inv) => {
       const supplierBids = (bidsData ?? []).filter((b) => b.supplier_id === inv.supplier_id);
-      // Take the first one (highest version due to ordering)
-      const latestBid = supplierBids[0];
       return {
         ...inv,
-        bids: latestBid ? [latestBid] : [],
+        bids: supplierBids,
       };
     });
 
