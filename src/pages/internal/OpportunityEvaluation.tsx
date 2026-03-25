@@ -54,12 +54,7 @@ const BID_STATUS_COLORS: Record<string, string> = {
   not_awarded: "bg-gray-200 text-gray-600",
 };
 
-const STATUS_OPTIONS = [
-  { value: "submitted", label: "Inviata" },
-  { value: "under_evaluation", label: "In valutazione" },
-  { value: "admitted", label: "Ammessa" },
-  { value: "admitted_with_reserve", label: "Ammessa con riserva" },
-];
+// Status options removed — replaced by icon-based actions
 
 export default function InternalOpportunityEvaluation() {
   const { id: opportunityId } = useParams<{ id: string }>();
