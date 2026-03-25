@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { invitationService } from "@/services/invitationService";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { FileText, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import SupplierOpportunitySheet from "@/components/supplier/OpportunitySheet";
+import SupplierBidSheet from "@/components/supplier/BidSheet";
 
 const INV_STATUS: Record<string, string> = {
   sent: "Nuovo",
@@ -25,8 +33,10 @@ const INV_COLORS: Record<string, string> = {
 
 export default function SupplierOpportunities() {
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const qc = useQueryClient();
+  const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
+  const [bidOppId, setBidOppId] = useState<string | null>(null);
+  const [bidInvitation, setBidInvitation] = useState<any>(null);
 
   const { data: invitations = [], isLoading } = useQuery({
     queryKey: ["supplier-invitations", profile?.supplier_id],
@@ -43,7 +53,14 @@ export default function SupplierOpportunities() {
     if (!inv.viewed_at) {
       markViewedMutation.mutate(inv.id);
     }
-    navigate(`/supplier/opportunities/${inv.opportunities?.id ?? inv.opportunity_id}`);
+    setSelectedOppId(inv.opportunities?.id ?? inv.opportunity_id);
+    setBidInvitation(inv);
+  };
+
+  const openBidSheet = () => {
+    if (selectedOppId) {
+      setBidOppId(selectedOppId);
+    }
   };
 
   return (
@@ -88,6 +105,35 @@ export default function SupplierOpportunities() {
           })}
         </div>
       )}
+
+      {/* Opportunity Detail Sheet */}
+      <Sheet open={!!selectedOppId} onOpenChange={(open) => { if (!open) setSelectedOppId(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          {selectedOppId && (
+            <SupplierOpportunitySheet
+              opportunityId={selectedOppId}
+              invitation={bidInvitation}
+              onOpenBid={openBidSheet}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Bid Sheet */}
+      <Sheet open={!!bidOppId} onOpenChange={(open) => { if (!open) setBidOppId(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          {bidOppId && (
+            <SupplierBidSheet
+              opportunityId={bidOppId}
+              invitation={bidInvitation}
+              onClose={() => {
+                setBidOppId(null);
+                qc.invalidateQueries({ queryKey: ["supplier-invitations"] });
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
