@@ -174,16 +174,46 @@ export default function SupplierOnboarding() {
   const changeRequestMutation = useMutation({
     mutationFn: async () => {
       if (!supplier || !profile) throw new Error("Dati mancanti");
+
+      // Compute diff — only include changed fields
+      const changedCompanyData: Record<string, any> = {};
+      if (companyData.company_name !== supplier.company_name) changedCompanyData.company_name = companyData.company_name;
+      if ((companyData.company_type || "") !== (supplier.company_type || "")) changedCompanyData.company_type = companyData.company_type || "";
+      if ((companyData.pec || "") !== (supplier.pec || "")) changedCompanyData.pec = companyData.pec || "";
+      if ((companyData.website || "") !== (supplier.website || "")) changedCompanyData.website = companyData.website || "";
+
+      const currentAddress = (supplier.legal_address && typeof supplier.legal_address === "object") ? supplier.legal_address as Record<string, string> : {};
+      const changedAddress: Record<string, string> = {};
+      for (const key of ["street", "city", "zip", "province", "country"]) {
+        if ((address[key] || "") !== (currentAddress[key] || "")) changedAddress[key] = address[key] || "";
+      }
+
+      const hasCompanyChanges = Object.keys(changedCompanyData).length > 0;
+      const hasAddressChanges = Object.keys(changedAddress).length > 0;
+
+      // Categories diff
+      const currentCatIds = existingCats.map((c: any) => c.category_id).sort();
+      const newCatIds = [...selectedCats].sort();
+      const hasCatChanges = JSON.stringify(currentCatIds) !== JSON.stringify(newCatIds);
+
+      // Contacts diff (simplified: always include if editing)
+      const validContacts = contacts.filter((c) => c.nome && c.email);
+
+      if (!hasCompanyChanges && !hasAddressChanges && !hasCatChanges) {
+        throw new Error("Nessuna modifica rilevata rispetto ai dati attuali.");
+      }
+
+      const requestedChanges: Record<string, any> = {};
+      if (hasCompanyChanges) requestedChanges.company_data = changedCompanyData;
+      if (hasAddressChanges) requestedChanges.address = { ...currentAddress, ...changedAddress };
+      if (hasCatChanges) requestedChanges.categories = selectedCats;
+      if (validContacts.length > 0) requestedChanges.contacts = validContacts;
+
       await changeRequestService.create({
         supplier_id: supplier.id,
         tenant_id: profile.tenant_id,
         requested_by: profile.id,
-        requested_changes: {
-          company_data: companyData,
-          address,
-          contacts: contacts.filter((c) => c.nome && c.email),
-          categories: selectedCats,
-        },
+        requested_changes: requestedChanges,
       });
     },
     onSuccess: () => {

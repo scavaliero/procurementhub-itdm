@@ -663,10 +663,13 @@ export default function InternalVendorDetail() {
                     <div className="text-xs space-y-1 bg-muted/50 rounded p-3">
                       {changes.company_data && (
                         <div>
-                          <span className="font-medium">Dati azienda:</span>{" "}
-                          {changes.company_data.company_name && `${changes.company_data.company_name}`}
-                          {changes.company_data.pec && ` · PEC: ${changes.company_data.pec}`}
-                          {changes.company_data.website && ` · Web: ${changes.company_data.website}`}
+                          <span className="font-medium">Dati azienda modificati:</span>
+                          <ul className="list-disc ml-4 mt-0.5">
+                            {changes.company_data.company_name !== undefined && <li>Ragione sociale: <strong>{changes.company_data.company_name}</strong></li>}
+                            {changes.company_data.company_type !== undefined && <li>Tipo società: <strong>{changes.company_data.company_type || "—"}</strong></li>}
+                            {changes.company_data.pec !== undefined && <li>PEC: <strong>{changes.company_data.pec || "—"}</strong></li>}
+                            {changes.company_data.website !== undefined && <li>Sito Web: <strong>{changes.company_data.website || "—"}</strong></li>}
+                          </ul>
                         </div>
                       )}
                       {changes.address && (
