@@ -316,7 +316,7 @@ export default function InternalOpportunityEvaluation() {
                       <React.Fragment key={`${inv.id}-${bid.id}`}>
                         <TableRow key={`${inv.id}-bid-${bid.id}`} className={`${isExpanded ? "border-b-0" : ""} ${isWithdrawnBid ? "opacity-50" : ""}`}>
                           <TableCell className="w-8 px-2">
-                            {hasBid && bidId && !isWithdrawnBid && (
+                            {hasBid && bidId && (
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedBid(isExpanded ? null : bidId)}>
                                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               </Button>
