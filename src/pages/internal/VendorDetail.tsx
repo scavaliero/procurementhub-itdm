@@ -150,6 +150,12 @@ export default function InternalVendorDetail() {
     },
   });
 
+  const { data: existingContacts = [] } = useQuery({
+    queryKey: ["supplier-contacts", id],
+    queryFn: () => contactService.list(id!),
+    enabled: !!id,
+  });
+
   const { data: history = [] } = useQuery({
     queryKey: ["supplier-history", id],
     queryFn: () => vendorService.getStatusHistory(id!),
