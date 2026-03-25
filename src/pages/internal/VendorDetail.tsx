@@ -8,6 +8,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
 import { documentService } from "@/services/documentService";
+import { contactService } from "@/services/contactService";
 import { auditService } from "@/services/auditService";
 import { notificationService } from "@/services/notificationService";
 import { useGrants } from "@/hooks/useGrants";
