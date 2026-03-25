@@ -96,7 +96,7 @@ export default function SupplierOpportunityDetail() {
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
     if (budgetMax) {
-      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare il budget massimo di € ${budgetMax.toLocaleString("it-IT")}`);
+      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di € ${budgetMax.toLocaleString("it-IT")}`);
     }
     return z.object({
       total_amount: amountSchema,
