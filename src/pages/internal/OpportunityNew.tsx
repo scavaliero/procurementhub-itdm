@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Upload, Save, Send } from "lucide-react";
 import { format } from "date-fns";
+import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 
 const step1Schema = z.object({
   title: z.string().min(3, "Titolo obbligatorio (min 3 caratteri)"),

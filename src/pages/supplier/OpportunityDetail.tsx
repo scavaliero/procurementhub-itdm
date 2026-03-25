@@ -287,6 +287,9 @@ export default function SupplierOpportunityDetail() {
         {deadlinePassed && !existingBid && (
           <Badge variant="destructive">Scadenza superata</Badge>
         )}
+        {bidsNotOpen && !deadlinePassed && !isSubmitted && (
+          <Badge variant="outline">Raccolta offerte non avviata</Badge>
+        )}
       </div>
 
       {isExcluded && (

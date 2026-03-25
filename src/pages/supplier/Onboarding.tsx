@@ -223,6 +223,34 @@ export default function SupplierOnboarding() {
         requested_by: profile.id,
         requested_changes: requestedChanges,
       });
+
+      // Notify all internal users with review_change_requests grant
+      try {
+        const { data: internalProfiles } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_type", "internal")
+          .eq("tenant_id", profile.tenant_id)
+          .eq("is_active", true);
+
+        if (internalProfiles) {
+          for (const admin of internalProfiles) {
+            await notificationService.send({
+              event_type: "change_request_submitted",
+              recipient_id: admin.id,
+              tenant_id: profile.tenant_id,
+              link_url: `/internal/vendors/${supplier.id}`,
+              related_entity_id: supplier.id,
+              related_entity_type: "supplier",
+              variables: {
+                supplier_name: supplier.company_name,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Non-blocking notification error:", e);
+      }
     },
     onSuccess: () => {
       toast.success("Richiesta di modifica inviata. Verrà esaminata dall'amministratore.");
