@@ -123,9 +123,12 @@ export const opportunityService = {
     return data as Opportunity;
   },
 
-  async uploadAttachment(opportunityId: string, file: File) {
+  async uploadAttachment(opportunityId: string, file: File, attachmentType?: string) {
     const ext = file.name.split(".").pop();
-    const path = `${opportunityId}/${crypto.randomUUID()}.${ext}`;
+    const folder = attachmentType
+      ? `${opportunityId}/${attachmentType}`
+      : opportunityId;
+    const path = `${folder}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from("opportunity-attachments")
       .upload(path, file);
@@ -139,6 +142,29 @@ export const opportunityService = {
       .list(opportunityId);
     if (error) throw error;
     return data ?? [];
+  },
+
+  async listTypedAttachments(opportunityId: string, attachmentType: string) {
+    const { data, error } = await supabase.storage
+      .from("opportunity-attachments")
+      .list(`${opportunityId}/${attachmentType}`);
+    if (error) throw error;
+    return (data ?? []).filter((f) => f.name !== ".emptyFolderPlaceholder");
+  },
+
+  async deleteAttachment(path: string) {
+    const { error } = await supabase.storage
+      .from("opportunity-attachments")
+      .remove([path]);
+    if (error) throw error;
+  },
+
+  async getAttachmentUrl(path: string) {
+    const { data, error } = await supabase.storage
+      .from("opportunity-attachments")
+      .createSignedUrl(path, 3600);
+    if (error) throw error;
+    return data.signedUrl;
   },
 
   async getInternalProfiles(): Promise<{ id: string; full_name: string; email: string }[]> {

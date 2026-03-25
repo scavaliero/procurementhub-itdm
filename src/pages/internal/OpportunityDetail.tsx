@@ -18,7 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink, Paperclip } from "lucide-react";
+import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
@@ -181,6 +182,7 @@ export default function InternalOpportunityDetail() {
         <TabsList>
           <TabsTrigger value="details">Dettagli</TabsTrigger>
           <TabsTrigger value="criteria">Criteri ({criteria.length})</TabsTrigger>
+          <TabsTrigger value="attachments"><Paperclip className="h-4 w-4 mr-1" /> Allegati</TabsTrigger>
           <TabsTrigger value="invitations">Inviti ({invitations.length})</TabsTrigger>
           {canInvite && <TabsTrigger value="invite">Invita fornitori</TabsTrigger>}
           {hasOrder && <TabsTrigger value="order">Ordine</TabsTrigger>}
@@ -242,6 +244,10 @@ export default function InternalOpportunityDetail() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="attachments">
+          <OpportunityAttachments opportunityId={opp.id} />
         </TabsContent>
 
         <TabsContent value="invitations">
