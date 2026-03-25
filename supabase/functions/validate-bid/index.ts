@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         return jsonResponse({
           valid: false,
           code: "RB05",
-          message: `L'importo dell'offerta (€ ${Number(bid.total_amount).toLocaleString("it-IT")}) supera il budget massimo (€ ${Number(opp.budget_max).toLocaleString("it-IT")})`,
+          message: `L'importo dell'offerta (€ ${Number(bid.total_amount).toLocaleString("it-IT")}) supera l'offerta massima (€ ${Number(opp.budget_max).toLocaleString("it-IT")})`,
           budget_max: opp.budget_max,
           bid_amount: bid.total_amount,
         });
