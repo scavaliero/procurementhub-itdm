@@ -463,12 +463,29 @@ export default function InternalVendorDetail() {
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info"><Building2 className="h-4 w-4 mr-1" /> Anagrafica</TabsTrigger>
-          <TabsTrigger value="documents"><FileText className="h-4 w-4 mr-1" /> Documenti</TabsTrigger>
+          {(() => {
+            const pendingDocs = docs.filter((d) => d.status === "uploaded");
+            const hasPending = pendingDocs.length > 0;
+            return (
+              <TabsTrigger value="documents" className={hasPending ? "font-bold" : ""}>
+                <FileText className="h-4 w-4 mr-1" /> Documenti
+                {hasPending && <span className="ml-1 text-xs">({pendingDocs.length})</span>}
+              </TabsTrigger>
+            );
+          })()}
           <TabsTrigger value="categories"><FolderTree className="h-4 w-4 mr-1" /> Categorie</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> Storico</TabsTrigger>
-          {changeRequests.length > 0 && (
-            <TabsTrigger value="changes">Richieste modifica ({changeRequests.filter(r => r.status === 'pending').length})</TabsTrigger>
-          )}
+          {(() => {
+            const pendingChanges = changeRequests.filter((r) => r.status === "pending");
+            if (changeRequests.length === 0) return null;
+            const hasPending = pendingChanges.length > 0;
+            return (
+              <TabsTrigger value="changes" className={hasPending ? "font-bold" : ""}>
+                Richieste modifica
+                {hasPending && <span className="ml-1 text-xs">({pendingChanges.length})</span>}
+              </TabsTrigger>
+            );
+          })()}
         </TabsList>
 
         {/* ── Tab Anagrafica ── */}
