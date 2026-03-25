@@ -165,8 +165,8 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   if (isSubmitted) {
     return (
       <div className="space-y-5">
-        <SheetHeader>
-          <SheetTitle className="text-xl">Offerta presentata</SheetTitle>
+        <div>
+          <h2 className="text-xl font-semibold">Offerta presentata</h2>
           <div className="flex items-center gap-2 pt-1">
             <Badge className={
               existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
@@ -189,7 +189,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
               </span>
             )}
           </div>
-        </SheetHeader>
+        </div>
 
         <Separator />
 
