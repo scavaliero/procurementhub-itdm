@@ -35,6 +35,7 @@ export default function SupplierOpportunityDetail() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [validationResult, setValidationResult] = useState<ValidateBidResult | null>(null);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const techFileRef = useRef<HTMLInputElement>(null);
   const econFileRef = useRef<HTMLInputElement>(null);
   const [techFile, setTechFile] = useState<File | null>(null);
