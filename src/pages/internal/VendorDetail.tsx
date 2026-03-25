@@ -146,6 +146,14 @@ export default function InternalVendorDetail() {
     enabled: !!id,
   });
 
+  const { data: changeRequests = [] } = useQuery({
+    queryKey: ["supplier-change-requests", id],
+    queryFn: () => changeRequestService.listForSupplier(id!),
+    enabled: !!id,
+  });
+
+  const { profile: currentProfile } = useAuth();
+
   /* ── Invalidation helper ── */
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["supplier", id] });
