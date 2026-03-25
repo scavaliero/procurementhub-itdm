@@ -446,6 +446,7 @@ export default function InternalOpportunityEvaluation() {
                     );
                     });
                   })}
+                </TableBody>
               </Table>
             </CardContent>
           </Card>
