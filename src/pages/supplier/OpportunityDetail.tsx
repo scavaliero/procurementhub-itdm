@@ -578,6 +578,29 @@ export default function SupplierOpportunityDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Withdraw confirmation dialog */}
+      <Dialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ritira offerta</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler ritirare la tua offerta? L'offerta ritirata rimarrà nello storico ma non sarà più considerata nella valutazione. Potrai presentare una nuova offerta.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWithdrawConfirm(false)}>Annulla</Button>
+            <Button
+              variant="destructive"
+              disabled={withdrawMutation.isPending}
+              onClick={() => withdrawMutation.mutate()}
+            >
+              <Undo2 className="h-4 w-4 mr-2" />
+              {withdrawMutation.isPending ? "Ritiro in corso…" : "Conferma ritiro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
