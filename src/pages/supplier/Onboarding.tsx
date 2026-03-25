@@ -6,6 +6,7 @@ import { categoryService } from "@/services/categoryService";
 import { contactService } from "@/services/contactService";
 import { changeRequestService } from "@/services/changeRequestService";
 import { notificationService } from "@/services/notificationService";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
