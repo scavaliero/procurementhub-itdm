@@ -76,7 +76,8 @@ export default function SupplierOpportunityDetail() {
   const bidEditable = !existingBid || existingBid.status === "draft";
   const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const canWithdraw = existingBid?.status === "submitted" && !deadlinePassed;
-  const formDisabled = isSubmitted || deadlinePassed;
+  const bidsNotOpen = opp ? !["collecting_bids", "evaluating"].includes(opp.status) : true;
+  const formDisabled = isSubmitted || deadlinePassed || bidsNotOpen;
   const budgetMax = opp?.budget_max ?? null;
 
   const withdrawMutation = useMutation({
