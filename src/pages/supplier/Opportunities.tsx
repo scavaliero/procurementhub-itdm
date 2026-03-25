@@ -10,18 +10,26 @@ import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
-const INV_STATUS: Record<string, string> = {
-  sent: "Nuovo",
-  viewed: "Visualizzato",
-  accepted: "Accettato",
-  declined: "Rifiutato",
+const OPP_STATUS_LABELS: Record<string, string> = {
+  draft: "Bozza",
+  pending_approval: "In approvazione",
+  open: "Aperta",
+  collecting_bids: "Raccolta offerte",
+  evaluating: "In valutazione",
+  awarded: "Aggiudicata",
+  closed: "Chiusa",
+  cancelled: "Annullata",
 };
 
-const INV_COLORS: Record<string, string> = {
-  sent: "bg-blue-100 text-blue-700",
-  viewed: "bg-gray-100 text-gray-700",
-  accepted: "bg-emerald-100 text-emerald-700",
-  declined: "bg-red-100 text-red-700",
+const OPP_STATUS_COLORS: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  pending_approval: "bg-amber-100 text-amber-700",
+  open: "bg-emerald-100 text-emerald-700",
+  collecting_bids: "bg-blue-100 text-blue-700",
+  evaluating: "bg-purple-100 text-purple-700",
+  awarded: "bg-green-100 text-green-800",
+  closed: "bg-gray-200 text-gray-600",
+  cancelled: "bg-red-100 text-red-700",
 };
 
 export default function SupplierOpportunities() {
@@ -86,8 +94,8 @@ export default function SupplierOpportunities() {
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-muted-foreground">{opp?.code ?? "—"}</span>
-                      <Badge variant="secondary" className={INV_COLORS[inv.status] ?? ""}>
-                        {INV_STATUS[inv.status] ?? inv.status}
+                      <Badge variant="secondary" className={OPP_STATUS_COLORS[opp?.status] ?? ""}>
+                        {OPP_STATUS_LABELS[opp?.status] ?? opp?.status ?? "—"}
                       </Badge>
                     </div>
                     <p className="font-medium truncate">{opp?.title ?? "—"}</p>
