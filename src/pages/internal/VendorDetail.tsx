@@ -140,6 +140,15 @@ export default function InternalVendorDetail() {
     enabled: !!id,
   });
 
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ["all-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("id, name, code");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data: history = [] } = useQuery({
     queryKey: ["supplier-history", id],
     queryFn: () => vendorService.getStatusHistory(id!),
