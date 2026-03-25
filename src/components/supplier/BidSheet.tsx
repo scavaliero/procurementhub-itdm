@@ -23,7 +23,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 import { toast } from "sonner";
 import { Save, Send, Upload, Trash2, AlertTriangle, FileText, Undo2, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -165,8 +165,8 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   if (isSubmitted) {
     return (
       <div className="space-y-5">
-        <SheetHeader>
-          <SheetTitle className="text-xl">Offerta presentata</SheetTitle>
+        <div>
+          <h2 className="text-xl font-semibold">Offerta presentata</h2>
           <div className="flex items-center gap-2 pt-1">
             <Badge className={
               existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
@@ -189,7 +189,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
               </span>
             )}
           </div>
-        </SheetHeader>
+        </div>
 
         <Separator />
 
@@ -264,9 +264,9 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   // Editable form (draft or new)
   return (
     <div className="space-y-5">
-      <SheetHeader>
-        <SheetTitle className="text-xl">{existingBid ? "Modifica offerta" : "Presenta offerta"}</SheetTitle>
-      </SheetHeader>
+      <div>
+        <h2 className="text-xl font-semibold">{existingBid ? "Modifica offerta" : "Presenta offerta"}</h2>
+      </div>
 
       {validationResult && !validationResult.valid && (
         <Alert variant="destructive">
