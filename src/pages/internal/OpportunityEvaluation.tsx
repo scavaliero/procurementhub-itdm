@@ -498,7 +498,7 @@ export default function InternalOpportunityEvaluation() {
                 <Alert variant="destructive" className="mt-2">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Questa offerta supera il budget massimo. Non è possibile aggiudicarla.
+                    Questa offerta supera l'offerta massima. Non è possibile aggiudicarla.
                   </AlertDescription>
                 </Alert>
               )}
