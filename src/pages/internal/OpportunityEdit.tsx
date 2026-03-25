@@ -291,6 +291,7 @@ export default function InternalOpportunityEdit() {
                   <div>
                     <Label>Offerta massima (€)</Label>
                     <Input type="number" step="0.01" {...register("budget_max")} />
+                    {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                   </div>
                 </>
               )}
