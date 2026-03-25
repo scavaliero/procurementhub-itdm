@@ -312,15 +312,9 @@ export default function SupplierOpportunityDetail() {
               {opp.bids_deadline ? format(new Date(opp.bids_deadline), "dd/MM/yyyy HH:mm") : "—"}
             </p>
           </div>
-          {opp.budget_estimated != null && (
-            <div>
-              <p className="text-sm text-muted-foreground">Budget stimato</p>
-              <p className="text-sm font-medium">€ {Number(opp.budget_estimated).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
-            </div>
-          )}
           {opp.budget_max != null && (
             <div>
-              <p className="text-sm text-muted-foreground">Budget massimo</p>
+              <p className="text-sm text-muted-foreground">Offerta massima</p>
               <p className="text-sm font-medium font-mono text-destructive">€ {Number(opp.budget_max).toLocaleString("it-IT", { minimumFractionDigits: 2 })}</p>
             </div>
           )}

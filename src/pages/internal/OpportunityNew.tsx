@@ -277,7 +277,7 @@ export default function InternalOpportunityNew() {
                       <Input type="number" step="0.01" {...register("budget_estimated")} />
                     </div>
                     <div>
-                      <Label>Budget massimo (€)</Label>
+                      <Label>Offerta massima (€)</Label>
                       <Input type="number" step="0.01" {...register("budget_max")} />
                     </div>
                   </>
