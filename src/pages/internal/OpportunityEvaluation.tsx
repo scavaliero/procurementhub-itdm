@@ -302,7 +302,17 @@ export default function InternalOpportunityEvaluation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invitations.map((inv: EvaluationInvitation) => {
+                  {(() => {
+                    const statusOrder: Record<string, number> = {
+                      winning: 0, not_awarded: 1, submitted: 2, admitted: 3,
+                      admitted_with_reserve: 4, excluded: 5, withdrawn: 6, draft: 7,
+                    };
+                    return [...invitations].sort((a, b) => {
+                      const aMin = Math.min(...(a.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99));
+                      const bMin = Math.min(...(b.bids ?? []).map((bid: any) => statusOrder[bid?.status] ?? 99));
+                      return aMin - bMin;
+                    });
+                  })().map((inv: EvaluationInvitation) => {
                     const bids = inv.bids ?? [];
                     if (bids.length === 0) {
                       // Supplier invited but no bid yet
