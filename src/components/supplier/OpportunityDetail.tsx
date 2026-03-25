@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
-import { ArrowLeft, FileText, Send, Calendar, MapPin, Tag } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, FileText, ClipboardList } from "lucide-react";
 import SupplierBidSheet from "./BidSheet";
 
 interface Props {
@@ -23,7 +22,6 @@ interface Props {
 export default function SupplierOpportunityDetail({ opportunityId, invitation, onBack }: Props) {
   const { profile } = useAuth();
   const supplierId = profile?.supplier_id;
-  const [bidSheetOpen, setBidSheetOpen] = useState(false);
 
   const { data: opp, isLoading } = useQuery({
     queryKey: ["opportunity", opportunityId],
@@ -72,7 +70,7 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+      <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -90,17 +88,6 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           </div>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{opp.code}</p>
         </div>
-        {canBid && (
-          <Button onClick={() => setBidSheetOpen(true)} className="shrink-0 gap-2">
-            {existingBid && existingBid.status !== "draft" ? <FileText className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-            {bidLabel}
-          </Button>
-        )}
-        {existingBid && existingBid.status !== "draft" && !isExcluded && (
-          <Button variant="outline" onClick={() => setBidSheetOpen(true)} className="shrink-0 gap-2">
-            <FileText className="h-4 w-4" /> Visualizza offerta
-          </Button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -109,8 +96,8 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           <TabsTrigger value="detail">
             <FileText className="h-4 w-4 mr-1.5" /> Dettaglio
           </TabsTrigger>
-          <TabsTrigger value="criteria">
-            <Tag className="h-4 w-4 mr-1.5" /> Criteri
+          <TabsTrigger value="bid">
+            <ClipboardList className="h-4 w-4 mr-1.5" /> Offerte
           </TabsTrigger>
         </TabsList>
 
@@ -200,42 +187,15 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           </div>
         </TabsContent>
 
-        {/* TAB CRITERI */}
-        <TabsContent value="criteria" className="space-y-6 mt-4">
-          {criteria.length === 0 ? (
-            <EmptyState title="Nessun criterio" description="Non sono stati definiti criteri di valutazione." />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Criteri di valutazione</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {criteria.map((c: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                      <span className="text-sm font-medium">{c.name}</span>
-                      <Badge variant="outline">{c.weight_pct}%</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* TAB OFFERTE */}
+        <TabsContent value="bid" className="space-y-6 mt-4">
+          <SupplierBidSheet
+            opportunityId={opportunityId}
+            invitation={invitation}
+            onClose={() => {}}
+          />
         </TabsContent>
       </Tabs>
-
-      {/* Bid Sheet */}
-      <Sheet open={bidSheetOpen} onOpenChange={setBidSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          {bidSheetOpen && (
-            <SupplierBidSheet
-              opportunityId={opportunityId}
-              invitation={invitation}
-              onClose={() => setBidSheetOpen(false)}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
