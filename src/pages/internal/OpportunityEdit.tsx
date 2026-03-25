@@ -155,15 +155,15 @@ export default function InternalOpportunityEdit() {
         },
       });
 
-      // Notify invited suppliers about the update
+      // Notify invited suppliers about the update (non-blocking)
       if (invitations.length > 0) {
-        await opportunityService.notifyInvitedSuppliersOfUpdate({
+        opportunityService.notifyInvitedSuppliersOfUpdate({
           opportunityId: id!,
           tenantId: profile.tenant_id,
           opportunityTitle: data.title,
           opportunityCode: opp?.code || "",
           invitations,
-        });
+        }).catch((err) => console.warn("Non-blocking notification error:", err));
       }
 
       return updated;
