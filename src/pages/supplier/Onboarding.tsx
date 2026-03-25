@@ -1,24 +1,25 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorService } from "@/services/vendorService";
 import { categoryService } from "@/services/categoryService";
 import { contactService } from "@/services/contactService";
+import { changeRequestService } from "@/services/changeRequestService";
 import { notificationService } from "@/services/notificationService";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, ArrowLeft, ArrowRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import {
+  Building2, Users, FolderTree, Plus, Trash2, Check, Save, Pencil, X, Clock, Send,
+} from "lucide-react";
 import type { Supplier } from "@/types";
 
 interface Contact {
@@ -29,22 +30,18 @@ interface Contact {
   phone: string;
 }
 
+const COMPANY_TYPES = ["SRL", "SPA", "SAS", "SNC", "Ditta Individuale", "Cooperativa", "Altro"];
+
 export default function SupplierOnboarding() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [step, setStep] = useState(0);
 
   const { data: supplier, isLoading: supLoading } = useQuery({
     queryKey: ["my-supplier"],
     queryFn: () => vendorService.getMySupplier(),
     enabled: !!profile,
   });
-
-  // Profile data (email, phone, full_name from registration)
-  const profileEmail = profile?.email || "";
-  const profilePhone = profile?.phone || "";
-  const profileName = profile?.full_name || "";
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -63,38 +60,48 @@ export default function SupplierOnboarding() {
     enabled: !!supplier,
   });
 
-  // Step 1 state
+  const { data: pendingRequest } = useQuery({
+    queryKey: ["pending-change-request", supplier?.id],
+    queryFn: () => changeRequestService.getPendingForSupplier(supplier!.id),
+    enabled: !!supplier && !["pre_registered"].includes(supplier?.status || ""),
+  });
+
+  // Determine mode
+  const isOnboarding = supplier?.status === "pre_registered";
+  const isPostOnboarding = supplier && !["pre_registered", "pending_review"].includes(supplier.status);
+  const hasPendingRequest = !!pendingRequest;
+
+  const [editing, setEditing] = useState(false);
+
+  // Form state
   const [companyData, setCompanyData] = useState<Partial<Supplier>>({});
   const [address, setAddress] = useState<Record<string, string>>({});
-
-  // Step 2 state
   const [contacts, setContacts] = useState<Contact[]>([
     { nome: "", cognome: "", ruolo: "", email: "", phone: "" },
   ]);
+  const [selectedCats, setSelectedCats] = useState<string[]>([]);
+  const [initDone, setInitDone] = useState(false);
   const [contactsInitDone, setContactsInitDone] = useState(false);
 
-  // Step 3 state
-  const [selectedCats, setSelectedCats] = useState<string[]>([]);
-
   // Init from supplier data
-  const initDone = useState(false);
-  if (supplier && !initDone[0]) {
-    setCompanyData({
-      company_name: supplier.company_name,
-      company_type: supplier.company_type,
-      pec: supplier.pec,
-      website: supplier.website,
-    });
-    if (supplier.legal_address && typeof supplier.legal_address === "object") {
-      setAddress(supplier.legal_address as Record<string, string>);
+  useEffect(() => {
+    if (supplier && !initDone) {
+      setCompanyData({
+        company_name: supplier.company_name,
+        company_type: supplier.company_type,
+        pec: supplier.pec,
+        website: supplier.website,
+      });
+      if (supplier.legal_address && typeof supplier.legal_address === "object") {
+        setAddress(supplier.legal_address as Record<string, string>);
+      }
+      if (existingCats.length > 0) {
+        setSelectedCats(existingCats.map((c: any) => c.category_id));
+      }
+      setInitDone(true);
     }
-    if (existingCats.length > 0) {
-      setSelectedCats(existingCats.map((c: any) => c.category_id));
-    }
-    initDone[1](true);
-  }
+  }, [supplier, existingCats, initDone]);
 
-  // Init contacts from DB
   useEffect(() => {
     if (existingContacts && existingContacts.length > 0 && !contactsInitDone) {
       setContacts(
@@ -109,6 +116,11 @@ export default function SupplierOnboarding() {
       setContactsInitDone(true);
     }
   }, [existingContacts, contactsInitDone]);
+
+  // Auto-enable editing for onboarding
+  useEffect(() => {
+    if (isOnboarding) setEditing(true);
+  }, [isOnboarding]);
 
   const saveContactsToDB = async () => {
     if (!supplier || !profile) return;
@@ -126,43 +138,17 @@ export default function SupplierOnboarding() {
     );
   };
 
-  const saveDraftMutation = useMutation({
-    mutationFn: async (opts?: { includeContacts?: boolean }) => {
-      if (!supplier) return;
-      await vendorService.updateSupplier(supplier.id, {
-        ...companyData,
-        legal_address: address as any,
-      } as any);
-      if (opts?.includeContacts) {
-        await saveContactsToDB();
-      }
-    },
-    onError: () => toast.error("Errore nel salvataggio bozza"),
-  });
-
-  const saveDraft = useCallback((includeContacts = false) => {
-    if (supplier) saveDraftMutation.mutate({ includeContacts });
-  }, [supplier, saveDraftMutation]);
-
+  // Onboarding finalize: save everything + change status
   const finalizeMutation = useMutation({
     mutationFn: async () => {
       if (!supplier || !profile) return;
-      // Save company data
       await vendorService.updateSupplier(supplier.id, {
         ...companyData,
         legal_address: address as any,
       } as any);
-      // Save contacts
       await saveContactsToDB();
-      // Save categories
       await vendorService.setSupplierCategories(supplier.id, selectedCats);
-      // Update status
-      await vendorService.updateSupplierStatus(
-        supplier.id,
-        "pending_review",
-        supplier.status
-      );
-      // Send notification
+      await vendorService.updateSupplierStatus(supplier.id, "pending_review", supplier.status);
       try {
         await notificationService.send({
           event_type: "onboarding_completed",
@@ -173,9 +159,7 @@ export default function SupplierOnboarding() {
           related_entity_type: "supplier",
           variables: { company_name: companyData.company_name || supplier.company_name },
         });
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     },
     onSuccess: async () => {
       toast.success("Dati inviati con successo! La tua richiesta è in fase di revisione.");
@@ -186,24 +170,53 @@ export default function SupplierOnboarding() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  // Post-onboarding: create a change request
+  const changeRequestMutation = useMutation({
+    mutationFn: async () => {
+      if (!supplier || !profile) throw new Error("Dati mancanti");
+      await changeRequestService.create({
+        supplier_id: supplier.id,
+        tenant_id: profile.tenant_id,
+        requested_by: profile.id,
+        requested_changes: {
+          company_data: companyData,
+          address,
+          contacts: contacts.filter((c) => c.nome && c.email),
+          categories: selectedCats,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Richiesta di modifica inviata. Verrà esaminata dall'amministratore.");
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["pending-change-request"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const addContact = () =>
+    setContacts([...contacts, { nome: "", cognome: "", ruolo: "", email: "", phone: "" }]);
+  const removeContact = (i: number) =>
+    setContacts(contacts.filter((_, idx) => idx !== i));
+  const updateContact = (i: number, field: keyof Contact, value: string) =>
+    setContacts(contacts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
+  const toggleCat = (id: string) =>
+    setSelectedCats((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+
+  const canFinalize = !!companyData.company_name && contacts.some((c) => c.nome && c.email) && selectedCats.length > 0;
+
   if (supLoading) return <PageSkeleton />;
   if (!supplier) {
-    return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Profilo fornitore non trovato.</p>
-      </div>
-    );
+    return <div className="p-6"><p className="text-muted-foreground">Profilo fornitore non trovato.</p></div>;
   }
 
-  // ── After submission: read-only waiting screen ──
+  // Pending review: waiting screen
   if (supplier.status === "pending_review") {
     const submittedDate = supplier.updated_at
       ? new Date(supplier.updated_at).toLocaleDateString("it-IT", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
         })
       : null;
 
@@ -219,317 +232,231 @@ export default function SupplierOnboarding() {
             {submittedDate && <> in data <strong>{submittedDate}</strong></>} ed
             è attualmente in fase di valutazione da parte dell'amministratore.
           </p>
-          <p className="text-muted-foreground text-sm">
-            Riceverai una notifica via email quando la tua richiesta sarà elaborata.
-            Non è necessaria alcuna ulteriore azione da parte tua.
-          </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          Stato: In valutazione
-        </Badge>
+        <Badge variant="secondary" className="text-sm">Stato: In valutazione</Badge>
       </div>
     );
   }
 
-  // ── Enabled: show read-only profile summary + redirect to documents ──
-  if (supplier.status === "enabled") {
-    const addr = supplier.legal_address as Record<string, string> | null;
-    return (
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <Check className="h-7 w-7 text-primary" />
-          </div>
-          <div className="text-center space-y-2">
-            <h1 className="text-xl font-semibold">Account abilitato</h1>
-            <p className="text-muted-foreground text-sm">
-              Il tuo account è stato abilitato. Ora devi caricare i documenti obbligatori
-              per completare il processo di qualifica.
-            </p>
-          </div>
-          <Badge variant="default" className="text-sm">Stato: Abilitato</Badge>
-        </div>
-
-        <Card className="card-top-suppliers">
-          <CardHeader>
-            <CardTitle className="text-base">Riepilogo Anagrafica</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <span className="text-muted-foreground">Ragione sociale</span>
-              <span className="font-medium">{supplier.company_name}</span>
-              {supplier.company_type && (
-                <>
-                  <span className="text-muted-foreground">Tipo società</span>
-                  <span>{supplier.company_type}</span>
-                </>
-              )}
-              {supplier.pec && (
-                <>
-                  <span className="text-muted-foreground">PEC</span>
-                  <span>{supplier.pec}</span>
-                </>
-              )}
-              {supplier.website && (
-                <>
-                  <span className="text-muted-foreground">Sito Web</span>
-                  <span>{supplier.website}</span>
-                </>
-              )}
-              {addr && (addr.street || addr.city) && (
-                <>
-                  <span className="text-muted-foreground">Sede legale</span>
-                  <span>{[addr.street, addr.city, addr.province, addr.zip, addr.country].filter(Boolean).join(", ")}</span>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Button className="w-full" onClick={() => navigate("/supplier/documents")}>
-          Vai al caricamento documenti
-        </Button>
-      </div>
-    );
-  }
-
-  const steps = ["Dati Azienda", "Referenti", "Categorie", "Riepilogo"];
-  const progress = ((step + 1) / steps.length) * 100;
-
-  const canNext = () => {
-    if (step === 0) return !!companyData.company_name;
-    if (step === 1) return contacts.some((c) => c.nome && c.email);
-    if (step === 2) return selectedCats.length > 0;
-    return true;
-  };
-
-  const handleNext = () => {
-    // Save contacts to DB only when leaving step 1 (Referenti)
-    saveDraft(step === 1);
-    setStep((s) => Math.min(s + 1, steps.length - 1));
-  };
-
-  const addContact = () =>
-    setContacts([...contacts, { nome: "", cognome: "", ruolo: "", email: "", phone: "" }]);
-  const removeContact = (i: number) =>
-    setContacts(contacts.filter((_, idx) => idx !== i));
-  const updateContact = (i: number, field: keyof Contact, value: string) =>
-    setContacts(contacts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
-
-  const toggleCat = (id: string) =>
-    setSelectedCats((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
+  const readOnly = !editing;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Onboarding Fornitore</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Completa il tuo profilo per essere qualificato.
-        </p>
-      </div>
-
-      {/* Progress */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          {steps.map((s, i) => (
-            <span key={s} className={i <= step ? "text-primary font-medium" : ""}>
-              {s}
-            </span>
-          ))}
+    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isOnboarding ? "Onboarding Fornitore" : "Anagrafica Azienda"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isOnboarding
+              ? "Completa il tuo profilo per essere qualificato."
+              : "Visualizza e gestisci i dati della tua azienda."}
+          </p>
         </div>
-        <Progress value={progress} className="h-2" />
+
+        {isPostOnboarding && !editing && (
+          <div className="flex items-center gap-2">
+            {hasPendingRequest && (
+              <Badge variant="secondary" className="gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> Modifica in attesa di approvazione
+              </Badge>
+            )}
+            {!hasPendingRequest && (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="h-4 w-4 mr-1.5" /> Richiedi modifica
+              </Button>
+            )}
+          </div>
+        )}
+
+        {isPostOnboarding && editing && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => {
+              setEditing(false);
+              // Reset to original values
+              setInitDone(false);
+              setContactsInitDone(false);
+            }}>
+              <X className="h-4 w-4 mr-1" /> Annulla
+            </Button>
+            <Button
+              onClick={() => changeRequestMutation.mutate()}
+              disabled={changeRequestMutation.isPending}
+            >
+              <Send className="h-4 w-4 mr-1.5" />
+              {changeRequestMutation.isPending ? "Invio…" : "Invia richiesta"}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Step 1 */}
-      {step === 0 && (
-        <Card className="card-top-suppliers">
-          <CardHeader>
-            <CardTitle>Dati Azienda</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Ragione sociale *</Label>
-                <Input
-                  value={companyData.company_name || ""}
-                  onChange={(e) =>
-                    setCompanyData({ ...companyData, company_name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tipo società</Label>
-                <Select
-                  value={companyData.company_type || ""}
-                  onValueChange={(v) =>
-                    setCompanyData({ ...companyData, company_type: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["SRL", "SPA", "SAS", "SNC", "Ditta Individuale", "Cooperativa", "Altro"].map(
-                      (t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Enabled status banner */}
+      {supplier.status === "enabled" && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Account abilitato</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Carica i documenti obbligatori per completare il processo di qualifica.
+              </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>PEC</Label>
-                <Input
-                  type="email"
-                  value={companyData.pec || ""}
-                  onChange={(e) =>
-                    setCompanyData({ ...companyData, pec: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Sito Web</Label>
-                <Input
-                  value={companyData.website || ""}
-                  onChange={(e) =>
-                    setCompanyData({ ...companyData, website: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <Separator className="my-2" />
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Dati dal profilo di registrazione</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label>Referente</Label>
-                <Input value={profileName} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input value={profileEmail} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Telefono</Label>
-                <Input value={profilePhone || "—"} disabled className="bg-muted" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Indirizzo sede legale</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input
-                  placeholder="Via/Piazza"
-                  value={address.street || ""}
-                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                />
-                <Input
-                  placeholder="Città"
-                  value={address.city || ""}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                />
-                <Input
-                  placeholder="CAP"
-                  value={address.zip || ""}
-                  onChange={(e) => setAddress({ ...address, zip: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                <Input
-                  placeholder="Provincia"
-                  value={address.province || ""}
-                  onChange={(e) => setAddress({ ...address, province: e.target.value })}
-                />
-                <Input
-                  placeholder="Nazione"
-                  value={address.country || "IT"}
-                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                />
-              </div>
-            </div>
+            <Button size="sm" onClick={() => navigate("/supplier/documents")}>
+              Vai ai documenti
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 2: Contacts */}
-      {step === 1 && (
-        <Card className="card-top-suppliers">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Referenti
+      {/* Section 1: Company Data */}
+      <Card className="card-top-suppliers">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="h-5 w-5" /> Dati Azienda
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldInput
+              label="Ragione sociale"
+              required
+              value={companyData.company_name || ""}
+              onChange={(v) => setCompanyData({ ...companyData, company_name: v })}
+              readOnly={readOnly}
+            />
+            <div className="space-y-1.5">
+              <Label className="text-sm">Tipo società</Label>
+              {readOnly ? (
+                <p className="text-sm font-medium py-2">{companyData.company_type || "—"}</p>
+              ) : (
+                <Select
+                  value={companyData.company_type || ""}
+                  onValueChange={(v) => setCompanyData({ ...companyData, company_type: v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Seleziona" /></SelectTrigger>
+                  <SelectContent>
+                    {COMPANY_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldInput label="PEC" value={companyData.pec || ""} onChange={(v) => setCompanyData({ ...companyData, pec: v })} readOnly={readOnly} type="email" />
+            <FieldInput label="Sito Web" value={companyData.website || ""} onChange={(v) => setCompanyData({ ...companyData, website: v })} readOnly={readOnly} />
+          </div>
+
+          <Separator />
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Dati dal profilo</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Referente</Label>
+              <p className="text-sm font-medium py-2">{profile?.full_name || "—"}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Email</Label>
+              <p className="text-sm font-medium py-2">{profile?.email || "—"}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Telefono</Label>
+              <p className="text-sm font-medium py-2">{profile?.phone || "—"}</p>
+            </div>
+          </div>
+
+          <Separator />
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Sede legale</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <FieldInput label="Via/Piazza" value={address.street || ""} onChange={(v) => setAddress({ ...address, street: v })} readOnly={readOnly} />
+            <FieldInput label="Città" value={address.city || ""} onChange={(v) => setAddress({ ...address, city: v })} readOnly={readOnly} />
+            <FieldInput label="CAP" value={address.zip || ""} onChange={(v) => setAddress({ ...address, zip: v })} readOnly={readOnly} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FieldInput label="Provincia" value={address.province || ""} onChange={(v) => setAddress({ ...address, province: v })} readOnly={readOnly} />
+            <FieldInput label="Nazione" value={address.country || "IT"} onChange={(v) => setAddress({ ...address, country: v })} readOnly={readOnly} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 2: Contacts */}
+      <Card className="card-top-suppliers">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between text-base">
+            <span className="flex items-center gap-2"><Users className="h-5 w-5" /> Referenti</span>
+            {!readOnly && (
               <Button size="sm" variant="outline" onClick={addContact}>
                 <Plus className="h-4 w-4 mr-1" /> Aggiungi
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {contacts.map((c, i) => (
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {readOnly ? (
+            contacts.filter((c) => c.nome).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nessun referente inserito.</p>
+            ) : (
+              <div className="space-y-3">
+                {contacts.filter((c) => c.nome).map((c, i) => (
+                  <div key={i} className="border rounded-lg p-3 space-y-1">
+                    <p className="text-sm font-medium">{c.nome} {c.cognome}</p>
+                    {c.ruolo && <p className="text-xs text-muted-foreground">{c.ruolo}</p>}
+                    <p className="text-xs">{c.email}{c.phone ? ` · ${c.phone}` : ""}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            contacts.map((c, i) => (
               <div key={i} className="border rounded-lg p-4 space-y-3 relative">
                 {contacts.length > 1 && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-2 right-2 h-7 w-7"
-                    onClick={() => removeContact(i)}
-                  >
+                  <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7" onClick={() => removeContact(i)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Nome *"
-                    value={c.nome}
-                    onChange={(e) => updateContact(i, "nome", e.target.value)}
-                  />
-                  <Input
-                    placeholder="Cognome"
-                    value={c.cognome}
-                    onChange={(e) => updateContact(i, "cognome", e.target.value)}
-                  />
+                  <Input placeholder="Nome *" value={c.nome} onChange={(e) => updateContact(i, "nome", e.target.value)} />
+                  <Input placeholder="Cognome" value={c.cognome} onChange={(e) => updateContact(i, "cognome", e.target.value)} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Ruolo"
-                    value={c.ruolo}
-                    onChange={(e) => updateContact(i, "ruolo", e.target.value)}
-                  />
-                  <Input
-                    placeholder="Email *"
-                    type="email"
-                    value={c.email}
-                    onChange={(e) => updateContact(i, "email", e.target.value)}
-                  />
-                  <Input
-                    placeholder="Telefono"
-                    type="tel"
-                    value={c.phone}
-                    onChange={(e) => updateContact(i, "phone", e.target.value)}
-                  />
+                  <Input placeholder="Ruolo" value={c.ruolo} onChange={(e) => updateContact(i, "ruolo", e.target.value)} />
+                  <Input placeholder="Email *" type="email" value={c.email} onChange={(e) => updateContact(i, "email", e.target.value)} />
+                  <Input placeholder="Telefono" type="tel" value={c.phone} onChange={(e) => updateContact(i, "phone", e.target.value)} />
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+            ))
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Step 3: Categories */}
-      {step === 2 && (
-        <Card className="card-top-suppliers">
-          <CardHeader>
-            <CardTitle>Categorie Merceologiche</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Seleziona almeno una categoria per cui desideri qualificarti.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {categories
-                .filter((c) => c.is_active)
-                .map((cat) => (
+      {/* Section 3: Categories */}
+      <Card className="card-top-suppliers">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FolderTree className="h-5 w-5" /> Categorie Merceologiche
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {readOnly ? (
+            selectedCats.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nessuna categoria selezionata.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {selectedCats.map((id) => {
+                  const cat = categories.find((c) => c.id === id);
+                  return cat ? (
+                    <Badge key={id} variant="secondary">{cat.code} — {cat.name}</Badge>
+                  ) : null;
+                })}
+              </div>
+            )
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground mb-4">
+                Seleziona almeno una categoria per cui desideri qualificarti.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {categories.filter((c) => c.is_active).map((cat) => (
                   <label
                     key={cat.id}
                     className={`flex items-start gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${
@@ -538,100 +465,50 @@ export default function SupplierOnboarding() {
                         : "hover:border-muted-foreground/30"
                     }`}
                   >
-                    <Checkbox
-                      checked={selectedCats.includes(cat.id)}
-                      onCheckedChange={() => toggleCat(cat.id)}
-                    />
+                    <Checkbox checked={selectedCats.includes(cat.id)} onCheckedChange={() => toggleCat(cat.id)} />
                     <div>
-                      <p className="text-sm font-medium">
-                        {cat.code} — {cat.name}
-                      </p>
-                      {cat.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {cat.description}
-                        </p>
-                      )}
+                      <p className="text-sm font-medium">{cat.code} — {cat.name}</p>
+                      {cat.description && <p className="text-xs text-muted-foreground mt-0.5">{cat.description}</p>}
                     </div>
                   </label>
                 ))}
-            </div>
-            {categories.filter((c) => c.is_active).length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Nessuna categoria disponibile al momento.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4: Summary */}
-      {step === 3 && (
-        <Card className="card-top-suppliers">
-          <CardHeader>
-            <CardTitle>Riepilogo</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold mb-1">Azienda</h3>
-              <p className="text-sm">
-                {companyData.company_name}{" "}
-                {companyData.company_type && `(${companyData.company_type})`}
-              </p>
-              {companyData.pec && (
-                <p className="text-xs text-muted-foreground">PEC: {companyData.pec}</p>
-              )}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-1">Referenti</h3>
-              {contacts
-                .filter((c) => c.nome)
-                .map((c, i) => (
-                  <p key={i} className="text-sm">
-                    {c.nome} {c.cognome} — {c.email}
-                    {c.ruolo && ` (${c.ruolo})`}
-                  </p>
-                ))}
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-1">Categorie selezionate</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCats.map((id) => {
-                  const cat = categories.find((c) => c.id === id);
-                  return cat ? (
-                    <Badge key={id} variant="secondary">
-                      {cat.code} — {cat.name}
-                    </Badge>
-                  ) : null;
-                })}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={() => setStep((s) => Math.max(s - 1, 0))}
-          disabled={step === 0}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Indietro
-        </Button>
-        {step < steps.length - 1 ? (
-          <Button onClick={handleNext} disabled={!canNext()}>
-            Avanti <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
-        ) : (
+      {/* Onboarding submit */}
+      {isOnboarding && (
+        <div className="flex justify-end">
           <Button
             onClick={() => finalizeMutation.mutate()}
-            disabled={finalizeMutation.isPending}
+            disabled={!canFinalize || finalizeMutation.isPending}
+            size="lg"
           >
-            <Check className="h-4 w-4 mr-1" />
+            <Send className="h-4 w-4 mr-1.5" />
             {finalizeMutation.isPending ? "Invio…" : "Invia Richiesta"}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldInput({
+  label, value, onChange, readOnly, required, type = "text",
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  readOnly: boolean; required?: boolean; type?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm">{label}{required && " *"}</Label>
+      {readOnly ? (
+        <p className="text-sm font-medium py-2">{value || "—"}</p>
+      ) : (
+        <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
     </div>
   );
 }
