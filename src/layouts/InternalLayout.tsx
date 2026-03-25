@@ -48,7 +48,7 @@ function InternalSidebarContent() {
   const location = useLocation();
   const { hasGrant } = useGrants();
 
-  const showConfig = hasGrant("manage_document_types");
+  const showConfig = hasGrant("manage_document_types") || hasGrant("manage_categories");
   const showAdmin = hasGrant("manage_roles") || hasGrant("manage_users") || hasGrant("view_audit_logs");
 
   const renderItems = (items: typeof adminNav) =>

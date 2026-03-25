@@ -764,7 +764,7 @@ export default function InternalVendorDetail() {
                     </div>
 
                     {/* Actions for pending requests */}
-                    {isPending && hasGrant("manage_users") && (
+                    {isPending && hasGrant("review_change_requests") && (
                       <div className="flex gap-2 pt-1">
                         <Button
                           size="sm"
