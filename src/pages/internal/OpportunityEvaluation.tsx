@@ -6,7 +6,7 @@ import { opportunityService } from "@/services/opportunityService";
 import { bidService, type EvaluationInvitation } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, X, Save, Trophy } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download } from "lucide-react";
 
 interface CriterionDef {
   name: string;
@@ -53,6 +54,13 @@ const BID_STATUS_COLORS: Record<string, string> = {
   not_awarded: "bg-gray-200 text-gray-600",
 };
 
+const STATUS_OPTIONS = [
+  { value: "submitted", label: "Inviata" },
+  { value: "under_evaluation", label: "In valutazione" },
+  { value: "admitted", label: "Ammessa" },
+  { value: "admitted_with_reserve", label: "Ammessa con riserva" },
+];
+
 export default function InternalOpportunityEvaluation() {
   const { id: opportunityId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,8 +72,8 @@ export default function InternalOpportunityEvaluation() {
   const [awardDialog, setAwardDialog] = useState(false);
   const [selectedWinner, setSelectedWinner] = useState("");
   const [awardJustification, setAwardJustification] = useState("");
+  const [expandedBid, setExpandedBid] = useState<string | null>(null);
 
-  // Scores: { [bidId]: { [criterionName]: score } }
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
 
   const { data: opp, isLoading: oppLoading } = useQuery({
@@ -87,7 +95,6 @@ export default function InternalOpportunityEvaluation() {
 
   const budgetMax = opp?.budget_max ?? null;
 
-  // Initialize scores from existing evaluations
   useMemo(() => {
     const initial: Record<string, Record<string, number>> = {};
     invitations.forEach((inv: EvaluationInvitation) => {
@@ -120,31 +127,25 @@ export default function InternalOpportunityEvaluation() {
     }));
   };
 
-  const saveEvalMutation = useMutation({
-    mutationFn: async (bidId: string) => {
-      if (!profile) throw new Error("Profilo non trovato");
-      await bidService.saveEvaluation({
-        bidId,
-        evaluatorId: profile.id,
-        criteriaScores: scores[bidId] ?? {},
-        totalScore: computeTotal(bidId),
-        tenantId: profile.tenant_id,
-      });
-    },
-    onSuccess: () => {
-      toast.success("Valutazione salvata");
-      qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
-    },
-    onError: (err: Error) => toast.error(err.message || "Errore"),
-  });
-
-  const statusMutation = useMutation({
+  // Auto-save evaluation + change status in one action
+  const actionMutation = useMutation({
     mutationFn: async ({ bidId, status, reason }: { bidId: string; status: string; reason?: string }) => {
       if (!profile) throw new Error("Profilo non trovato");
+      // Save evaluation scores first (if any criteria exist)
+      if (criteria.length > 0 && scores[bidId]) {
+        await bidService.saveEvaluation({
+          bidId,
+          evaluatorId: profile.id,
+          criteriaScores: scores[bidId] ?? {},
+          totalScore: computeTotal(bidId),
+          tenantId: profile.tenant_id,
+        });
+      }
+      // Then update status
       await bidService.updateBidStatus(bidId, status, profile.tenant_id, reason);
     },
     onSuccess: () => {
-      toast.success("Stato aggiornato");
+      toast.success("Stato aggiornato e valutazione salvata");
       qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
       setExcludeDialog(null);
       setExcludeReason("");
@@ -152,7 +153,6 @@ export default function InternalOpportunityEvaluation() {
     onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
-  // Admitted bids for award selection
   const admittedBids = useMemo(() => {
     const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number; exceedsBudget: boolean }[] = [];
     invitations.forEach((inv: EvaluationInvitation) => {
@@ -182,7 +182,6 @@ export default function InternalOpportunityEvaluation() {
   const canCreateOrder = hasGrant("manage_orders");
   const isAwarded = opp?.status === "awarded";
 
-  // Selected winner budget check
   const selectedWinnerData = admittedBids.find((b) => b.bidId === selectedWinner);
   const winnerExceedsBudget = selectedWinnerData?.exceedsBudget ?? false;
 
@@ -224,7 +223,6 @@ export default function InternalOpportunityEvaluation() {
   }
 
   const canEvaluate = hasGrant("evaluate_bids");
-  // Disable evaluation actions after award
   const actionsDisabled = isAwarded;
 
   return (
@@ -266,126 +264,138 @@ export default function InternalOpportunityEvaluation() {
       {invitations.length === 0 ? (
         <EmptyState title="Nessuna offerta" description="Nessun fornitore ha ancora presentato un'offerta." />
       ) : (
-        <Card>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-background z-10 min-w-[160px]">Fornitore</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead className="text-right">Importo (€)</TableHead>
-                  <TableHead className="text-center">Giorni</TableHead>
-                  {criteria.map((c) => (
-                    <TableHead key={c.name} className="text-center min-w-[100px]">
-                      <div className="text-xs">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground">{c.weight_pct}% (max {c.max_score})</div>
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-center font-bold">Totale</TableHead>
-                  {canEvaluate && !actionsDisabled && <TableHead className="text-center">Azioni</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitations.map((inv: EvaluationInvitation) => {
-                  const bid = inv.bids?.[0];
-                  const bidId = bid?.id;
-                  const bidStatus = bid?.status ?? "no_bid";
-                  const hasBid = !!bid && bid.status !== "draft";
-                  const total = bidId ? computeTotal(bidId) : 0;
-                  const bidAmount = Number(bid?.total_amount ?? 0);
-                  const overBudget = budgetMax != null && bidAmount > budgetMax && hasBid;
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="sticky left-0 bg-background z-10 min-w-[160px]">Fornitore</TableHead>
+                    <TableHead>Stato</TableHead>
+                    <TableHead className="text-right">Importo (€)</TableHead>
+                    <TableHead className="text-center">Giorni</TableHead>
+                    {criteria.map((c) => (
+                      <TableHead key={c.name} className="text-center min-w-[100px]">
+                        <div className="text-xs">{c.name}</div>
+                        <div className="text-[10px] text-muted-foreground">{c.weight_pct}% (max {c.max_score})</div>
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-center font-bold">Totale</TableHead>
+                    {canEvaluate && !actionsDisabled && <TableHead className="text-center">Azioni</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invitations.map((inv: EvaluationInvitation) => {
+                    const bid = inv.bids?.[0];
+                    const bidId = bid?.id;
+                    const bidStatus = bid?.status ?? "no_bid";
+                    const hasBid = !!bid && bid.status !== "draft";
+                    const total = bidId ? computeTotal(bidId) : 0;
+                    const bidAmount = Number(bid?.total_amount ?? 0);
+                    const overBudget = budgetMax != null && bidAmount > budgetMax && hasBid;
+                    const isExpanded = expandedBid === bidId;
 
-                  return (
-                    <TableRow key={inv.id}>
-                      <TableCell className="sticky left-0 bg-background font-medium">
-                        {inv.suppliers?.company_name ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={BID_STATUS_COLORS[bidStatus] ?? "bg-gray-100 text-gray-500"}>
-                          {BID_STATUS_LABELS[bidStatus] ?? bidStatus}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className={`text-right font-mono ${overBudget ? "text-destructive font-bold" : ""}`}>
-                        {hasBid ? `€ ${bidAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : "—"}
-                        {overBudget && <span className="block text-[10px]">⚠ Supera budget</span>}
-                      </TableCell>
-                      <TableCell className="text-center">{hasBid ? bid.execution_days ?? "—" : "—"}</TableCell>
-                      {criteria.map((c) => (
-                        <TableCell key={c.name} className="text-center">
-                          {hasBid && canEvaluate && bidId && !actionsDisabled ? (
-                            <Input
-                              type="number"
-                              min={0}
-                              max={c.max_score}
-                              className="w-16 mx-auto text-center h-8 text-sm"
-                              value={scores[bidId]?.[c.name] ?? ""}
-                              onChange={(e) => setScore(bidId, c.name, Math.min(c.max_score, Math.max(0, Number(e.target.value))))}
-                            />
-                          ) : hasBid && bidId ? (
-                            <span>{scores[bidId]?.[c.name] ?? "—"}</span>
-                          ) : (
-                            "—"
+                    return (
+                      <>
+                        <TableRow key={inv.id} className={isExpanded ? "border-b-0" : ""}>
+                          <TableCell className="w-8 px-2">
+                            {hasBid && bidId && (
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedBid(isExpanded ? null : bidId)}>
+                                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                              </Button>
+                            )}
+                          </TableCell>
+                          <TableCell className="sticky left-0 bg-background font-medium">
+                            {inv.suppliers?.company_name ?? "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={BID_STATUS_COLORS[bidStatus] ?? "bg-gray-100 text-gray-500"}>
+                              {BID_STATUS_LABELS[bidStatus] ?? bidStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className={`text-right font-mono ${overBudget ? "text-destructive font-bold" : ""}`}>
+                            {hasBid ? `€ ${bidAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : "—"}
+                            {overBudget && <span className="block text-[10px]">⚠ Supera budget</span>}
+                          </TableCell>
+                          <TableCell className="text-center">{hasBid ? bid.execution_days ?? "—" : "—"}</TableCell>
+                          {criteria.map((c) => (
+                            <TableCell key={c.name} className="text-center">
+                              {hasBid && canEvaluate && bidId && !actionsDisabled ? (
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={c.max_score}
+                                  className="w-16 mx-auto text-center h-8 text-sm"
+                                  value={scores[bidId]?.[c.name] ?? ""}
+                                  onChange={(e) => setScore(bidId, c.name, Math.min(c.max_score, Math.max(0, Number(e.target.value))))}
+                                />
+                              ) : hasBid && bidId ? (
+                                <span>{scores[bidId]?.[c.name] ?? "—"}</span>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-center font-bold">
+                            {hasBid && bidId ? total.toFixed(2) : "—"}
+                          </TableCell>
+                          {canEvaluate && !actionsDisabled && (
+                            <TableCell>
+                              {hasBid && bidId && bidStatus !== "excluded" ? (
+                                <div className="flex items-center gap-1 justify-center">
+                                  {/* Status selector — auto-saves evaluation + status */}
+                                  <Select
+                                    value=""
+                                    onValueChange={(newStatus) => {
+                                      actionMutation.mutate({ bidId, status: newStatus });
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 w-[140px] text-xs">
+                                      <SelectValue placeholder="Cambia stato" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {STATUS_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                          {opt.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive"
+                                    title="Escludi"
+                                    onClick={() => setExcludeDialog({ bidId, supplierName: inv.suppliers?.company_name ?? "" })}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ) : bidStatus === "excluded" ? (
+                                <Badge variant="destructive" className="text-xs">Esclusa (definitiva)</Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                           )}
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-center font-bold">
-                        {hasBid && bidId ? total.toFixed(2) : "—"}
-                      </TableCell>
-                      {canEvaluate && !actionsDisabled && (
-                        <TableCell>
-                          {hasBid && bidId && bidStatus !== "excluded" ? (
-                            <div className="flex items-center gap-1 justify-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                title="Salva valutazione"
-                                onClick={() => saveEvalMutation.mutate(bidId)}
-                                disabled={saveEvalMutation.isPending}
-                              >
-                                <Save className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-emerald-600"
-                                title="Ammetti"
-                                onClick={() => statusMutation.mutate({ bidId, status: "admitted" })}
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-amber-600"
-                                title="Ammetti con riserva"
-                                onClick={() => statusMutation.mutate({ bidId, status: "admitted_with_reserve" })}
-                              >
-                                <AlertTriangle className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive"
-                                title="Escludi"
-                                onClick={() => setExcludeDialog({ bidId, supplierName: inv.suppliers?.company_name ?? "" })}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ) : bidStatus === "excluded" ? (
-                            <Badge variant="destructive" className="text-xs">Esclusa (definitiva)</Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                        </TableRow>
+                        {/* Expanded bid detail */}
+                        {isExpanded && bidId && (
+                          <TableRow key={`${inv.id}-detail`}>
+                            <TableCell colSpan={6 + criteria.length + (canEvaluate && !actionsDisabled ? 1 : 0)} className="bg-muted/30 p-0">
+                              <BidDetailPanel bidId={bidId} bid={bid!} />
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Exclude Dialog */}
@@ -415,10 +425,10 @@ export default function InternalOpportunityEvaluation() {
             </Button>
             <Button
               variant="destructive"
-              disabled={!excludeReason.trim() || statusMutation.isPending}
+              disabled={!excludeReason.trim() || actionMutation.isPending}
               onClick={() => {
                 if (excludeDialog) {
-                  statusMutation.mutate({ bidId: excludeDialog.bidId, status: "excluded", reason: excludeReason });
+                  actionMutation.mutate({ bidId: excludeDialog.bidId, status: "excluded", reason: excludeReason });
                 }
               }}
             >
@@ -482,6 +492,103 @@ export default function InternalOpportunityEvaluation() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Expanded panel showing bid details + attachments */
+function BidDetailPanel({ bidId, bid }: { bidId: string; bid: any }) {
+  const { data: attachments = [], isLoading } = useQuery({
+    queryKey: ["bid-attachments-admin", bidId],
+    queryFn: () => bidService.listTypedAttachments(bidId),
+    enabled: !!bidId,
+  });
+
+  const techAtt = attachments.find((a: any) => a.attachment_type === "technical_offer");
+  const econAtt = attachments.find((a: any) => a.attachment_type === "economic_offer");
+
+  return (
+    <div className="px-6 py-4 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {bid.technical_description && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium mb-1">Descrizione tecnica</p>
+            <p className="text-sm whitespace-pre-wrap bg-background rounded border p-3">{bid.technical_description}</p>
+          </div>
+        )}
+        {bid.proposed_conditions && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium mb-1">Condizioni proposte</p>
+            <p className="text-sm whitespace-pre-wrap bg-background rounded border p-3">{bid.proposed_conditions}</p>
+          </div>
+        )}
+        {bid.notes && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium mb-1">Note</p>
+            <p className="text-sm whitespace-pre-wrap bg-background rounded border p-3">{bid.notes}</p>
+          </div>
+        )}
+        {bid.bid_validity_date && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium mb-1">Validità offerta</p>
+            <p className="text-sm">{new Date(bid.bid_validity_date).toLocaleDateString("it-IT")}</p>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      <div>
+        <p className="text-xs text-muted-foreground font-medium mb-2">Allegati offerta</p>
+        {isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : attachments.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">Nessun allegato caricato</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {techAtt && (
+              <div className="flex items-center gap-2 bg-background rounded border px-3 py-2">
+                <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{techAtt.original_filename}</p>
+                  <p className="text-[10px] text-muted-foreground">Offerta Tecnica</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7"
+                  onClick={async () => {
+                    const url = await bidService.getBidAttachmentUrl(techAtt.storage_path);
+                    window.open(url, "_blank");
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+            {econAtt && (
+              <div className="flex items-center gap-2 bg-background rounded border px-3 py-2">
+                <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{econAtt.original_filename}</p>
+                  <p className="text-[10px] text-muted-foreground">Offerta Economica</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7"
+                  onClick={async () => {
+                    const url = await bidService.getBidAttachmentUrl(econAtt.storage_path);
+                    window.open(url, "_blank");
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

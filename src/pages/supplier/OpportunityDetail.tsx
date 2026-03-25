@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -27,7 +27,10 @@ export default function SupplierOpportunityDetail() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [validationResult, setValidationResult] = useState<ValidateBidResult | null>(null);
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const techFileRef = useRef<HTMLInputElement>(null);
+  const econFileRef = useRef<HTMLInputElement>(null);
+  const [techFile, setTechFile] = useState<File | null>(null);
+  const [econFile, setEconFile] = useState<File | null>(null);
 
   const supplierId = profile?.supplier_id;
 
@@ -52,14 +55,18 @@ export default function SupplierOpportunityDetail() {
     enabled: !!opportunityId && !!supplierId,
   });
 
+  // Existing typed attachments
+  const { data: existingAttachments = [] } = useQuery({
+    queryKey: ["bid-attachments", existingBid?.id],
+    queryFn: () => bidService.listTypedAttachments(existingBid!.id),
+    enabled: !!existingBid?.id,
+  });
+
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
-  
   const isExcluded = existingBid?.status === "excluded";
   const bidEditable = !existingBid || existingBid.status === "draft";
   const isSubmitted = !!existingBid && existingBid.status !== "draft";
   const formDisabled = isSubmitted || deadlinePassed;
-
-  // Budget max from opportunity
   const budgetMax = opp?.budget_max ?? null;
 
   const bidSchema = useMemo(() => {
@@ -89,7 +96,6 @@ export default function SupplierOpportunityDetail() {
     resolver: zodResolver(bidSchema),
   });
 
-  // Pre-fill form with existing bid data
   useEffect(() => {
     if (existingBid && existingBid.status === "draft") {
       reset({
@@ -122,11 +128,28 @@ export default function SupplierOpportunityDetail() {
         },
         existingBid?.id
       );
+
+      // Upload typed attachments
+      if (techFile) {
+        await bidService.uploadTypedAttachment({
+          bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id,
+          attachmentType: "technical_offer", file: techFile,
+        });
+        setTechFile(null);
+      }
+      if (econFile) {
+        await bidService.uploadTypedAttachment({
+          bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id,
+          attachmentType: "economic_offer", file: econFile,
+        });
+        setEconFile(null);
+      }
       return bid;
     },
     onSuccess: () => {
       toast.success("Bozza salvata");
       qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
+      qc.invalidateQueries({ queryKey: ["bid-attachments"] });
     },
     onError: (err: any) => toast.error(err.message || "Errore nel salvataggio"),
   });
@@ -134,13 +157,10 @@ export default function SupplierOpportunityDetail() {
   const submitMutation = useMutation({
     mutationFn: async (data: BidFormData) => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
-
-      // Budget validation
       if (budgetMax && data.total_amount > budgetMax) {
         throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera il budget massimo (€ ${budgetMax.toLocaleString("it-IT")})`);
       }
 
-      // 1. Save/update draft first
       const bid = await bidService.saveDraft(
         {
           opportunity_id: opportunityId,
@@ -157,29 +177,34 @@ export default function SupplierOpportunityDetail() {
         existingBid?.id
       );
 
-      // 2. Upload attachments
-      for (const file of attachments) {
-        await bidService.uploadAttachment(opportunityId, supplierId, file);
+      // Upload typed attachments
+      if (techFile) {
+        await bidService.uploadTypedAttachment({
+          bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id,
+          attachmentType: "technical_offer", file: techFile,
+        });
+      }
+      if (econFile) {
+        await bidService.uploadTypedAttachment({
+          bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id,
+          attachmentType: "economic_offer", file: econFile,
+        });
       }
 
-      // 3. Validate
       const validation = await bidService.validate(opportunityId, supplierId);
       setValidationResult(validation);
+      if (!validation.valid) throw new Error(validation.message || "Validazione fallita");
 
-      if (!validation.valid) {
-        throw new Error(validation.message || "Validazione fallita");
-      }
-
-      // 4. Submit
       return bidService.submit(bid.id, profile.tenant_id, opportunityId, invitation?.id);
     },
     onSuccess: () => {
       toast.success("Offerta inviata con successo");
       qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
-      setAttachments([]);
+      qc.invalidateQueries({ queryKey: ["bid-attachments"] });
+      setTechFile(null);
+      setEconFile(null);
     },
     onError: (err: any) => {
-      // Don't toast if it's a validation error — we show inline
       if (!validationResult || validationResult.valid) {
         toast.error(err.message || "Errore nell'invio");
       }
@@ -190,6 +215,9 @@ export default function SupplierOpportunityDetail() {
     () => (Array.isArray(opp?.evaluation_criteria) ? opp.evaluation_criteria : []),
     [opp]
   );
+
+  const existingTechAtt = existingAttachments.find((a: any) => a.attachment_type === "technical_offer");
+  const existingEconAtt = existingAttachments.find((a: any) => a.attachment_type === "economic_offer");
 
   if (oppLoading || bidLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
@@ -231,7 +259,6 @@ export default function SupplierOpportunityDetail() {
         )}
       </div>
 
-      {/* Excluded notice — irreversible */}
       {isExcluded && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -242,7 +269,7 @@ export default function SupplierOpportunityDetail() {
         </Alert>
       )}
 
-      {/* Opportunity details — now with economic info */}
+      {/* Opportunity details */}
       <Card className="card-top-opportunities">
         <CardHeader><CardTitle className="text-lg">Dettagli Opportunità</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -256,7 +283,6 @@ export default function SupplierOpportunityDetail() {
               {opp.bids_deadline ? format(new Date(opp.bids_deadline), "dd/MM/yyyy HH:mm") : "—"}
             </p>
           </div>
-          {/* Economic details */}
           {opp.budget_estimated != null && (
             <div>
               <p className="text-sm text-muted-foreground">Budget stimato</p>
@@ -404,39 +430,75 @@ export default function SupplierOpportunityDetail() {
                 <Textarea {...register("notes")} rows={2} />
               </div>
 
-              {/* Attachments */}
-              {!formDisabled && (
-                <div>
-                  <Label>Allegati</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      className="hidden"
-                      id="bid-files"
-                      onChange={(e) => {
-                        if (e.target.files) setAttachments([...attachments, ...Array.from(e.target.files)]);
-                      }}
-                    />
-                    <label htmlFor="bid-files" className="cursor-pointer flex flex-col items-center gap-1">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Clicca per caricare</span>
-                    </label>
-                  </div>
-                  {attachments.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {attachments.map((f, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm bg-muted rounded px-3 py-1">
-                          <span>{f.name}</span>
-                          <Button variant="ghost" size="sm" type="button" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
+              {/* Typed Attachments */}
+              <Separator />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Offerta Tecnica */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Offerta Tecnica
+                  </Label>
+                  {existingTechAtt && !techFile && (
+                    <div className="flex items-center gap-2 text-sm bg-muted rounded px-3 py-2">
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1">{existingTechAtt.original_filename}</span>
+                      <Badge variant="outline" className="text-[10px] shrink-0">Caricato</Badge>
                     </div>
                   )}
+                  {techFile && (
+                    <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 rounded px-3 py-2">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <span className="truncate flex-1">{techFile.name}</span>
+                      {!formDisabled && (
+                        <Button variant="ghost" size="sm" type="button" onClick={() => setTechFile(null)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {!formDisabled && (
+                    <>
+                      <input ref={techFileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => { if (e.target.files?.[0]) setTechFile(e.target.files[0]); }} />
+                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => techFileRef.current?.click()}>
+                        <Upload className="h-3.5 w-3.5 mr-1" /> {existingTechAtt || techFile ? "Sostituisci" : "Carica"} offerta tecnica
+                      </Button>
+                    </>
+                  )}
                 </div>
-              )}
+
+                {/* Offerta Economica */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Offerta Economica
+                  </Label>
+                  {existingEconAtt && !econFile && (
+                    <div className="flex items-center gap-2 text-sm bg-muted rounded px-3 py-2">
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate flex-1">{existingEconAtt.original_filename}</span>
+                      <Badge variant="outline" className="text-[10px] shrink-0">Caricato</Badge>
+                    </div>
+                  )}
+                  {econFile && (
+                    <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 rounded px-3 py-2">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <span className="truncate flex-1">{econFile.name}</span>
+                      {!formDisabled && (
+                        <Button variant="ghost" size="sm" type="button" onClick={() => setEconFile(null)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {!formDisabled && (
+                    <>
+                      <input ref={econFileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => { if (e.target.files?.[0]) setEconFile(e.target.files[0]); }} />
+                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => econFileRef.current?.click()}>
+                        <Upload className="h-3.5 w-3.5 mr-1" /> {existingEconAtt || econFile ? "Sostituisci" : "Carica"} offerta economica
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </fieldset>
 
             {!formDisabled && (
@@ -457,6 +519,36 @@ export default function SupplierOpportunityDetail() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Show attachments in read-only mode when submitted */}
+      {isSubmitted && existingAttachments.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Allegati offerta</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {existingAttachments.map((att: any) => (
+              <div key={att.id} className="flex items-center gap-3 bg-muted rounded px-3 py-2">
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{att.original_filename}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {att.attachment_type === "technical_offer" ? "Offerta Tecnica" : "Offerta Economica"}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const url = await bidService.getBidAttachmentUrl(att.storage_path);
+                    window.open(url, "_blank");
+                  }}
+                >
+                  Scarica
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
