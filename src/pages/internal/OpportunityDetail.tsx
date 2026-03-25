@@ -18,8 +18,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza", pending_approval: "In approvazione", open: "Aperta",
@@ -79,6 +80,12 @@ export default function InternalOpportunityDetail() {
     queryKey: ["order-exists-for-opp", id],
     queryFn: () => orderService.existsForOpportunity(id!),
     enabled: !!id,
+  });
+
+  const { data: orderForOpp } = useQuery({
+    queryKey: ["order-for-opp", id],
+    queryFn: () => orderService.getByOpportunityId(id!),
+    enabled: !!id && hasOrder,
   });
 
   const statusMutation = useMutation({
@@ -176,6 +183,7 @@ export default function InternalOpportunityDetail() {
           <TabsTrigger value="criteria">Criteri ({criteria.length})</TabsTrigger>
           <TabsTrigger value="invitations">Inviti ({invitations.length})</TabsTrigger>
           {canInvite && <TabsTrigger value="invite">Invita fornitori</TabsTrigger>}
+          {hasOrder && <TabsTrigger value="order">Ordine</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="details">
@@ -272,6 +280,39 @@ export default function InternalOpportunityDetail() {
         {canInvite && (
           <TabsContent value="invite">
             <InviteSuppliers opportunityId={opp.id} categoryId={opp.category_id} tenantId={opp.tenant_id} />
+          </TabsContent>
+        )}
+
+        {hasOrder && orderForOpp && (
+          <TabsContent value="order">
+            <Card className="card-top-orders">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <ShoppingCart className="h-5 w-5" /> Ordine collegato
+                  </CardTitle>
+                  <Link to={`/internal/orders/${orderForOpp.id}`}>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      <ExternalLink className="h-3.5 w-3.5" /> Vai al dettaglio
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Detail label="Codice" value={orderForOpp.code} />
+                <Detail label="Stato" value={orderForOpp.status === "draft" ? "Bozza" : orderForOpp.status === "pending_approval" ? "In approvazione" : orderForOpp.status === "issued" ? "Emesso" : orderForOpp.status === "accepted" ? "Accettato" : orderForOpp.status === "completed" ? "Completato" : orderForOpp.status} />
+                <Detail label="Oggetto" value={orderForOpp.subject} />
+                <Detail label="Fornitore" value={(orderForOpp as any).suppliers?.company_name} />
+                <Detail label="Importo" value={orderForOpp.amount != null ? `€ ${Number(orderForOpp.amount).toLocaleString("it-IT")}` : undefined} />
+                <Detail label="Periodo" value={orderForOpp.start_date && orderForOpp.end_date ? `${orderForOpp.start_date} — ${orderForOpp.end_date}` : undefined} />
+                {orderForOpp.description && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Descrizione</p>
+                    <p className="text-sm whitespace-pre-wrap">{orderForOpp.description}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         )}
       </Tabs>
