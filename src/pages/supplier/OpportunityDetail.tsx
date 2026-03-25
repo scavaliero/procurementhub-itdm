@@ -262,6 +262,11 @@ export default function SupplierOpportunityDetail() {
           <h1 className="text-2xl font-bold">{opp.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">{opp.code}</p>
         </div>
+        {canWithdraw && (
+          <Button variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => setShowWithdrawConfirm(true)}>
+            <Undo2 className="h-4 w-4" /> Ritira offerta
+          </Button>
+        )}
         {existingBid && existingBid.status !== "draft" && (
           <Badge className={
             existingBid.status === "winning" ? "bg-emerald-100 text-emerald-700" :
