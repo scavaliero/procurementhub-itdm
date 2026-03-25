@@ -374,36 +374,12 @@ export default function InternalOpportunityNew() {
         <Card>
           <CardHeader><CardTitle>Allegati e Condizioni</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Allegati</Label>
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  id="opp-files"
-                  onChange={(e) => {
-                    if (e.target.files) setAttachments([...attachments, ...Array.from(e.target.files)]);
-                  }}
-                />
-                <label htmlFor="opp-files" className="cursor-pointer flex flex-col items-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Clicca per caricare file</span>
-                </label>
-              </div>
-              {attachments.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {attachments.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm bg-muted rounded px-3 py-1">
-                      <span>{f.name}</span>
-                      <Button variant="ghost" size="sm" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {draftId && (
+              <OpportunityAttachments opportunityId={draftId} />
+            )}
+            {!draftId && (
+              <p className="text-sm text-muted-foreground">Salva prima i dati generali per poter caricare gli allegati.</p>
+            )}
 
             <div>
               <Label>Condizioni di partecipazione</Label>
