@@ -247,7 +247,7 @@ export default function InternalOpportunityDetail() {
         </TabsContent>
 
         <TabsContent value="attachments">
-          <OpportunityAttachments opportunityId={opp.id} />
+          <OpportunityAttachments opportunityId={opp.id} readOnly={!hasGrant("manage_opportunity_attachments")} />
         </TabsContent>
 
         <TabsContent value="invitations">
