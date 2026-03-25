@@ -153,25 +153,26 @@ export default function InternalOpportunityEvaluation() {
   const admittedBids = useMemo(() => {
     const result: { bidId: string; supplierId: string; supplierName: string; totalAmount: number; score: number; exceedsBudget: boolean }[] = [];
     invitations.forEach((inv: EvaluationInvitation) => {
-      const bid = inv.bids?.[0];
-      if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
-        const amount = Number(bid.total_amount ?? 0);
-        result.push({
-          bidId: bid.id,
-          supplierId: inv.supplier_id,
-          supplierName: inv.suppliers?.company_name ?? "—",
-          totalAmount: amount,
-          score: computeTotal(bid.id),
-          exceedsBudget: budgetMax != null && amount > budgetMax,
-        });
-      }
+      (inv.bids ?? []).forEach((bid) => {
+        if (bid && (bid.status === "admitted" || bid.status === "admitted_with_reserve")) {
+          const amount = Number(bid.total_amount ?? 0);
+          result.push({
+            bidId: bid.id,
+            supplierId: inv.supplier_id,
+            supplierName: inv.suppliers?.company_name ?? "—",
+            totalAmount: amount,
+            score: computeTotal(bid.id),
+            exceedsBudget: budgetMax != null && amount > budgetMax,
+          });
+        }
+      });
     });
     return result;
   }, [invitations, computeTotal, budgetMax]);
 
   const allSubmittedBidIds = useMemo(() => {
     return invitations
-      .map((inv: EvaluationInvitation) => inv.bids?.[0]?.id)
+      .flatMap((inv: EvaluationInvitation) => (inv.bids ?? []).filter(b => b.status !== "withdrawn" && b.status !== "draft").map(b => b.id))
       .filter(Boolean) as string[];
   }, [invitations]);
 
