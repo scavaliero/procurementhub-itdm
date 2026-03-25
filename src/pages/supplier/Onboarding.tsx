@@ -198,7 +198,7 @@ export default function SupplierOnboarding() {
 
       // Contacts diff — compare with existing contacts from DB
       const validContacts = contacts.filter((c) => c.nome && c.email);
-      const existingContacts = (existingContactsList || []).map((c: any) => ({
+      const dbContacts = (existingContacts || []).map((c: any) => ({
         nome: c.first_name || "",
         cognome: c.last_name || "",
         ruolo: c.role || "",
