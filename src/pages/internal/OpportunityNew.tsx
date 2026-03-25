@@ -32,6 +32,14 @@ const step1Schema = z.object({
   end_date: z.string().optional(),
   budget_estimated: z.coerce.number().optional(),
   budget_max: z.coerce.number().optional(),
+}).refine((data) => {
+  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+    return false;
+  }
+  return true;
+}, {
+  message: "L'offerta massima non può superare il budget stimato",
+  path: ["budget_max"],
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
