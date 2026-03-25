@@ -450,6 +450,9 @@ export default function InternalVendorDetail() {
           <TabsTrigger value="documents"><FileText className="h-4 w-4 mr-1" /> Documenti</TabsTrigger>
           <TabsTrigger value="categories"><FolderTree className="h-4 w-4 mr-1" /> Categorie</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> Storico</TabsTrigger>
+          {changeRequests.length > 0 && (
+            <TabsTrigger value="changes">Richieste modifica ({changeRequests.filter(r => r.status === 'pending').length})</TabsTrigger>
+          )}
         </TabsList>
 
         {/* ── Tab Anagrafica ── */}
