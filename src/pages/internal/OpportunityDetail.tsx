@@ -246,6 +246,10 @@ export default function InternalOpportunityDetail() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="attachments">
+          <OpportunityAttachments opportunityId={opp.id} />
+        </TabsContent>
+
         <TabsContent value="invitations">
           <Card className="card-top-opportunities">
             <CardContent className="p-6">
