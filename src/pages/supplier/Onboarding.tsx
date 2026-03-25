@@ -196,18 +196,26 @@ export default function SupplierOnboarding() {
       const newCatIds = [...selectedCats].sort();
       const hasCatChanges = JSON.stringify(currentCatIds) !== JSON.stringify(newCatIds);
 
-      // Contacts diff (simplified: always include if editing)
+      // Contacts diff — compare with existing contacts from DB
       const validContacts = contacts.filter((c) => c.nome && c.email);
+      const dbContacts = (existingContacts || []).map((c: any) => ({
+        nome: c.first_name || "",
+        cognome: c.last_name || "",
+        ruolo: c.role || "",
+        email: c.email || "",
+        phone: c.phone || "",
+      }));
+      const hasContactChanges = JSON.stringify(validContacts) !== JSON.stringify(dbContacts);
 
-      if (!hasCompanyChanges && !hasAddressChanges && !hasCatChanges) {
+      if (!hasCompanyChanges && !hasAddressChanges && !hasCatChanges && !hasContactChanges) {
         throw new Error("Nessuna modifica rilevata rispetto ai dati attuali.");
       }
 
       const requestedChanges: Record<string, any> = {};
       if (hasCompanyChanges) requestedChanges.company_data = changedCompanyData;
-      if (hasAddressChanges) requestedChanges.address = { ...currentAddress, ...changedAddress };
+      if (hasAddressChanges) requestedChanges.address = changedAddress;
       if (hasCatChanges) requestedChanges.categories = selectedCats;
-      if (validContacts.length > 0) requestedChanges.contacts = validContacts;
+      if (hasContactChanges) requestedChanges.contacts = validContacts;
 
       await changeRequestService.create({
         supplier_id: supplier.id,

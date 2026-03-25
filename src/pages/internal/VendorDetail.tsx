@@ -674,8 +674,14 @@ export default function InternalVendorDetail() {
                       )}
                       {changes.address && (
                         <div>
-                          <span className="font-medium">Sede:</span>{" "}
-                          {[changes.address.street, changes.address.city, changes.address.province, changes.address.zip].filter(Boolean).join(", ")}
+                          <span className="font-medium">Sede modificata:</span>
+                          <ul className="list-disc ml-4 mt-0.5">
+                            {changes.address.street !== undefined && <li>Via/Piazza: <strong>{changes.address.street || "—"}</strong></li>}
+                            {changes.address.city !== undefined && <li>Città: <strong>{changes.address.city || "—"}</strong></li>}
+                            {changes.address.zip !== undefined && <li>CAP: <strong>{changes.address.zip || "—"}</strong></li>}
+                            {changes.address.province !== undefined && <li>Provincia: <strong>{changes.address.province || "—"}</strong></li>}
+                            {changes.address.country !== undefined && <li>Nazione: <strong>{changes.address.country || "—"}</strong></li>}
+                          </ul>
                         </div>
                       )}
                       {changes.contacts?.length > 0 && (
