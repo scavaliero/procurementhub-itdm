@@ -39,6 +39,7 @@ export interface EvaluationInvitation {
     submitted_at: string | null;
     economic_detail: Json | null;
     bid_validity_date: string | null;
+    version: number | null;
     bid_evaluations: Array<{
       id: string;
       criteria_scores: Json;
