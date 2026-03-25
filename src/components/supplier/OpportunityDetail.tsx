@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
 import { ArrowLeft, FileText, ClipboardList } from "lucide-react";
-import { useState } from "react";
 import SupplierBidSheet from "./BidSheet";
 
 interface Props {
