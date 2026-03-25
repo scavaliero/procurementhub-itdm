@@ -25,6 +25,7 @@ import SupplierOpportunities from "@/pages/supplier/Opportunities";
 import SupplierOpportunityDetail from "@/pages/supplier/OpportunityDetail";
 import SupplierOrders from "@/pages/supplier/Orders";
 import SupplierBillingApprovals from "@/pages/supplier/BillingApprovals";
+import SupplierBillingApprovalDetail from "@/pages/supplier/BillingApprovalDetail";
 import SupplierNotifications from "@/pages/supplier/Notifications";
 import SupplierProfile from "@/pages/supplier/Profile";
 
@@ -90,7 +91,7 @@ const App = () => (
             <Route path="/supplier/opportunities/:id" element={<SupplierOpportunityDetail />} />
             <Route path="/supplier/orders" element={<SupplierOrders />} />
             <Route path="/supplier/billing-approvals" element={<SupplierBillingApprovals />} />
-            <Route path="/supplier/billing-approvals/:id" element={<SupplierBillingApprovals />} />
+            <Route path="/supplier/billing-approvals/:id" element={<SupplierBillingApprovalDetail />} />
             <Route path="/supplier/notifications" element={<SupplierNotifications />} />
             <Route path="/supplier/profile" element={<SupplierProfile />} />
             <Route path="/supplier/change-password" element={<ChangePassword />} />
