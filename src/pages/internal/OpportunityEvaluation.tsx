@@ -607,7 +607,6 @@ function BidDetailPanel({ bidId, bid }: { bidId: string; bid: any }) {
           </div>
         )}
       </div>
-      </div>
 
       <Separator />
 
