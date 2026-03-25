@@ -296,7 +296,7 @@ export default function InternalOpportunityEvaluation() {
                           <TableCell className="text-right">—</TableCell>
                           <TableCell className="text-center">—</TableCell>
                           {criteria.map((c) => <TableCell key={c.name} className="text-center">—</TableCell>)}
-                          <TableCell className="text-center font-bold">—</TableCell>
+                          {/* Totale removed */}
                           {canEvaluate && !actionsDisabled && <TableCell />}
                         </TableRow>
                       );
