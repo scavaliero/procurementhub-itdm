@@ -606,8 +606,7 @@ function BidDetailPanel({ bidId, bid }: { bidId: string; bid: any }) {
             <p className="text-sm">{new Date(bid.submitted_at).toLocaleDateString("it-IT")} {new Date(bid.submitted_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
         )}
-          </div>
-        )}
+      </div>
       </div>
 
       <Separator />
