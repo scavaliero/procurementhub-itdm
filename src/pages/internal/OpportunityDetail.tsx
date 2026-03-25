@@ -182,6 +182,7 @@ export default function InternalOpportunityDetail() {
         <TabsList>
           <TabsTrigger value="details">Dettagli</TabsTrigger>
           <TabsTrigger value="criteria">Criteri ({criteria.length})</TabsTrigger>
+          <TabsTrigger value="attachments"><Paperclip className="h-4 w-4 mr-1" /> Allegati</TabsTrigger>
           <TabsTrigger value="invitations">Inviti ({invitations.length})</TabsTrigger>
           {canInvite && <TabsTrigger value="invite">Invita fornitori</TabsTrigger>}
           {hasOrder && <TabsTrigger value="order">Ordine</TabsTrigger>}
