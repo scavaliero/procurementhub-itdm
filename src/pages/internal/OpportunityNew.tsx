@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Upload, Save, Send } from "lucide-react";
 import { format } from "date-fns";
+import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 
 const step1Schema = z.object({
   title: z.string().min(3, "Titolo obbligatorio (min 3 caratteri)"),
@@ -59,7 +60,7 @@ export default function InternalOpportunityNew() {
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
-  const [attachments, setAttachments] = useState<File[]>([]);
+  
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -132,10 +133,7 @@ export default function InternalOpportunityNew() {
         status,
       } as any);
 
-      // Upload attachments
-      for (const file of attachments) {
-        await opportunityService.uploadAttachment(draftId, file);
-      }
+      // Attachments are now uploaded directly via OpportunityAttachments component
 
       return opp;
     },
@@ -374,36 +372,12 @@ export default function InternalOpportunityNew() {
         <Card>
           <CardHeader><CardTitle>Allegati e Condizioni</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Allegati</Label>
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  id="opp-files"
-                  onChange={(e) => {
-                    if (e.target.files) setAttachments([...attachments, ...Array.from(e.target.files)]);
-                  }}
-                />
-                <label htmlFor="opp-files" className="cursor-pointer flex flex-col items-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Clicca per caricare file</span>
-                </label>
-              </div>
-              {attachments.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {attachments.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm bg-muted rounded px-3 py-1">
-                      <span>{f.name}</span>
-                      <Button variant="ghost" size="sm" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {draftId && (
+              <OpportunityAttachments opportunityId={draftId} />
+            )}
+            {!draftId && (
+              <p className="text-sm text-muted-foreground">Salva prima i dati generali per poter caricare gli allegati.</p>
+            )}
 
             <div>
               <Label>Condizioni di partecipazione</Label>

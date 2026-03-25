@@ -128,14 +128,14 @@ export const dashboardService = {
     return data;
   },
 
-  /** Count non-approved documents for supplier */
+  /** Count documents that need attention (rejected, expired, or uploaded awaiting review) */
   async supplierPendingDocs(supplierId: string): Promise<number> {
     const { count, error } = await supabase
       .from("uploaded_documents")
       .select("id", { count: "exact", head: true })
       .eq("supplier_id", supplierId)
       .is("deleted_at", null)
-      .neq("status", "approved");
+      .in("status", ["uploaded", "rejected"]);
     if (error) throw error;
     return count ?? 0;
   },
