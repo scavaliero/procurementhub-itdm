@@ -167,7 +167,7 @@ export default function SupplierBillingApprovalDetail() {
       </div>
 
       {/* Allegati (sola lettura) */}
-      <BillingAttachments billingId={id!} billingStatus={billing.status} readOnly />
+      <BillingAttachments billingId={id!} canEdit={false} />
     </div>
   );
 }
