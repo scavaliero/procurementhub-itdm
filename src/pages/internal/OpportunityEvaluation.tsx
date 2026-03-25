@@ -354,9 +354,7 @@ export default function InternalOpportunityEvaluation() {
                               )}
                             </TableCell>
                           ))}
-                          <TableCell className="text-center font-bold">
-                            {hasBid && bidId ? total.toFixed(2) : "—"}
-                          </TableCell>
+                          {/* Totale removed */}
                           {canEvaluate && !actionsDisabled && (
                             <TableCell>
                               {hasBid && bidId && (() => {
