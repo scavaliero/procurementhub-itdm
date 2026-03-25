@@ -133,10 +133,7 @@ export default function InternalOpportunityNew() {
         status,
       } as any);
 
-      // Upload attachments
-      for (const file of attachments) {
-        await opportunityService.uploadAttachment(draftId, file);
-      }
+      // Attachments are now uploaded directly via OpportunityAttachments component
 
       return opp;
     },
