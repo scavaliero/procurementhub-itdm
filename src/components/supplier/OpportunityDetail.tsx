@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
 import { ArrowLeft, FileText, Send, Calendar, MapPin, Tag, ClipboardList } from "lucide-react";
