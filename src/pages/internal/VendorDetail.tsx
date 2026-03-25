@@ -737,7 +737,7 @@ export default function InternalVendorDetail() {
                           <div>
                             <span className="font-medium">Categorie modificate:</span>
                             <ul className="list-disc ml-4 mt-0.5">
-                              {added.length > 0 && <li className="text-green-700">Aggiunte: <strong>{added.map((cid: string) => catMap[cid] || cid).join(", ")}</strong></li>}
+                              {added.length > 0 && <li className="text-primary">Aggiunte: <strong>{added.map((cid: string) => catMap[cid] || cid).join(", ")}</strong></li>}
                               {removed.length > 0 && <li className="text-destructive">Rimosse: <strong>{removed.map((cid: string) => catMap[cid] || cid).join(", ")}</strong></li>}
                               {added.length === 0 && removed.length === 0 && <li>Nessuna variazione rilevata</li>}
                             </ul>
