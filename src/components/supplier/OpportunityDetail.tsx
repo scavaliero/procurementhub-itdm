@@ -72,7 +72,7 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+      <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -90,17 +90,6 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           </div>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{opp.code}</p>
         </div>
-        {canBid && (
-          <Button onClick={() => setBidSheetOpen(true)} className="shrink-0 gap-2">
-            {existingBid && existingBid.status !== "draft" ? <FileText className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-            {bidLabel}
-          </Button>
-        )}
-        {existingBid && existingBid.status !== "draft" && !isExcluded && (
-          <Button variant="outline" onClick={() => setBidSheetOpen(true)} className="shrink-0 gap-2">
-            <FileText className="h-4 w-4" /> Visualizza offerta
-          </Button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -109,8 +98,8 @@ export default function SupplierOpportunityDetail({ opportunityId, invitation, o
           <TabsTrigger value="detail">
             <FileText className="h-4 w-4 mr-1.5" /> Dettaglio
           </TabsTrigger>
-          <TabsTrigger value="criteria">
-            <Tag className="h-4 w-4 mr-1.5" /> Criteri
+          <TabsTrigger value="bid">
+            <ClipboardList className="h-4 w-4 mr-1.5" /> Offerte
           </TabsTrigger>
         </TabsList>
 
