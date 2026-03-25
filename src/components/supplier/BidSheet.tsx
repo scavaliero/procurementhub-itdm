@@ -264,9 +264,9 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   // Editable form (draft or new)
   return (
     <div className="space-y-5">
-      <SheetHeader>
-        <SheetTitle className="text-xl">{existingBid ? "Modifica offerta" : "Presenta offerta"}</SheetTitle>
-      </SheetHeader>
+      <div>
+        <h2 className="text-xl font-semibold">{existingBid ? "Modifica offerta" : "Presenta offerta"}</h2>
+      </div>
 
       {validationResult && !validationResult.valid && (
         <Alert variant="destructive">
