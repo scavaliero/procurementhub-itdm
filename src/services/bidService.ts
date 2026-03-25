@@ -184,24 +184,74 @@ export const bidService = {
     return data as Bid;
   },
 
-  /** Upload bid attachment */
-  async uploadAttachment(opportunityId: string, supplierId: string, file: File): Promise<string> {
-    const ext = file.name.split(".").pop();
-    const path = `${opportunityId}/${supplierId}/${crypto.randomUUID()}_${file.name}`;
-    const { error } = await supabase.storage
+  /** Upload typed bid attachment (technical_offer / economic_offer) */
+  async uploadTypedAttachment(params: {
+    bidId: string;
+    opportunityId: string;
+    supplierId: string;
+    tenantId: string;
+    attachmentType: "technical_offer" | "economic_offer";
+    file: File;
+  }): Promise<void> {
+    const path = `${params.opportunityId}/${params.supplierId}/${params.attachmentType}_${crypto.randomUUID()}_${params.file.name}`;
+    const { error: storageErr } = await supabase.storage
       .from("bid-attachments")
-      .upload(path, file);
+      .upload(path, params.file);
+    if (storageErr) throw storageErr;
+
+    // Remove previous attachment of same type for this bid
+    const { data: existing } = await supabase
+      .from("bid_attachments")
+      .select("id, storage_path")
+      .eq("bid_id", params.bidId)
+      .eq("attachment_type", params.attachmentType);
+    if (existing && existing.length > 0) {
+      for (const old of existing) {
+        if (old.storage_path) {
+          await supabase.storage.from("bid-attachments").remove([old.storage_path]);
+        }
+      }
+      await supabase
+        .from("bid_attachments")
+        .delete()
+        .eq("bid_id", params.bidId)
+        .eq("attachment_type", params.attachmentType);
+    }
+
+    const { error } = await supabase
+      .from("bid_attachments")
+      .insert({
+        bid_id: params.bidId,
+        opportunity_id: params.opportunityId,
+        supplier_id: params.supplierId,
+        tenant_id: params.tenantId,
+        attachment_type: params.attachmentType,
+        storage_path: path,
+        original_filename: params.file.name,
+        mime_type: params.file.type,
+        file_size_bytes: params.file.size,
+      });
     if (error) throw error;
-    return path;
   },
 
-  /** List bid attachments */
-  async listAttachments(opportunityId: string, supplierId: string) {
-    const { data, error } = await supabase.storage
-      .from("bid-attachments")
-      .list(`${opportunityId}/${supplierId}`);
+  /** List typed attachments for a bid */
+  async listTypedAttachments(bidId: string) {
+    const { data, error } = await supabase
+      .from("bid_attachments")
+      .select("*")
+      .eq("bid_id", bidId)
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return data ?? [];
+  },
+
+  /** Get signed URL for bid attachment */
+  async getBidAttachmentUrl(storagePath: string): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from("bid-attachments")
+      .createSignedUrl(storagePath, 3600);
+    if (error) throw error;
+    return data.signedUrl;
   },
 
   // ── Evaluation (internal) ──────────────────────────────────
