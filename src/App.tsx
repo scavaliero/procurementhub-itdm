@@ -52,6 +52,9 @@ import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
 import InternalProfile from "@/pages/internal/Profile";
 import ChangePassword from "@/pages/ChangePassword";
+import PurchaseRequestsPage from "@/pages/internal/purchasing/PurchaseRequestsPage";
+import NewPurchaseRequestPage from "@/pages/internal/purchasing/NewPurchaseRequestPage";
+import PurchaseRequestDetailPage from "@/pages/internal/purchasing/PurchaseRequestDetailPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
