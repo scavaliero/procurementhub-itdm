@@ -288,7 +288,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 2: Manager validator + submitted */}
-          {hasGrant("validate_purchase_request") && pr.status === "submitted" && (
+          {!isTerminal && hasGrant("validate_purchase_request") && pr.status === "submitted" && (
             <Card>
               <CardHeader><CardTitle className="text-sm">Validazione</CardTitle></CardHeader>
               <CardContent className="space-y-3">
