@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { invitationService } from "@/services/invitationService";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock } from "lucide-react";
 import { format } from "date-fns";
 import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
@@ -37,6 +46,19 @@ export default function SupplierOpportunities() {
   const qc = useQueryClient();
   const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
   const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const statusFilter = searchParams.get("status") || "all";
+  const searchQuery = searchParams.get("q") || "";
+
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v && v !== "all") next.set(k, v);
+      else next.delete(k);
+    });
+    setSearchParams(next, { replace: true });
+  };
 
   const { data: invitations = [], isLoading } = useQuery({
     queryKey: ["supplier-invitations", profile?.supplier_id],
@@ -48,6 +70,35 @@ export default function SupplierOpportunities() {
     mutationFn: (invId: string) => invitationService.markViewed(invId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["supplier-invitations"] }),
   });
+
+  // KPI counts
+  const kpiCounts = useMemo(() => {
+    let total = 0, unseen = 0, open = 0, evaluating = 0;
+    for (const inv of invitations as any[]) {
+      total++;
+      if (!inv.viewed_at) unseen++;
+      const status = inv.opportunities?.status;
+      if (status === "open" || status === "collecting_bids") open++;
+      if (status === "evaluating") evaluating++;
+    }
+    return { total, unseen, open, evaluating };
+  }, [invitations]);
+
+  // Filtered list
+  const filteredInvitations = useMemo(() => {
+    return (invitations as any[]).filter((inv) => {
+      const opp = inv.opportunities;
+      if (statusFilter === "unseen" && inv.viewed_at) return false;
+      if (statusFilter === "open" && opp?.status !== "open" && opp?.status !== "collecting_bids") return false;
+      if (statusFilter === "evaluating" && opp?.status !== "evaluating") return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const haystack = `${opp?.code ?? ""} ${opp?.title ?? ""} ${opp?.categories?.name ?? ""}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [invitations, statusFilter, searchQuery]);
 
   const handleClick = (inv: any) => {
     if (!inv.viewed_at) {
@@ -71,18 +122,67 @@ export default function SupplierOpportunities() {
     );
   }
 
+  const kpiCards = [
+    { key: "all", label: "Totale", value: kpiCounts.total, icon: Briefcase, color: "text-blue-600", bg: "bg-blue-100" },
+    { key: "unseen", label: "Da visualizzare", value: kpiCounts.unseen, icon: EyeOff, color: "text-amber-600", bg: "bg-amber-100", alert: true },
+    { key: "open", label: "Aperte", value: kpiCounts.open, icon: Eye, color: "text-emerald-600", bg: "bg-emerald-100" },
+    { key: "evaluating", label: "In valutazione", value: kpiCounts.evaluating, icon: Clock, color: "text-purple-600", bg: "bg-purple-100" },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Opportunità</h1>
       <p className="text-muted-foreground">Gare a cui sei stato invitato.</p>
 
+      {/* KPI Cards */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {kpiCards.map((kpi) => {
+          const isSelected = statusFilter === kpi.key || (statusFilter === "all" && kpi.key === "all");
+          const Icon = kpi.icon;
+          return (
+            <Card
+              key={kpi.key}
+              className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${
+                isSelected && kpi.key !== "all" ? "ring-2 ring-primary" : ""
+              } ${kpi.alert && kpi.value > 0 ? "border-amber-400/40 bg-amber-50" : ""}`}
+              onClick={() => updateParams({ status: kpi.key === "all" ? "all" : (statusFilter === kpi.key ? "all" : kpi.key) })}
+              data-testid={`opp-kpi-${kpi.key}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {kpi.label}
+                </CardTitle>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${kpi.bg}`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold tabular-nums">{kpi.value}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Cerca codice, titolo…"
+          value={searchQuery}
+          onChange={(e) => updateParams({ q: e.target.value })}
+          className="pl-9"
+          data-testid="opp-search"
+        />
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
-      ) : invitations.length === 0 ? (
-        <EmptyState title="Nessuna opportunità" description="Non sei stato ancora invitato a nessuna gara." />
+      ) : filteredInvitations.length === 0 ? (
+        <EmptyState title="Nessuna opportunità" description="Non ci sono opportunità che corrispondono ai filtri." />
       ) : (
         <div className="space-y-3">
-          {invitations.map((inv: any) => {
+          {filteredInvitations.map((inv: any) => {
             const opp = inv.opportunities;
             return (
               <Card

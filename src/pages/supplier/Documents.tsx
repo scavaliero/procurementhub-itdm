@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { documentService } from "@/services/documentService";
 import { vendorService } from "@/services/vendorService";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -16,8 +18,8 @@ import {
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Send, Lock } from "lucide-react";
-import { useState } from "react";
+import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2 } from "lucide-react";
+import { useState, useMemo } from "react";
 import { DocumentCard } from "@/components/supplier/DocumentCard";
 import type { UploadedDocument } from "@/types";
 
@@ -28,6 +30,19 @@ export default function SupplierDocuments() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const statusFilter = searchParams.get("status") || "all";
+  const searchQuery = searchParams.get("q") || "";
+
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v && v !== "all") next.set(k, v);
+      else next.delete(k);
+    });
+    setSearchParams(next, { replace: true });
+  };
 
   const { data: supplier, isLoading: supLoading } = useQuery({
     queryKey: ["my-supplier"],
@@ -91,6 +106,44 @@ export default function SupplierDocuments() {
     && mandatory.length > 0
     && mandatoryUploaded >= mandatory.length;
 
+  // KPI counts for documents
+  const kpiCounts = useMemo(() => {
+    let approvedCount = 0, pending = 0, rejected = 0, missing = 0;
+    for (const dt of docTypes) {
+      const doc = latestByType[dt.id];
+      if (!doc) { missing++; continue; }
+      if (doc.status === "approved") approvedCount++;
+      else if (doc.status === "uploaded") pending++;
+      else if (doc.status === "rejected") rejected++;
+    }
+    return { approved: approvedCount, pending, rejected, missing };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docTypes, uploadedDocs]);
+
+  // Filtered doc types
+  const filteredDocTypes = useMemo(() => {
+    return docTypes.filter((dt) => {
+      const doc = latestByType[dt.id];
+      if (statusFilter === "approved" && doc?.status !== "approved") return false;
+      if (statusFilter === "pending" && doc?.status !== "uploaded") return false;
+      if (statusFilter === "rejected" && doc?.status !== "rejected") return false;
+      if (statusFilter === "missing" && doc) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!dt.name.toLowerCase().includes(q) && !(dt.code ?? "").toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docTypes, uploadedDocs, statusFilter, searchQuery]);
+
+  const kpiCards = [
+    { key: "approved", label: "Approvati", value: kpiCounts.approved, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
+    { key: "pending", label: "In revisione", value: kpiCounts.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
+    { key: "rejected", label: "Rifiutati", value: kpiCounts.rejected, icon: FileX, color: "text-destructive", bg: "bg-destructive/10", alert: true },
+    { key: "missing", label: "Mancanti", value: kpiCounts.missing, icon: FileCheck, color: "text-muted-foreground", bg: "bg-muted" },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -100,6 +153,48 @@ export default function SupplierDocuments() {
             ? "I documenti sono stati inviati e sono in attesa di revisione."
             : "Carica i documenti richiesti per la qualifica."}
         </p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {kpiCards.map((kpi) => {
+          const isSelected = statusFilter === kpi.key;
+          const Icon = kpi.icon;
+          return (
+            <Card
+              key={kpi.key}
+              className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${
+                isSelected ? "ring-2 ring-primary" : ""
+              } ${kpi.alert && kpi.value > 0 ? "border-destructive/40 bg-destructive/5" : ""}`}
+              onClick={() => updateParams({ status: isSelected ? "all" : kpi.key })}
+              data-testid={`sup-docs-kpi-${kpi.key}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {kpi.label}
+                </CardTitle>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${kpi.bg}`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold tabular-nums">{kpi.value}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Cerca documento…"
+          value={searchQuery}
+          onChange={(e) => updateParams({ q: e.target.value })}
+          className="pl-9"
+          data-testid="sup-docs-search"
+        />
       </div>
 
       {mandatory.length > 0 && (
@@ -137,14 +232,14 @@ export default function SupplierDocuments() {
         </Card>
       )}
 
-      {docTypes.length === 0 ? (
+      {filteredDocTypes.length === 0 ? (
         <EmptyState
-          title="Nessun documento richiesto"
-          description="Non ci sono tipi documento configurati al momento."
+          title="Nessun documento"
+          description="Non ci sono documenti che corrispondono ai filtri."
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {docTypes.map((dt) => (
+          {filteredDocTypes.map((dt) => (
             <DocumentCard
               key={dt.id}
               docType={dt}
