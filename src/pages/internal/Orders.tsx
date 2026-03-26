@@ -21,8 +21,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CheckCircle, XCircle, Search } from "lucide-react";
+import { CheckCircle, XCircle, Search, ShoppingCart, Clock, FileEdit, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 
 const ACTIVE_STATUSES = ["issued", "accepted", "in_progress"];
 
