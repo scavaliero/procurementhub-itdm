@@ -52,6 +52,9 @@ import AuditLogs from "@/pages/internal/AuditLogs";
 import InternalNotifications from "@/pages/internal/Notifications";
 import InternalProfile from "@/pages/internal/Profile";
 import ChangePassword from "@/pages/ChangePassword";
+import PurchaseRequestsPage from "@/pages/internal/purchasing/PurchaseRequestsPage";
+import NewPurchaseRequestPage from "@/pages/internal/purchasing/NewPurchaseRequestPage";
+import PurchaseRequestDetailPage from "@/pages/internal/purchasing/PurchaseRequestDetailPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -127,6 +130,10 @@ const App = () => (
             <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
             <Route path="/internal/profile" element={<InternalProfile />} />
             <Route path="/internal/change-password" element={<ChangePassword />} />
+            {/* Purchasing module routes */}
+            <Route path="/internal/purchasing/requests" element={<PurchaseRequestsPage />} />
+            <Route path="/internal/purchasing/requests/new" element={<NewPurchaseRequestPage />} />
+            <Route path="/internal/purchasing/requests/:id" element={<PurchaseRequestDetailPage />} />
           </Route>
 
           {/* Catch-all */}
