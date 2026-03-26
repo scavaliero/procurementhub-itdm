@@ -73,15 +73,32 @@ export const dashboardService = {
     return Array.from(map.entries()).map(([status, count]) => ({ status, count }));
   },
 
-  /** Count active orders (issued, accepted, in_progress) */
+  /** Count active orders (issued, accepted, in_progress) excluding fully-billed */
   async activeContracts(): Promise<number> {
-    const { count, error } = await supabase
+    const { data: orders, error } = await supabase
       .from("orders")
-      .select("id", { count: "exact", head: true })
+      .select("id, amount, status")
       .is("deleted_at", null)
       .in("status", ["issued", "accepted", "in_progress"]);
     if (error) throw error;
-    return count ?? 0;
+    if (!orders || orders.length === 0) return 0;
+
+    // Get approved billing totals to exclude fully-billed orders
+    const { data: billings } = await supabase
+      .from("billing_approvals")
+      .select("order_id, amount")
+      .is("deleted_at", null)
+      .in("status", ["approved", "invoiced", "closed"]);
+
+    const billedByOrder: Record<string, number> = {};
+    (billings || []).forEach((b: any) => {
+      billedByOrder[b.order_id] = (billedByOrder[b.order_id] || 0) + Number(b.amount);
+    });
+
+    return orders.filter((o) => {
+      const billed = billedByOrder[o.id] || 0;
+      return billed < Number(o.amount);
+    }).length;
   },
 
   /** Count pending billing approvals */
