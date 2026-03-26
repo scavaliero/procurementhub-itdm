@@ -175,6 +175,14 @@ export default function InternalVendors() {
   const totalCount = result?.count || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
+  // Fetch doc alert counts for visible suppliers
+  const supplierIds = useMemo(() => suppliers.map((s) => s.id), [suppliers]);
+  const { data: docAlerts = {} } = useQuery({
+    queryKey: ["supplier-doc-alerts", supplierIds],
+    queryFn: () => vendorService.getDocAlertCounts(supplierIds),
+    enabled: supplierIds.length > 0,
+  });
+
   // CSV Export — exports ALL records matching active filters (no pagination)
   const handleExportCsv = async () => {
     try {
