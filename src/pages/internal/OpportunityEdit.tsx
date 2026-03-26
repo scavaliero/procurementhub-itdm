@@ -95,6 +95,21 @@ export default function InternalOpportunityEdit() {
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category_id: "",
+      internal_ref_id: "",
+      requesting_unit: "",
+      opens_at: "",
+      bids_deadline: "",
+      start_date: "",
+      end_date: "",
+      budget_estimated: undefined,
+      budget_max: undefined,
+      participation_conditions: "",
+      operational_notes: "",
+    },
   });
 
   useEffect(() => {

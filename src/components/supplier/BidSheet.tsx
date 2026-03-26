@@ -196,7 +196,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
             <ReadField label="Importo totale" value={existingBid.total_amount != null ? `€ ${Number(existingBid.total_amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : undefined} />
             <ReadField label="Validità offerta" value={existingBid.bid_validity_date ? format(new Date(existingBid.bid_validity_date), "dd/MM/yyyy") : undefined} />
             <ReadField label="Data presentazione" value={existingBid.submitted_at ? format(new Date(existingBid.submitted_at), "dd/MM/yyyy HH:mm") : undefined} />
-            <ReadField label="Data presentazione" value={existingBid.submitted_at ? format(new Date(existingBid.submitted_at), "dd/MM/yyyy HH:mm") : undefined} />
+            <ReadField label="Descrizione tecnica" value={existingBid.technical_description} multiline />
             <ReadField label="Descrizione tecnica" value={existingBid.technical_description} multiline />
             {existingBid.proposed_conditions && <ReadField label="Condizioni proposte" value={existingBid.proposed_conditions} multiline />}
             {existingBid.notes && <ReadField label="Note" value={existingBid.notes} multiline />}
