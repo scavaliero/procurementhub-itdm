@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SUPPLIER_STATUS_LABELS_PLURAL } from "@/lib/supplierStatusConfig";
+import { formatCurrency } from "@/utils/formatters";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
   AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
-  Eye,
+  Eye, ClipboardList, Package, CreditCard, CheckSquare, Receipt,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
