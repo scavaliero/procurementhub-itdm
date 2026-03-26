@@ -254,8 +254,23 @@ export default function PurchaseRequestDetailPage() {
 
         {/* Sidebar Actions */}
         <div className="space-y-4">
+          {isTerminal && (
+            <Card>
+              <CardContent className="py-4 text-center">
+                <Badge variant="secondary" className={`text-sm ${STATUS_COLORS[pr.status] ?? ""}`}>
+                  {STATUS_LABELS[pr.status] ?? pr.status}
+                </Badge>
+                {pr.outcome && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Esito: {pr.outcome === "opportunity" ? "Opportunità creata" : pr.outcome === "direct_purchase" ? "Acquisto diretto" : pr.outcome}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* BLOCK 1: Owner + draft */}
-          {isOwner && pr.status === "draft" && (
+          {!isTerminal && isOwner && pr.status === "draft" && (
             <Card>
               <CardHeader><CardTitle className="text-sm">Azioni</CardTitle></CardHeader>
               <CardContent className="space-y-2">
