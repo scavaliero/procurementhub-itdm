@@ -88,9 +88,14 @@ export default function SupplierOpportunities() {
   const filteredInvitations = useMemo(() => {
     return (invitations as any[]).filter((inv) => {
       const opp = inv.opportunities;
+      // KPI card filters
       if (statusFilter === "unseen" && inv.viewed_at) return false;
       if (statusFilter === "open" && opp?.status !== "open" && opp?.status !== "collecting_bids") return false;
       if (statusFilter === "evaluating" && opp?.status !== "evaluating") return false;
+      // Dropdown status filters (exact match)
+      if (statusFilter === "collecting_bids" && opp?.status !== "collecting_bids") return false;
+      if (statusFilter === "awarded" && opp?.status !== "awarded") return false;
+      if (statusFilter === "closed" && opp?.status !== "closed") return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const haystack = `${opp?.code ?? ""} ${opp?.title ?? ""} ${opp?.categories?.name ?? ""}`.toLowerCase();

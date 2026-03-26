@@ -50,6 +50,25 @@ test.describe("Supplier pages KPI cards and filters", () => {
     await expect(page.locator("text=Nessuna opportunità")).toBeVisible();
   });
 
+  test("Opportunities status dropdown filter is visible and works", async ({ page }) => {
+    await loginAsSupplier(page);
+    await page.goto("/supplier/opportunities");
+    await page.waitForSelector("text=Opportunità");
+
+    const trigger = page.locator('[data-testid="opp-status-filter"]');
+    await expect(trigger).toBeVisible();
+
+    // Open dropdown and select "Aggiudicata"
+    await trigger.click();
+    await page.locator('[role="option"]:has-text("Aggiudicata")').click();
+    expect(page.url()).toContain("status=awarded");
+
+    // Reset to all
+    await trigger.click();
+    await page.locator('[role="option"]:has-text("Tutti gli stati")').click();
+    expect(page.url()).not.toContain("status=awarded");
+  });
+
   // ── Orders ─────────────────────────────────────────────────
 
   test("Orders page shows KPI cards", async ({ page }) => {
@@ -130,12 +149,13 @@ test.describe("Supplier pages KPI cards and filters", () => {
 
   // ── Documents ──────────────────────────────────────────────
 
-  test("Documents page shows KPI cards", async ({ page }) => {
+  test("Documents page shows 5 KPI cards", async ({ page }) => {
     await loginAsSupplier(page);
     await page.goto("/supplier/documents");
     await page.waitForSelector("text=Documenti");
 
     await expect(page.locator('[data-testid="sup-docs-kpi-approved"]')).toBeVisible();
+    await expect(page.locator('[data-testid="sup-docs-kpi-expiring"]')).toBeVisible();
     await expect(page.locator('[data-testid="sup-docs-kpi-pending"]')).toBeVisible();
     await expect(page.locator('[data-testid="sup-docs-kpi-rejected"]')).toBeVisible();
     await expect(page.locator('[data-testid="sup-docs-kpi-missing"]')).toBeVisible();
