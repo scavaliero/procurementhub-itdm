@@ -339,6 +339,7 @@ export default function InternalVendors() {
             <SelectItem value="expired">⚠️ Scaduti</SelectItem>
           </SelectContent>
         </Select>
+      </div>
 
       {/* Table */}
       {suppliers.length === 0 && !isFetching ? (
