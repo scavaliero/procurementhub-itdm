@@ -98,6 +98,13 @@ function InternalSidebarContent() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Ufficio Acquisti */}
+        {(hasGrant("create_purchase_request") || hasGrant("view_own_purchase_requests") ||
+          hasGrant("validate_purchase_request") || hasGrant("validate_purchase_request_high") ||
+          hasGrant("manage_purchase_operations") || hasGrant("view_purchase_panel")) && (
+          <PurchasingSidebarSection collapsed={collapsed} hasGrant={hasGrant} />
+        )}
+
         {showConfig && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4 mb-1 mt-2">
