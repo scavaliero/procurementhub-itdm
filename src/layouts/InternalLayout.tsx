@@ -183,13 +183,8 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active}>
-                  <a
-                    href={item.url}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.history.pushState({}, "", item.url);
-                      window.dispatchEvent(new PopStateEvent("popstate"));
-                    }}
+                  <Link
+                    to={item.url}
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors ${
                       active
                         ? "bg-sidebar-accent text-sidebar-primary font-semibold"
@@ -207,7 +202,7 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
                         )}
                       </span>
                     )}
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
