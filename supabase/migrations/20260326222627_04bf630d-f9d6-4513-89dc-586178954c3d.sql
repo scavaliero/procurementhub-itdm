@@ -1,0 +1,5 @@
+ALTER TABLE grants DROP CONSTRAINT IF EXISTS grants_module_check;
+ALTER TABLE grants ADD CONSTRAINT grants_module_check
+  CHECK (module IN (
+    'vendor_register', 'procurement', 'contracts', 'admin', 'purchasing'
+  ));
