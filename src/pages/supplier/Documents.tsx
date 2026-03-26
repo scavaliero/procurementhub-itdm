@@ -74,37 +74,15 @@ export default function SupplierDocuments() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  if (supLoading || dtLoading || udLoading) return <PageSkeleton />;
-  if (!supplier) {
-    return (
-      <div className="p-6">
-        <EmptyState title="Profilo fornitore non trovato" />
-      </div>
-    );
-  }
-
   // Build map: latest upload per document_type_id
   const latestByType: Record<string, UploadedDocument> = {};
-  uploadedDocs.forEach((d) => {
-    if (!latestByType[d.document_type_id] || d.version > latestByType[d.document_type_id].version) {
-      latestByType[d.document_type_id] = d;
-    }
-  });
-
-  const mandatory = docTypes.filter((dt) => dt.is_mandatory);
-  const approved = mandatory.filter(
-    (dt) => latestByType[dt.id]?.status === "approved"
-  ).length;
-  const mandatoryUploaded = mandatory.filter(
-    (dt) => latestByType[dt.id] && latestByType[dt.id].status !== "rejected"
-  ).length;
-  const progressPct = mandatory.length > 0 ? (approved / mandatory.length) * 100 : 0;
-
-  const isLocked = LOCKED_STATUSES.includes(supplier.status);
-  const canSubmit = !isLocked
-    && supplier.status === "enabled"
-    && mandatory.length > 0
-    && mandatoryUploaded >= mandatory.length;
+  if (uploadedDocs) {
+    uploadedDocs.forEach((d) => {
+      if (!latestByType[d.document_type_id] || d.version > latestByType[d.document_type_id].version) {
+        latestByType[d.document_type_id] = d;
+      }
+    });
+  }
 
   // KPI counts for documents
   const kpiCounts = useMemo(() => {
@@ -136,6 +114,30 @@ export default function SupplierDocuments() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docTypes, uploadedDocs, statusFilter, searchQuery]);
+
+  if (supLoading || dtLoading || udLoading) return <PageSkeleton />;
+  if (!supplier) {
+    return (
+      <div className="p-6">
+        <EmptyState title="Profilo fornitore non trovato" />
+      </div>
+    );
+  }
+
+  const mandatory = docTypes.filter((dt) => dt.is_mandatory);
+  const approved = mandatory.filter(
+    (dt) => latestByType[dt.id]?.status === "approved"
+  ).length;
+  const mandatoryUploaded = mandatory.filter(
+    (dt) => latestByType[dt.id] && latestByType[dt.id].status !== "rejected"
+  ).length;
+  const progressPct = mandatory.length > 0 ? (approved / mandatory.length) * 100 : 0;
+
+  const isLocked = LOCKED_STATUSES.includes(supplier.status);
+  const canSubmit = !isLocked
+    && supplier.status === "enabled"
+    && mandatory.length > 0
+    && mandatoryUploaded >= mandatory.length;
 
   const kpiCards = [
     { key: "approved", label: "Approvati", value: kpiCounts.approved, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
