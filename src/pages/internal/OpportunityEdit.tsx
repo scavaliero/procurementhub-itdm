@@ -132,6 +132,8 @@ export default function InternalOpportunityEdit() {
         budget_max: opp.budget_max ?? undefined,
         participation_conditions: opp.participation_conditions || "",
         operational_notes: opp.operational_notes || "",
+        require_technical_offer: opp.require_technical_offer ?? true,
+        require_economic_offer: opp.require_economic_offer ?? true,
       });
       const ec = Array.isArray(opp.evaluation_criteria) ? (opp.evaluation_criteria as unknown as Criterion[]) : [];
       setCriteria(ec);

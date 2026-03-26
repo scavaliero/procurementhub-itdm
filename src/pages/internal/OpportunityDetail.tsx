@@ -203,7 +203,30 @@ export default function InternalOpportunityDetail() {
             ✓ Ordine già generato
           </Badge>
         )}
+        {canDelete && (
+          <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleteMutation.isPending}>
+            <Trash2 className="mr-2 h-4 w-4" /> Elimina
+          </Button>
+        )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina opportunità</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare questa opportunità? L'azione è irreversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Annulla</Button>
+            <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()}>
+              {deleteMutation.isPending ? "Eliminazione…" : "Conferma eliminazione"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="details">
         <TabsList>

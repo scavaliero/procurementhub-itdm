@@ -52,6 +52,20 @@ export const invitationService = {
       .select();
     if (error) throw error;
 
+    // Auto-transition opportunity to "collecting_bids" if currently "open"
+    const { data: opp } = await supabase
+      .from("opportunities")
+      .select("status")
+      .eq("id", params.opportunityId)
+      .single();
+
+    if (opp && opp.status === "open") {
+      await supabase
+        .from("opportunities")
+        .update({ status: "collecting_bids" })
+        .eq("id", params.opportunityId);
+    }
+
     // Get opportunity details for notification variables
     const { data: oppData } = await supabase
       .from("opportunities")
