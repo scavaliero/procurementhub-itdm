@@ -111,6 +111,8 @@ export default function InternalOpportunityEdit() {
       budget_max: undefined,
       participation_conditions: "",
       operational_notes: "",
+      require_technical_offer: true,
+      require_economic_offer: true,
     },
   });
 
