@@ -55,6 +55,9 @@ import ChangePassword from "@/pages/ChangePassword";
 import PurchaseRequestsPage from "@/pages/internal/purchasing/PurchaseRequestsPage";
 import NewPurchaseRequestPage from "@/pages/internal/purchasing/NewPurchaseRequestPage";
 import PurchaseRequestDetailPage from "@/pages/internal/purchasing/PurchaseRequestDetailPage";
+import PurchasePanelPage from "@/pages/internal/purchasing/PurchasePanelPage";
+import DirectPurchasesPage from "@/pages/internal/purchasing/DirectPurchasesPage";
+import NewDirectPurchasePage from "@/pages/internal/purchasing/NewDirectPurchasePage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -134,6 +137,9 @@ const App = () => (
             <Route path="/internal/purchasing/requests" element={<PurchaseRequestsPage />} />
             <Route path="/internal/purchasing/requests/new" element={<NewPurchaseRequestPage />} />
             <Route path="/internal/purchasing/requests/:id" element={<PurchaseRequestDetailPage />} />
+            <Route path="/internal/purchasing/panel" element={<PurchasePanelPage />} />
+            <Route path="/internal/purchasing/direct" element={<DirectPurchasesPage />} />
+            <Route path="/internal/purchasing/direct/new/:reqId?" element={<NewDirectPurchasePage />} />
           </Route>
 
           {/* Catch-all */}
