@@ -72,13 +72,25 @@ export default function InternalOpportunityNew() {
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Load linked purchase request info
+  // Load linked purchase request info and pre-fill fields
   useEffect(() => {
     if (!fromRequest) return;
     purchaseRequestService.getById(fromRequest)
-      .then((req) => setFromRequestCode(req.code))
+      .then((req) => {
+        setFromRequestCode(req.code);
+        // Pre-fill form fields from RDA data
+        if (req.subject) setValue("title", req.subject);
+        if (req.description) setValue("description", req.description);
+        if (req.amount) {
+          setValue("budget_estimated", Number(req.amount));
+          setValue("budget_max", Number(req.amount));
+        }
+        if (req.needed_by) {
+          setValue("end_date", req.needed_by);
+        }
+      })
       .catch(() => {});
-  }, [fromRequest]);
+  }, [fromRequest, setValue]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
