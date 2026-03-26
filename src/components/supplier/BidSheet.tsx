@@ -111,7 +111,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       toast.success("Offerta ritirata. Puoi presentare una nuova offerta.");
       setShowWithdrawConfirm(false);
       qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
-      reset({ total_amount: undefined, technical_description: "", execution_days: undefined, bid_validity_date: "", proposed_conditions: "", notes: "" });
+      reset({ total_amount: undefined, technical_description: "", bid_validity_date: "", proposed_conditions: "", notes: "" });
     },
     onError: (err: any) => toast.error(err.message || "Errore nel ritiro"),
   });
