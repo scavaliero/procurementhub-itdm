@@ -158,7 +158,7 @@ export default function DirectPurchasesPage() {
               </TableHeader>
               <TableBody>
                 {(purchases as DirectPurchase[]).map((dp) => (
-                  <TableRow key={dp.id}>
+                  <TableRow key={dp.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelected(dp)}>
                     <TableCell className="font-mono text-sm">{dp.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{dp.supplier_name}</TableCell>
                     <TableCell className="text-sm">{formatDateIT(dp.purchase_date)}</TableCell>
