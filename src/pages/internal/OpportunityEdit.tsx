@@ -33,12 +33,14 @@ const formSchema = z.object({
   bids_deadline: z.string().min(1, "Scadenza offerte obbligatoria"),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  budget_estimated: z.coerce.number().optional(),
-  budget_max: z.coerce.number().optional(),
+  budget_estimated: z.coerce.number().gt(0, "Budget stimato obbligatorio e maggiore di 0"),
+  budget_max: z.coerce.number().gt(0, "Offerta massima obbligatoria e maggiore di 0"),
   participation_conditions: z.string().optional(),
   operational_notes: z.string().optional(),
+  require_technical_offer: z.boolean(),
+  require_economic_offer: z.boolean(),
 }).refine((data) => {
-  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+  if (data.budget_max > data.budget_estimated) {
     return false;
   }
   return true;
