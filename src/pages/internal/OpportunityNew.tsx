@@ -221,6 +221,15 @@ export default function InternalOpportunityNew() {
         <h1 className="text-2xl font-bold">Nuova Opportunità</h1>
       </div>
 
+      {fromRequestCode && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Opportunità collegata alla Richiesta <strong>{fromRequestCode}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Stepper */}
       <div className="flex items-center gap-2">
         {["Dati generali", "Criteri di valutazione", "Allegati e condizioni"].map((label, i) => (

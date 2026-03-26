@@ -131,6 +131,83 @@ function InternalSidebarContent() {
   );
 }
 
+function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean; hasGrant: (g: string) => boolean }) {
+  const location = useLocation();
+  const isValidator = hasGrant("validate_purchase_request") || hasGrant("validate_purchase_request_high");
+
+  // Badge count for pending validation
+  const { data: allRequests = [] } = usePurchaseRequests(isValidator ? {} : undefined);
+  const pendingCount = isValidator
+    ? (allRequests as any[]).filter((r: any) => ["submitted", "pending_validation"].includes(r.status)).length
+    : 0;
+
+  const items: { title: string; url: string; icon: any; show: boolean; badge?: number }[] = [
+    {
+      title: "Le mie richieste",
+      url: "/internal/purchasing/requests",
+      icon: ClipboardList,
+      show: hasGrant("create_purchase_request") || hasGrant("view_own_purchase_requests"),
+    },
+    {
+      title: "Da validare",
+      url: "/internal/purchasing/requests",
+      icon: CheckSquare,
+      show: isValidator,
+      badge: pendingCount > 0 ? pendingCount : undefined,
+    },
+    {
+      title: "Pannello Acquisti",
+      url: "/internal/purchasing/panel",
+      icon: Package,
+      show: hasGrant("manage_purchase_operations") || hasGrant("view_purchase_panel"),
+    },
+    {
+      title: "Acquisti Diretti",
+      url: "/internal/purchasing/direct",
+      icon: CreditCard,
+      show: hasGrant("manage_purchase_operations") || hasGrant("validate_purchase_request_high"),
+    },
+  ];
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4 mb-1 mt-2">
+        Ufficio Acquisti
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.filter((i) => i.show).map((item) => {
+            const active = location.pathname.startsWith(item.url);
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild isActive={active}>
+                  <NavLink
+                    to={item.url}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
+                    activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                  >
+                    <item.icon className="h-[18px] w-[18px] shrink-0" />
+                    {!collapsed && (
+                      <span className="text-sm flex-1 flex items-center justify-between">
+                        {item.title}
+                        {item.badge != null && (
+                          <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                            {item.badge}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
 export default function InternalLayout() {
   return (
     <SidebarProvider>
