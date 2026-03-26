@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { billingApprovalService } from "@/services/billingApprovalService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
@@ -48,7 +48,14 @@ export default function InternalBillingApprovals() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const setStatusFilter = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (v && v !== "all") next.set("status", v);
+    else next.delete("status");
+    setSearchParams(next, { replace: true });
+  };
   const [showCreate, setShowCreate] = useState(false);
   const [approveDialog, setApproveDialog] = useState<string | null>(null);
   const [rejectDialog, setRejectDialog] = useState<string | null>(null);

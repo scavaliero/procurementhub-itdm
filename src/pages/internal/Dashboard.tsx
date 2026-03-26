@@ -155,12 +155,12 @@ export default function InternalDashboard() {
     key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string; to?: string;
   }[] = [
     { key: "_total", title: "Fornitori totali", icon: Building2, to: "/internal/vendors" },
-    { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors" },
-    { key: "pending_review", title: "In revisione", icon: Eye, to: "/internal/vendors" },
-    { key: "enabled", title: "Abilitati", icon: Unlock, to: "/internal/vendors" },
-    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors" },
-    { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors" },
-    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors" },
+    { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors?status=pre_registered" },
+    { key: "pending_review", title: "In revisione", icon: Eye, to: "/internal/vendors?status=pending_review" },
+    { key: "enabled", title: "Abilitati", icon: Unlock, to: "/internal/vendors?status=enabled" },
+    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors?status=in_accreditation" },
+    { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors?status=accredited" },
+    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors?status=suspended" },
     { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors" },
   ];
 
@@ -211,7 +211,7 @@ export default function InternalDashboard() {
                   value={r.count}
                   icon={Briefcase}
                   cardClass="card-top-procurement"
-                  to="/internal/opportunities"
+                  to={`/internal/opportunities?status=${r.status}`}
                 />
               ))}
               {(!oppStats || oppStats.length === 0) && (
@@ -236,7 +236,7 @@ export default function InternalDashboard() {
               icon={FileText}
               alert={pendingBillings > 0}
               cardClass="card-top-economic"
-              to="/internal/billing-approvals"
+              to="/internal/billing-approvals?status=pending_approval"
             />
             <KpiCard
               title="Contratti budget < 10%"
