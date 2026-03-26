@@ -326,7 +326,19 @@ export default function InternalVendors() {
             />
           </div>
         </div>
-      </div>
+        <Select
+          value={docsAlert || "all"}
+          onValueChange={(v) => updateParams({ docs_alert: v === "all" ? "" : v })}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Tutti i documenti" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tutti i documenti</SelectItem>
+            <SelectItem value="expiring">📄 In scadenza (30gg)</SelectItem>
+            <SelectItem value="expired">⚠️ Scaduti</SelectItem>
+          </SelectContent>
+        </Select>
 
       {/* Table */}
       {suppliers.length === 0 && !isFetching ? (
