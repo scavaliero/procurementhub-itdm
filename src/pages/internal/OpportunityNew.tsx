@@ -283,16 +283,30 @@ export default function InternalOpportunityNew() {
                 {canViewBudget && (
                   <>
                     <div>
-                      <Label>Budget stimato (€)</Label>
+                      <Label>Budget stimato (€) *</Label>
                       <Input type="number" step="0.01" {...register("budget_estimated")} />
+                      {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
                     </div>
                     <div>
-                      <Label>Offerta massima (€)</Label>
+                      <Label>Offerta massima (€) *</Label>
                       <Input type="number" step="0.01" {...register("budget_max")} />
                       {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                     </div>
                   </>
                 )}
+                <div className="md:col-span-2 flex flex-col gap-3 pt-2">
+                  <Label className="text-sm font-semibold">Documenti offerta richiesti</Label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" {...register("require_technical_offer")} className="accent-primary h-4 w-4" />
+                      <span className="text-sm">Offerta Tecnica obbligatoria</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" {...register("require_economic_offer")} className="accent-primary h-4 w-4" />
+                      <span className="text-sm">Offerta Economica obbligatoria</span>
+                    </label>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button type="submit">
