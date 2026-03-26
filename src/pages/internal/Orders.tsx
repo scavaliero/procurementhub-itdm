@@ -75,17 +75,24 @@ export default function InternalOrders() {
   });
 
   const filteredOrders = useMemo(() => {
+    const isEffectivelyCompleted = (o: any) => {
+      const billedTotal = o.billed_total ?? 0;
+      return billedTotal >= Number(o.amount) && ["accepted", "in_progress"].includes(o.status);
+    };
+
     return orders.filter((o: any) => {
       if (statusFilter === "active") {
         if (!ACTIVE_STATUSES.includes(o.status)) return false;
+        // Exclude orders that are effectively completed (fully billed)
+        if (isEffectivelyCompleted(o)) return false;
       } else if (statusFilter === "low_budget") {
         const billedTotal = o.billed_total ?? 0;
         const amount = Number(o.amount);
         if (amount <= 0) return false;
         const residualPct = ((amount - billedTotal) / amount) * 100;
         if (residualPct >= 10) return false;
-        // Only show active/in-progress orders with low budget
         if (!ACTIVE_STATUSES.includes(o.status)) return false;
+        if (isEffectivelyCompleted(o)) return false;
       } else if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
