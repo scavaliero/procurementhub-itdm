@@ -130,6 +130,10 @@ const App = () => (
             <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
             <Route path="/internal/profile" element={<InternalProfile />} />
             <Route path="/internal/change-password" element={<ChangePassword />} />
+            {/* Purchasing module routes */}
+            <Route path="/internal/purchasing/requests" element={<PurchaseRequestsPage />} />
+            <Route path="/internal/purchasing/requests/new" element={<NewPurchaseRequestPage />} />
+            <Route path="/internal/purchasing/requests/:id" element={<PurchaseRequestDetailPage />} />
           </Route>
 
           {/* Catch-all */}
