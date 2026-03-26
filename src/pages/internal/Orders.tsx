@@ -28,6 +28,7 @@ const ACTIVE_STATUSES = ["issued", "accepted", "in_progress"];
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Attivi",
+  low_budget: "Budget < 10%",
   draft: "Bozza",
   pending_approval: "In approvazione",
   issued: "Emesso",
