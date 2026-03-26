@@ -118,7 +118,8 @@ export const dashboardService = {
     const { data: lowBudgetRows, error: lbErr } = await supabase
       .from("contract_economic_summary")
       .select("order_id")
-      .lt("residual_pct", 10);
+      .lt("residual_pct", 10)
+      .gt("residual_pct", 0);
     if (lbErr) throw lbErr;
     if (!lowBudgetRows || lowBudgetRows.length === 0) return 0;
 

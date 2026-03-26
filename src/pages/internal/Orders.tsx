@@ -212,7 +212,7 @@ export default function InternalOrders() {
           <SelectTrigger className="w-[200px]" data-testid="orders-status-filter">
             <SelectValue placeholder="Tutti gli stati" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" side="bottom" align="start" sideOffset={4} avoidCollisions={false}>
             <SelectItem value="all">Tutti gli stati</SelectItem>
             {Object.entries(STATUS_LABELS).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
