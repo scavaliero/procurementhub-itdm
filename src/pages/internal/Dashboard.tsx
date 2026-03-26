@@ -175,7 +175,7 @@ export default function InternalDashboard() {
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
   const supplierKpis: {
-    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string; to?: string;
+    key: string; title: string; icon: React.ElementType; alert?: boolean; warning?: boolean; subtitle?: string; to?: string;
   }[] = [
     { key: "_total", title: "Fornitori totali", icon: Building2, to: "/internal/vendors" },
     { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors?status=pre_registered" },
@@ -184,7 +184,7 @@ export default function InternalDashboard() {
     { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors?status=in_accreditation" },
     { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors?status=accredited" },
     { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors?status=suspended" },
-    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors?docs_alert=expiring" },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, warning: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors?docs_alert=expiring" },
     { key: "_expired", title: "Documenti scaduti", icon: FileWarning, alert: expiredDocs > 0, subtitle: "Scadenza superata", to: "/internal/vendors?docs_alert=expired" },
   ];
 
