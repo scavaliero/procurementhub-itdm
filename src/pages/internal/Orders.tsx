@@ -21,8 +21,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CheckCircle, XCircle, Search } from "lucide-react";
+import { CheckCircle, XCircle, Search, ShoppingCart, Clock, FileEdit, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 
 const ACTIVE_STATUSES = ["issued", "accepted", "in_progress"];
 
@@ -103,6 +104,26 @@ export default function InternalOrders() {
     });
   }, [orders, statusFilter, searchQuery]);
 
+  // KPI counts computed from loaded orders
+  const kpiCounts = useMemo(() => {
+    const isEffectivelyCompleted = (o: any) => {
+      const billedTotal = o.billed_total ?? 0;
+      return billedTotal >= Number(o.amount) && ["accepted", "in_progress"].includes(o.status);
+    };
+    let active = 0, pendingApproval = 0, draft = 0, lowBudget = 0;
+    for (const ord of orders as any[]) {
+      if (ACTIVE_STATUSES.includes(ord.status) && !isEffectivelyCompleted(ord)) {
+        active++;
+        const billedTotal = ord.billed_total ?? 0;
+        const amount = Number(ord.amount);
+        if (amount > 0 && ((amount - billedTotal) / amount) * 100 < 10) lowBudget++;
+      }
+      if (ord.status === "pending_approval") pendingApproval++;
+      if (ord.status === "draft") draft++;
+    }
+    return { active, pendingApproval, draft, lowBudget };
+  }, [orders]);
+
   const approveMutation = useMutation({
     mutationFn: (orderId: string) => orderService.approveOrder(orderId, profile!.tenant_id, profile!.id),
     onSuccess: () => {
@@ -127,6 +148,13 @@ export default function InternalOrders() {
     return <div className="p-6 space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
   }
 
+  const kpiCards = [
+    { key: "active", label: "Attivi", value: kpiCounts.active, icon: ShoppingCart, color: "text-emerald-600", bg: "bg-emerald-100" },
+    { key: "pending_approval", label: "In approvazione", value: kpiCounts.pendingApproval, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
+    { key: "draft", label: "Bozze", value: kpiCounts.draft, icon: FileEdit, color: "text-muted-foreground", bg: "bg-muted" },
+    { key: "low_budget", label: "Budget < 10%", value: kpiCounts.lowBudget, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10", alert: true },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Ordini" }]} />
@@ -134,6 +162,36 @@ export default function InternalOrders() {
         <span className="text-base">🛒</span>
         Ordini
       </h2>
+
+      {/* KPI Cards */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {kpiCards.map((kpi) => {
+          const isSelected = statusFilter === kpi.key;
+          const Icon = kpi.icon;
+          return (
+            <Card
+              key={kpi.key}
+              className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${
+                isSelected ? "ring-2 ring-primary" : ""
+              } ${kpi.alert && kpi.value > 0 ? "border-destructive/40 bg-destructive/5" : ""}`}
+              onClick={() => updateParams({ status: isSelected ? "all" : kpi.key })}
+              data-testid={`orders-kpi-${kpi.key}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {kpi.label}
+                </CardTitle>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${kpi.bg}`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold tabular-nums">{kpi.value}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
