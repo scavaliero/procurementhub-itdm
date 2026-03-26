@@ -84,7 +84,7 @@ export default function InternalOpportunityNew() {
     setValue,
   } = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
-    defaultValues: step1Data ?? {},
+    defaultValues: step1Data ?? { require_technical_offer: true, require_economic_offer: true },
   });
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
