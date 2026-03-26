@@ -107,6 +107,7 @@ export default function InternalVendors() {
   const search = searchParams.get("q") || "";
   const dateFrom = searchParams.get("date_from") || "";
   const dateTo = searchParams.get("date_to") || "";
+  const docsAlert = (searchParams.get("docs_alert") as "expiring" | "expired" | null) || "";
 
   const [searchInput, setSearchInput] = useState(search);
 
