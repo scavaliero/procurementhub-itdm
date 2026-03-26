@@ -328,7 +328,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 3: Finance approver */}
-          {hasGrant("validate_purchase_request_high") && (
+          {!isTerminal && hasGrant("validate_purchase_request_high") && (
             <>
               {pr.status === "pending_validation" && (
                 <Card>
