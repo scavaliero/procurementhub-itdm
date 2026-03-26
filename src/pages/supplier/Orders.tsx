@@ -45,7 +45,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 const FILTER_STATUS_LABELS: Record<string, string> = {
   issued: "Emesso",
-  accepted: "Accettato",
   in_progress: "In corso",
   completed: "Completato",
   rejected: "Rifiutato",
