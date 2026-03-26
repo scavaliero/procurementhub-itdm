@@ -211,6 +211,7 @@ export default function InternalDashboard() {
                   value={r.count}
                   icon={Briefcase}
                   cardClass="card-top-procurement"
+                  to="/internal/opportunities"
                 />
               ))}
               {(!oppStats || oppStats.length === 0) && (
