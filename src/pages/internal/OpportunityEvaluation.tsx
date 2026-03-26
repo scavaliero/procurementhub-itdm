@@ -244,7 +244,7 @@ export default function InternalOpportunityEvaluation() {
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: opp.title, href: `/internal/opportunities/${opportunityId}` }, { label: "Valutazione" }]} />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: opp.title, href: `/internal/opportunities/${opportunityId}` }, { label: "Valutazione" }]} />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(`/internal/opportunities/${opportunityId}`)}>

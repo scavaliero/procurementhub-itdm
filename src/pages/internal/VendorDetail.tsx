@@ -435,7 +435,7 @@ export default function InternalVendorDetail() {
     <div className="p-6 space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Fornitori", href: "/internal/vendors" },
           { label: supplier.company_name },
         ]}

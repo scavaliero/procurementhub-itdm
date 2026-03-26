@@ -157,7 +157,7 @@ export default function InternalOrders() {
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Ordini" }]} />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Ordini" }]} />
       <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar-green">
         <span className="text-base">🛒</span>
         Ordini

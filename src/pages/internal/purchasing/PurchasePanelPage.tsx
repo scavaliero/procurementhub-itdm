@@ -66,7 +66,7 @@ export default function PurchasePanelPage() {
     <div className="p-6 space-y-8">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Pannello Acquisti" },
         ]}
       />

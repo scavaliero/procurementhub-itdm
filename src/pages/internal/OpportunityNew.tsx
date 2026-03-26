@@ -226,7 +226,7 @@ export default function InternalOpportunityNew() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: "Nuova Opportunità" }]} />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: "Nuova Opportunità" }]} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/internal/opportunities")}>
           <ArrowLeft className="h-4 w-4" />

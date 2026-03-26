@@ -139,7 +139,7 @@ export default function NewDirectPurchasePage() {
     <div className="p-6 space-y-6 max-w-2xl">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Acquisti Diretti", href: "/internal/purchasing/direct" },
           { label: "Nuovo acquisto" },
         ]}

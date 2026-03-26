@@ -123,7 +123,7 @@ export default function PurchaseRequestDetailPage() {
     <div className="p-6 space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Richieste di Acquisto", href: "/internal/purchasing/requests" },
           { label: pr.code ?? "Dettaglio" },
         ]}
