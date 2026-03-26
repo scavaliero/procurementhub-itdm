@@ -78,7 +78,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
     return z.object({
       total_amount: amountSchema,
       technical_description: z.string().min(10, "Descrizione tecnica obbligatoria (min 10 caratteri)"),
-      execution_days: z.coerce.number().int().positive("Giorni di esecuzione obbligatori"),
       bid_validity_date: z.string().min(1, "Data validità obbligatoria"),
       proposed_conditions: z.string().optional(),
       notes: z.string().optional(),
