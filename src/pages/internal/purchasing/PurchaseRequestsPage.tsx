@@ -60,6 +60,7 @@ export default function PurchaseRequestsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const viewMode = searchParams.get("view") || "";
   const statusFilter = searchParams.get("status") || "all";
   const searchQuery = searchParams.get("q") || "";
 
