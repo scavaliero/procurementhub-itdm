@@ -107,6 +107,12 @@ export default function InternalDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  const { data: expiredDocs = 0 } = useQuery({
+    queryKey: ["dashboard", "expired-docs"],
+    queryFn: () => dashboardService.expiredDocuments(),
+    refetchInterval: REFETCH_MS,
+  });
+
   const { data: oppStats, isLoading: loadingOpp } = useQuery({
     queryKey: ["dashboard", "opportunities-by-status"],
     queryFn: () => dashboardService.opportunitiesByStatus(),
