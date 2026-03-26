@@ -152,16 +152,16 @@ export default function InternalDashboard() {
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
   const supplierKpis: {
-    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string;
+    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string; to?: string;
   }[] = [
-    { key: "_total", title: "Fornitori totali", icon: Building2 },
-    { key: "pre_registered", title: "Pre-registrati", icon: Clock },
-    { key: "pending_review", title: "In revisione", icon: Eye },
-    { key: "enabled", title: "Abilitati", icon: Unlock },
-    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck },
-    { key: "accredited", title: "Accreditati", icon: UserCheck },
-    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true },
-    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni" },
+    { key: "_total", title: "Fornitori totali", icon: Building2, to: "/internal/vendors" },
+    { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors" },
+    { key: "pending_review", title: "In revisione", icon: Eye, to: "/internal/vendors" },
+    { key: "enabled", title: "Abilitati", icon: Unlock, to: "/internal/vendors" },
+    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors" },
+    { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors" },
+    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors" },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors" },
   ];
 
   return (
