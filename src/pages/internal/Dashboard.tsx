@@ -312,6 +312,47 @@ export default function InternalDashboard() {
         </section>
       )}
 
+      {/* ── Ufficio Acquisti ─── */}
+      {showPurchasing && (
+        <section className="space-y-4">
+          <SectionHeader icon="🛒" title="Ufficio Acquisti" />
+          {loadingPV ? (
+            <SkeletonCards count={4} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <KpiCard
+                title="Da validare"
+                value={pendingValidations}
+                icon={CheckSquare}
+                alert={pendingValidations > 0}
+                to="/internal/purchasing/requests?view=validate"
+              />
+              <KpiCard
+                title="In lavorazione"
+                value={inPurchase}
+                icon={Package}
+                to="/internal/purchasing/panel"
+              />
+              <KpiCard
+                title="Acquisti diretti (mese)"
+                value={dpMonth.count}
+                icon={CreditCard}
+                subtitle={`Totale: ${formatCurrency(dpMonth.total)}`}
+                to="/internal/purchasing/direct"
+              />
+              <KpiCard
+                title="Senza fattura"
+                value={dpNoInvoice}
+                icon={Receipt}
+                warning={dpNoInvoice > 0}
+                subtitle={dpNoInvoice > 0 ? "Fattura mancante" : undefined}
+                to="/internal/purchasing/direct"
+              />
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ── Liste recenti ─── */}
       <section className="space-y-4">
         <SectionHeader icon="📌" title="Attività Recenti" variant="green" />
