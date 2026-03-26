@@ -18,7 +18,7 @@ import {
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2 } from "lucide-react";
+import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { DocumentCard } from "@/components/supplier/DocumentCard";
 import type { UploadedDocument } from "@/types";
