@@ -26,24 +26,41 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle, cardClass, to,
+  title, value, icon: Icon, alert, warning, subtitle, cardClass, to,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   alert?: boolean;
+  warning?: boolean;
   subtitle?: string;
   cardClass?: string;
   to?: string;
 }) {
+  const borderClass = alert
+    ? "border-destructive/40 bg-destructive/5"
+    : warning
+    ? "border-amber-400/50 bg-amber-50"
+    : "";
+  const iconBg = alert
+    ? "bg-destructive/10"
+    : warning
+    ? "bg-amber-100"
+    : "bg-primary/8";
+  const iconColor = alert
+    ? "text-destructive"
+    : warning
+    ? "text-amber-600"
+    : "text-primary";
+
   const content = (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""} ${to ? "cursor-pointer" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${borderClass} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${alert ? "bg-destructive/10" : "bg-primary/8"}`}>
-          <Icon className={`h-4 w-4 ${alert ? "text-destructive" : "text-primary"}`} />
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
       </CardHeader>
       <CardContent>
@@ -158,7 +175,7 @@ export default function InternalDashboard() {
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
   const supplierKpis: {
-    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string; to?: string;
+    key: string; title: string; icon: React.ElementType; alert?: boolean; warning?: boolean; subtitle?: string; to?: string;
   }[] = [
     { key: "_total", title: "Fornitori totali", icon: Building2, to: "/internal/vendors" },
     { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors?status=pre_registered" },
@@ -167,7 +184,7 @@ export default function InternalDashboard() {
     { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors?status=in_accreditation" },
     { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors?status=accredited" },
     { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors?status=suspended" },
-    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors?docs_alert=expiring" },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, warning: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors?docs_alert=expiring" },
     { key: "_expired", title: "Documenti scaduti", icon: FileWarning, alert: expiredDocs > 0, subtitle: "Scadenza superata", to: "/internal/vendors?docs_alert=expired" },
   ];
 
@@ -195,6 +212,7 @@ export default function InternalDashboard() {
                   value={value}
                   icon={kpi.icon}
                   alert={kpi.alert && value > 0}
+                  warning={kpi.warning && value > 0}
                   subtitle={kpi.subtitle}
                   cardClass="card-top-suppliers"
                   to={kpi.to}
