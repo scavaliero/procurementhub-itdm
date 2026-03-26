@@ -105,9 +105,14 @@ export default function SupplierDocuments() {
 
   // Filtered doc types
   const filteredDocTypes = useMemo(() => {
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     return docTypes.filter((dt) => {
       const doc = latestByType[dt.id];
       if (statusFilter === "approved" && doc?.status !== "approved") return false;
+      if (statusFilter === "expiring") {
+        if (!doc || doc.status !== "approved" || !doc.expiry_date || new Date(doc.expiry_date) > thirtyDays) return false;
+      }
       if (statusFilter === "pending" && doc?.status !== "uploaded") return false;
       if (statusFilter === "rejected" && doc?.status !== "rejected") return false;
       if (statusFilter === "missing" && doc) return false;
