@@ -60,6 +60,7 @@ export default function PurchaseRequestsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const viewMode = searchParams.get("view") || "";
   const statusFilter = searchParams.get("status") || "all";
   const searchQuery = searchParams.get("q") || "";
 
@@ -78,9 +79,10 @@ export default function PurchaseRequestsPage() {
   const isRequester = hasGrant("view_own_purchase_requests") && !isValidator && !isOperator;
 
   const queryFilters = useMemo(() => {
+    if (viewMode === "mine") return { mine: true };
     if (isRequester) return { mine: true };
     return {};
-  }, [isRequester]);
+  }, [isRequester, viewMode]);
 
   const { data: requests = [], isLoading } = usePurchaseRequests(queryFilters);
 
@@ -88,8 +90,14 @@ export default function PurchaseRequestsPage() {
   const visibleRequests = useMemo(() => {
     let list = requests as PurchaseRequest[];
 
+    // view=validate → show only requests pending validation
+    if (viewMode === "validate") {
+      list = list.filter((r) =>
+        ["submitted", "pending_validation"].includes(r.status)
+      );
+    }
     // Operators only see actionable statuses
-    if (isOperator && !isValidator) {
+    else if (isOperator && !isValidator) {
       list = list.filter((r) =>
         ["approved", "approved_finance", "in_purchase", "completed"].includes(r.status)
       );
@@ -108,7 +116,7 @@ export default function PurchaseRequestsPage() {
       );
     }
     return list;
-  }, [requests, statusFilter, searchQuery, isOperator, isValidator]);
+  }, [requests, statusFilter, searchQuery, isOperator, isValidator, viewMode]);
 
   // KPI counts
   const kpiCounts = useMemo(() => {
