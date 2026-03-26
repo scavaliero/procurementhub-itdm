@@ -31,10 +31,12 @@ const step1Schema = z.object({
   bids_deadline: z.string().min(1, "Scadenza offerte obbligatoria"),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  budget_estimated: z.coerce.number().optional(),
-  budget_max: z.coerce.number().optional(),
+  budget_estimated: z.coerce.number().gt(0, "Budget stimato obbligatorio e maggiore di 0"),
+  budget_max: z.coerce.number().gt(0, "Offerta massima obbligatoria e maggiore di 0"),
+  require_technical_offer: z.boolean(),
+  require_economic_offer: z.boolean(),
 }).refine((data) => {
-  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+  if (data.budget_max > data.budget_estimated) {
     return false;
   }
   return true;
@@ -82,7 +84,7 @@ export default function InternalOpportunityNew() {
     setValue,
   } = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
-    defaultValues: step1Data ?? {},
+    defaultValues: step1Data ?? { require_technical_offer: true, require_economic_offer: true },
   });
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
@@ -101,6 +103,8 @@ export default function InternalOpportunityNew() {
         end_date: data.end_date || undefined,
         budget_estimated: data.budget_estimated,
         budget_max: data.budget_max,
+        require_technical_offer: data.require_technical_offer,
+        require_economic_offer: data.require_economic_offer,
       };
 
       if (draftId) {
@@ -279,16 +283,30 @@ export default function InternalOpportunityNew() {
                 {canViewBudget && (
                   <>
                     <div>
-                      <Label>Budget stimato (€)</Label>
+                      <Label>Budget stimato (€) *</Label>
                       <Input type="number" step="0.01" {...register("budget_estimated")} />
+                      {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
                     </div>
                     <div>
-                      <Label>Offerta massima (€)</Label>
+                      <Label>Offerta massima (€) *</Label>
                       <Input type="number" step="0.01" {...register("budget_max")} />
                       {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                     </div>
                   </>
                 )}
+                <div className="md:col-span-2 flex flex-col gap-3 pt-2">
+                  <Label className="text-sm font-semibold">Documenti offerta richiesti</Label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" {...register("require_technical_offer")} className="accent-primary h-4 w-4" />
+                      <span className="text-sm">Offerta Tecnica obbligatoria</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" {...register("require_economic_offer")} className="accent-primary h-4 w-4" />
+                      <span className="text-sm">Offerta Economica obbligatoria</span>
+                    </label>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button type="submit">

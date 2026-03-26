@@ -194,6 +194,8 @@ export interface Opportunity {
   evaluation_criteria: Json | null;
   participation_conditions: string | null;
   operational_notes: string | null;
+  require_technical_offer: boolean;
+  require_economic_offer: boolean;
   version: number | null;
   deleted_at: string | null;
   created_at: string | null;

@@ -33,12 +33,14 @@ const formSchema = z.object({
   bids_deadline: z.string().min(1, "Scadenza offerte obbligatoria"),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  budget_estimated: z.coerce.number().optional(),
-  budget_max: z.coerce.number().optional(),
+  budget_estimated: z.coerce.number().gt(0, "Budget stimato obbligatorio e maggiore di 0"),
+  budget_max: z.coerce.number().gt(0, "Offerta massima obbligatoria e maggiore di 0"),
   participation_conditions: z.string().optional(),
   operational_notes: z.string().optional(),
+  require_technical_offer: z.boolean(),
+  require_economic_offer: z.boolean(),
 }).refine((data) => {
-  if (data.budget_max != null && data.budget_estimated != null && data.budget_max > data.budget_estimated) {
+  if (data.budget_max > data.budget_estimated) {
     return false;
   }
   return true;
@@ -109,6 +111,8 @@ export default function InternalOpportunityEdit() {
       budget_max: undefined,
       participation_conditions: "",
       operational_notes: "",
+      require_technical_offer: true,
+      require_economic_offer: true,
     },
   });
 
@@ -128,6 +132,8 @@ export default function InternalOpportunityEdit() {
         budget_max: opp.budget_max ?? undefined,
         participation_conditions: opp.participation_conditions || "",
         operational_notes: opp.operational_notes || "",
+        require_technical_offer: opp.require_technical_offer ?? true,
+        require_economic_offer: opp.require_economic_offer ?? true,
       });
       const ec = Array.isArray(opp.evaluation_criteria) ? (opp.evaluation_criteria as unknown as Criterion[]) : [];
       setCriteria(ec);
@@ -161,6 +167,8 @@ export default function InternalOpportunityEdit() {
         participation_conditions: data.participation_conditions || null,
         operational_notes: data.operational_notes || null,
         evaluation_criteria: criteria.length > 0 ? (criteria as any) : [],
+        require_technical_offer: data.require_technical_offer,
+        require_economic_offer: data.require_economic_offer,
       } as any);
 
       await auditService.log({
@@ -300,16 +308,30 @@ export default function InternalOpportunityEdit() {
               {canViewBudget && (
                 <>
                   <div>
-                    <Label>Budget stimato (€)</Label>
+                    <Label>Budget stimato (€) *</Label>
                     <Input type="number" step="0.01" {...register("budget_estimated")} />
+                    {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
                   </div>
                   <div>
-                    <Label>Offerta massima (€)</Label>
+                    <Label>Offerta massima (€) *</Label>
                     <Input type="number" step="0.01" {...register("budget_max")} />
                     {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
                   </div>
                 </>
               )}
+              <div className="md:col-span-2 flex flex-col gap-3 pt-2">
+                <Label className="text-sm font-semibold">Documenti offerta richiesti</Label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" {...register("require_technical_offer")} className="accent-primary h-4 w-4" />
+                    <span className="text-sm">Offerta Tecnica obbligatoria</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" {...register("require_economic_offer")} className="accent-primary h-4 w-4" />
+                    <span className="text-sm">Offerta Economica obbligatoria</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

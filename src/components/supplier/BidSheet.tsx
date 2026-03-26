@@ -309,7 +309,9 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
         {/* Attachments */}
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label className="flex items-center gap-2"><FileText className="h-4 w-4" /> Offerta Tecnica</Label>
+            <Label className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> Offerta Tecnica {(opp as any)?.require_technical_offer ? "*" : "(facoltativa)"}
+            </Label>
             {existingTechAtt && !techFile && (
               <div className="flex items-center gap-2 text-sm bg-muted rounded px-3 py-2">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -331,7 +333,9 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2"><FileText className="h-4 w-4" /> Offerta Economica</Label>
+            <Label className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> Offerta Economica {(opp as any)?.require_economic_offer ? "*" : "(facoltativa)"}
+            </Label>
             {existingEconAtt && !econFile && (
               <div className="flex items-center gap-2 text-sm bg-muted rounded px-3 py-2">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />

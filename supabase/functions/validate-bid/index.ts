@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // 1. Fetch opportunity
     const { data: opp, error: oppErr } = await supabase
       .from("opportunities")
-      .select("id, bids_deadline, status, category_id, budget_max")
+      .select("id, bids_deadline, status, category_id, budget_max, require_technical_offer, require_economic_offer")
       .eq("id", opportunity_id)
       .maybeSingle();
 
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. RB-02: Check mandatory documents
+    // 4. RB-02: Check mandatory BLOCKING documents only
     const { data: missingDocs, error: mdErr } = await supabase.rpc(
       "check_mandatory_docs",
       {
@@ -90,13 +90,64 @@ Deno.serve(async (req) => {
 
     if (mdErr) throw mdErr;
 
+    // Only block on documents that are is_blocking=true
     if (missingDocs && missingDocs.length > 0) {
-      return jsonResponse({
-        valid: false,
-        code: "RB02",
-        message: "Documenti obbligatori mancanti o non approvati",
-        missing_documents: missingDocs,
-      });
+      // Fetch which of these doc types are blocking
+      const missingIds = missingDocs.map((d: any) => d.document_type_id);
+      const { data: docTypes } = await supabase
+        .from("document_types")
+        .select("id, is_blocking")
+        .in("id", missingIds);
+
+      const blockingIds = new Set(
+        (docTypes ?? []).filter((dt: any) => dt.is_blocking).map((dt: any) => dt.id)
+      );
+      const blockingMissing = missingDocs.filter((d: any) => blockingIds.has(d.document_type_id));
+
+      if (blockingMissing.length > 0) {
+        return jsonResponse({
+          valid: false,
+          code: "RB02",
+          message: "Documenti obbligatori bloccanti mancanti o non approvati",
+          missing_documents: blockingMissing,
+        });
+      }
+    }
+
+    // 4b. Check required bid attachments (technical/economic offer)
+    const { data: latestBid } = await supabase
+      .from("bids")
+      .select("id")
+      .eq("opportunity_id", opportunity_id)
+      .eq("supplier_id", supplier_id)
+      .eq("status", "draft")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestBid) {
+      const { data: bidAtts } = await supabase
+        .from("bid_attachments")
+        .select("attachment_type")
+        .eq("bid_id", latestBid.id);
+
+      const attTypes = new Set((bidAtts ?? []).map((a: any) => a.attachment_type));
+
+      if (opp.require_technical_offer && !attTypes.has("technical_offer")) {
+        return jsonResponse({
+          valid: false,
+          code: "RB06",
+          message: "Allegato 'Offerta Tecnica' obbligatorio mancante",
+        });
+      }
+
+      if (opp.require_economic_offer && !attTypes.has("economic_offer")) {
+        return jsonResponse({
+          valid: false,
+          code: "RB07",
+          message: "Allegato 'Offerta Economica' obbligatorio mancante",
+        });
+      }
     }
 
     // 5. RB-05: Check budget max

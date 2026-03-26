@@ -1,4 +1,12 @@
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,7 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink, Paperclip } from "lucide-react";
+import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardList, Award, ShoppingCart, Pencil, ExternalLink, Paperclip, Trash2 } from "lucide-react";
 import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -45,14 +53,11 @@ const STATUS_TRANSITIONS: Record<string, { next: string; label: string; icon: an
     { next: "open", label: "Approva e pubblica", icon: CheckCircle, variant: "default" },
     { next: "draft", label: "Rimanda in bozza", icon: ArrowLeft, variant: "outline" },
   ],
-  open: [
-    { next: "collecting_bids", label: "Avvia raccolta offerte", icon: Play, variant: "default" },
-  ],
+  // "open" has no manual transitions — auto-transitions to "collecting_bids" on first invite
   collecting_bids: [
     { next: "evaluating", label: "Chiudi raccolta e valuta", icon: ClipboardList, variant: "default" },
   ],
   // "evaluating" → "awarded" is handled ONLY via the evaluation page "Seleziona vincitore"
-  // which creates the awards record. No direct status button here.
   awarded: [
     { next: "closed", label: "Chiudi opportunità", icon: CheckCircle, variant: "outline" },
   ],
@@ -64,6 +69,8 @@ export default function InternalOpportunityDetail() {
   const qc = useQueryClient();
   const { profile } = useAuth();
   const { hasGrant } = useGrants();
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: opp, isLoading } = useQuery({
     queryKey: ["opportunity", id],
@@ -114,11 +121,31 @@ export default function InternalOpportunityDetail() {
   if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   if (!opp) return <EmptyState title="Opportunità non trovata" />;
 
-  const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
+   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
   const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
   const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
+  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && invitations.length === 0 && !hasOrder && ["draft", "pending_approval", "open"].includes(opp.status);
   const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await opportunityService.update(id!, { deleted_at: new Date().toISOString() } as any);
+      await auditService.log({
+        tenant_id: profile!.tenant_id,
+        entity_type: "opportunity",
+        entity_id: id!,
+        event_type: "opportunity_deleted",
+        new_state: { deleted: true },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Opportunità eliminata");
+      navigate("/internal/opportunities");
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Errore nell'eliminazione"),
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -176,7 +203,30 @@ export default function InternalOpportunityDetail() {
             ✓ Ordine già generato
           </Badge>
         )}
+        {canDelete && (
+          <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleteMutation.isPending}>
+            <Trash2 className="mr-2 h-4 w-4" /> Elimina
+          </Button>
+        )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina opportunità</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare questa opportunità? L'azione è irreversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Annulla</Button>
+            <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()}>
+              {deleteMutation.isPending ? "Eliminazione…" : "Conferma eliminazione"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="details">
         <TabsList>
