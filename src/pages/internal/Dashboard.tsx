@@ -107,6 +107,12 @@ export default function InternalDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  const { data: expiredDocs = 0 } = useQuery({
+    queryKey: ["dashboard", "expired-docs"],
+    queryFn: () => dashboardService.expiredDocuments(),
+    refetchInterval: REFETCH_MS,
+  });
+
   const { data: oppStats, isLoading: loadingOpp } = useQuery({
     queryKey: ["dashboard", "opportunities-by-status"],
     queryFn: () => dashboardService.opportunitiesByStatus(),
@@ -161,7 +167,8 @@ export default function InternalDashboard() {
     { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors?status=in_accreditation" },
     { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors?status=accredited" },
     { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors?status=suspended" },
-    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors" },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors?docs_alert=expiring" },
+    { key: "_expired", title: "Documenti scaduti", icon: FileWarning, alert: expiredDocs > 0, subtitle: "Scadenza superata", to: "/internal/vendors?docs_alert=expired" },
   ];
 
   return (
@@ -178,6 +185,8 @@ export default function InternalDashboard() {
                 ? totalSuppliers
                 : kpi.key === "_docs"
                 ? expiringDocs
+                : kpi.key === "_expired"
+                ? expiredDocs
                 : getCount(kpi.key);
               return (
                 <KpiCard

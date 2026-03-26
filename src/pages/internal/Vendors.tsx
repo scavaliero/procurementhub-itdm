@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { vendorService } from "@/services/vendorService";
@@ -42,6 +42,8 @@ import {
   Eye,
   Unlock,
   ClipboardCheck,
+  FileWarning,
+  FileX2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -105,6 +107,7 @@ export default function InternalVendors() {
   const search = searchParams.get("q") || "";
   const dateFrom = searchParams.get("date_from") || "";
   const dateTo = searchParams.get("date_to") || "";
+  const docsAlert = (searchParams.get("docs_alert") as "expiring" | "expired" | null) || "";
 
   const [searchInput, setSearchInput] = useState(search);
 
@@ -152,6 +155,7 @@ export default function InternalVendors() {
       search,
       dateFrom,
       dateTo,
+      docsAlert,
     ],
     queryFn: () =>
       vendorService.listSuppliersPaginated({
@@ -162,6 +166,7 @@ export default function InternalVendors() {
         search: search || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
+        docsAlert: (docsAlert as "expiring" | "expired") || undefined,
       }),
     enabled: !!profile,
   });
@@ -169,6 +174,14 @@ export default function InternalVendors() {
   const suppliers = result?.data || [];
   const totalCount = result?.count || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  // Fetch doc alert counts for visible suppliers
+  const supplierIds = useMemo(() => suppliers.map((s) => s.id), [suppliers]);
+  const { data: docAlerts = {} } = useQuery({
+    queryKey: ["supplier-doc-alerts", supplierIds],
+    queryFn: () => vendorService.getDocAlertCounts(supplierIds),
+    enabled: supplierIds.length > 0,
+  });
 
   // CSV Export — exports ALL records matching active filters (no pagination)
   const handleExportCsv = async () => {
@@ -313,6 +326,19 @@ export default function InternalVendors() {
             />
           </div>
         </div>
+        <Select
+          value={docsAlert || "all"}
+          onValueChange={(v) => updateParams({ docs_alert: v === "all" ? "" : v })}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Tutti i documenti" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tutti i documenti</SelectItem>
+            <SelectItem value="expiring">📄 In scadenza (30gg)</SelectItem>
+            <SelectItem value="expired">⚠️ Scaduti</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -329,6 +355,8 @@ export default function InternalVendors() {
                 <TableRow>
                   <TableHead>Ragione Sociale</TableHead>
                   <TableHead>Stato</TableHead>
+                  <TableHead className="text-center">Doc. in scadenza</TableHead>
+                  <TableHead className="text-center">Doc. scaduti</TableHead>
                   <TableHead>Registrato il</TableHead>
                 </TableRow>
               </TableHeader>
@@ -336,6 +364,7 @@ export default function InternalVendors() {
                 {suppliers.map((s) => {
                   const cfg =
                     SUPPLIER_STATUS_CONFIG[s.status] || SUPPLIER_STATUS_CONFIG.pre_registered;
+                  const alerts = docAlerts[s.id];
                   return (
                     <TableRow
                       key={s.id}
@@ -350,6 +379,26 @@ export default function InternalVendors() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {alerts?.expiring ? (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                            <FileWarning className="h-3 w-3" />
+                            {alerts.expiring}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {alerts?.expired ? (
+                          <Badge variant="destructive" className="gap-1">
+                            <FileX2 className="h-3 w-3" />
+                            {alerts.expired}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {s.created_at
