@@ -246,17 +246,12 @@ export default function InternalOpportunityNew() {
         <h1 className="text-2xl font-bold">Nuova Opportunità</h1>
       </div>
 
-      {fromRequestCode ? (
+      {linkedRequest ? (
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Opportunità collegata alla Richiesta <strong>{fromRequestCode}</strong>
+            Opportunità collegata alla Richiesta <strong>{linkedRequest.code ?? fromRequest}</strong>
           </AlertDescription>
-        </Alert>
-      ) : fromRequest ? (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>Caricamento dati richiesta collegata…</AlertDescription>
         </Alert>
       ) : null}
 
