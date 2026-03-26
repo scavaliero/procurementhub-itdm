@@ -144,13 +144,13 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
   const items: { title: string; url: string; icon: any; show: boolean; badge?: number }[] = [
     {
       title: "Le mie richieste",
-      url: "/internal/purchasing/requests",
+      url: "/internal/purchasing/requests?view=mine",
       icon: ClipboardList,
       show: hasGrant("create_purchase_request") || hasGrant("view_own_purchase_requests"),
     },
     {
       title: "Da validare",
-      url: "/internal/purchasing/requests",
+      url: "/internal/purchasing/requests?view=validate",
       icon: CheckSquare,
       show: isValidator,
       badge: pendingCount > 0 ? pendingCount : undefined,
