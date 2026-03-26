@@ -137,7 +137,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       if (!supplierId || !profile) throw new Error("Dati mancanti");
       if (budgetMax && data.total_amount > budgetMax) throw new Error(`L'importo supera l'offerta massima`);
       const bid = await bidService.saveDraft(
-        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: data.total_amount, technical_description: data.technical_description, execution_days: data.execution_days, bid_validity_date: data.bid_validity_date, proposed_conditions: data.proposed_conditions, notes: data.notes },
+        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: data.total_amount, technical_description: data.technical_description, bid_validity_date: data.bid_validity_date, proposed_conditions: data.proposed_conditions, notes: data.notes },
         existingBid?.id
       );
       if (techFile) await bidService.uploadTypedAttachment({ bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id, attachmentType: "technical_offer", file: techFile });
