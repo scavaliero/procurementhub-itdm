@@ -183,10 +183,18 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active}>
-                  <NavLink
-                    to={item.url}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                    activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                  <a
+                    href={item.url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, "", item.url);
+                      window.dispatchEvent(new PopStateEvent("popstate"));
+                    }}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors ${
+                      active
+                        ? "bg-sidebar-accent text-sidebar-primary font-semibold"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary"
+                    }`}
                   >
                     <item.icon className="h-[18px] w-[18px] shrink-0" />
                     {!collapsed && (
@@ -199,7 +207,7 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
                         )}
                       </span>
                     )}
-                  </NavLink>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
