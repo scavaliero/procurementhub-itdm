@@ -132,7 +132,6 @@ export default function SupplierOrders() {
   const kpiCards = [
     { key: "to_action", label: "Da gestire", value: kpiCounts.toAction, icon: Clock, color: "text-amber-600", bg: "bg-amber-100", alert: true },
     { key: "in_progress", label: "In corso", value: kpiCounts.inProgress, icon: PlayCircle, color: "text-purple-600", bg: "bg-purple-100" },
-    { key: "accepted", label: "Accettati", value: kpiCounts.accepted, icon: ShoppingCart, color: "text-emerald-600", bg: "bg-emerald-100" },
     { key: "completed", label: "Completati", value: kpiCounts.completed, icon: CheckCircle, color: "text-teal-600", bg: "bg-teal-100" },
   ];
 
