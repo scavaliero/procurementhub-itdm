@@ -355,6 +355,8 @@ export default function InternalVendors() {
                 <TableRow>
                   <TableHead>Ragione Sociale</TableHead>
                   <TableHead>Stato</TableHead>
+                  <TableHead className="text-center">Doc. in scadenza</TableHead>
+                  <TableHead className="text-center">Doc. scaduti</TableHead>
                   <TableHead>Registrato il</TableHead>
                 </TableRow>
               </TableHeader>
@@ -362,6 +364,7 @@ export default function InternalVendors() {
                 {suppliers.map((s) => {
                   const cfg =
                     SUPPLIER_STATUS_CONFIG[s.status] || SUPPLIER_STATUS_CONFIG.pre_registered;
+                  const alerts = docAlerts[s.id];
                   return (
                     <TableRow
                       key={s.id}
@@ -376,6 +379,26 @@ export default function InternalVendors() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {alerts?.expiring ? (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                            <FileWarning className="h-3 w-3" />
+                            {alerts.expiring}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {alerts?.expired ? (
+                          <Badge variant="destructive" className="gap-1">
+                            <FileX2 className="h-3 w-3" />
+                            {alerts.expired}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {s.created_at
