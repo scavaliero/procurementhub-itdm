@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SUPPLIER_STATUS_LABELS_PLURAL } from "@/lib/supplierStatusConfig";
+import { formatCurrency } from "@/utils/formatters";
 import {
   Building2, FileWarning, Briefcase, ShoppingCart, FileText,
   AlertTriangle, ArrowRight, UserCheck, Unlock, Clock, ClipboardCheck, PauseCircle,
-  Eye,
+  Eye, ClipboardList, Package, CreditCard, CheckSquare, Receipt,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
@@ -171,6 +172,39 @@ export default function InternalDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  // ── Purchasing KPIs ──
+  const showPurchasing = hasGrant("create_purchase_request") || hasGrant("view_own_purchase_requests") ||
+    hasGrant("validate_purchase_request") || hasGrant("validate_purchase_request_high") ||
+    hasGrant("manage_purchase_operations") || hasGrant("view_purchase_panel");
+
+  const { data: pendingValidations = 0, isLoading: loadingPV } = useQuery({
+    queryKey: ["dashboard", "pending-purchase-validations"],
+    queryFn: () => dashboardService.pendingPurchaseValidations(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: inPurchase = 0 } = useQuery({
+    queryKey: ["dashboard", "in-purchase"],
+    queryFn: () => dashboardService.inPurchaseRequests(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: dpMonth = { count: 0, total: 0 } } = useQuery({
+    queryKey: ["dashboard", "direct-purchases-month"],
+    queryFn: () => dashboardService.directPurchasesThisMonth(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: dpNoInvoice = 0 } = useQuery({
+    queryKey: ["dashboard", "dp-no-invoice"],
+    queryFn: () => dashboardService.directPurchasesNoInvoice(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
   const totalSuppliers = supplierStats?.reduce((s, r) => s + r.count, 0) ?? 0;
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
@@ -275,6 +309,47 @@ export default function InternalDashboard() {
               to="/internal/orders?status=low_budget"
             />
           </div>
+        </section>
+      )}
+
+      {/* ── Ufficio Acquisti ─── */}
+      {showPurchasing && (
+        <section className="space-y-4">
+          <SectionHeader icon="🛒" title="Ufficio Acquisti" />
+          {loadingPV ? (
+            <SkeletonCards count={4} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <KpiCard
+                title="Da validare"
+                value={pendingValidations}
+                icon={CheckSquare}
+                alert={pendingValidations > 0}
+                to="/internal/purchasing/requests?view=validate"
+              />
+              <KpiCard
+                title="In lavorazione"
+                value={inPurchase}
+                icon={Package}
+                to="/internal/purchasing/panel"
+              />
+              <KpiCard
+                title="Acquisti diretti (mese)"
+                value={dpMonth.count}
+                icon={CreditCard}
+                subtitle={`Totale: ${formatCurrency(dpMonth.total)}`}
+                to="/internal/purchasing/direct"
+              />
+              <KpiCard
+                title="Senza fattura"
+                value={dpNoInvoice}
+                icon={Receipt}
+                warning={dpNoInvoice > 0}
+                subtitle={dpNoInvoice > 0 ? "Fattura mancante" : undefined}
+                to="/internal/purchasing/direct"
+              />
+            </div>
+          )}
         </section>
       )}
 
