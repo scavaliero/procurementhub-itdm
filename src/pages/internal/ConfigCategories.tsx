@@ -89,7 +89,7 @@ export default function ConfigCategories() {
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/internal" }, { label: "Categorie Merceologiche" }]} />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Categorie Merceologiche" }]} />
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 section-accent-bar">
           <span className="text-base">🏷️</span>

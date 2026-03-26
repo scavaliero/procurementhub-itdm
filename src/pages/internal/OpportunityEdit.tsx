@@ -229,7 +229,7 @@ export default function InternalOpportunityEdit() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <Breadcrumb items={[
-        { label: "Dashboard", href: "/internal" },
+        { label: "Dashboard", href: "/internal/dashboard" },
         { label: "Opportunità", href: "/internal/opportunities" },
         { label: opp?.title || "Modifica", href: `/internal/opportunities/${id}` },
         { label: "Modifica" },

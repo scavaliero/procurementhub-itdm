@@ -137,7 +137,7 @@ export default function NewPurchaseRequestPage() {
     <div className="p-6 space-y-6 max-w-2xl">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Richieste di Acquisto", href: "/internal/purchasing/requests" },
           { label: draftId ? "Modifica bozza" : "Nuova richiesta" },
         ]}

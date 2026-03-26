@@ -153,7 +153,7 @@ export default function InternalOrderDetail() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/internal" },
+          { label: "Dashboard", href: "/internal/dashboard" },
           { label: "Ordini", href: "/internal/orders" },
           { label: order.code ?? order.subject },
         ]}
