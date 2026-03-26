@@ -563,6 +563,100 @@ export type Database = {
           },
         ]
       }
+      direct_purchases: {
+        Row: {
+          amount: number
+          code: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          invoice_date: string | null
+          invoice_filename: string | null
+          invoice_number: string | null
+          invoice_storage_path: string | null
+          notes: string | null
+          purchase_date: string
+          purchase_request_id: string | null
+          registered_by: string | null
+          subject: string
+          supplier_address: string | null
+          supplier_email: string | null
+          supplier_name: string
+          supplier_vat: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          code?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_filename?: string | null
+          invoice_number?: string | null
+          invoice_storage_path?: string | null
+          notes?: string | null
+          purchase_date: string
+          purchase_request_id?: string | null
+          registered_by?: string | null
+          subject: string
+          supplier_address?: string | null
+          supplier_email?: string | null
+          supplier_name: string
+          supplier_vat?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          code?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_filename?: string | null
+          invoice_number?: string | null
+          invoice_storage_path?: string | null
+          notes?: string | null
+          purchase_date?: string
+          purchase_request_id?: string | null
+          registered_by?: string | null
+          subject?: string
+          supplier_address?: string | null
+          supplier_email?: string | null
+          supplier_name?: string
+          supplier_vat?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_purchases_purchase_request_id_fkey"
+            columns: ["purchase_request_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_purchases_registered_by_fkey"
+            columns: ["registered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_purchases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_types: {
         Row: {
           allowed_formats: string[] | null
@@ -1114,6 +1208,165 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_request_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          from_status: string | null
+          id: string
+          notes: string | null
+          purchase_request_id: string
+          reason: string | null
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          purchase_request_id: string
+          reason?: string | null
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          purchase_request_id?: string
+          reason?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_request_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_request_status_history_purchase_request_id_fkey"
+            columns: ["purchase_request_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_requests: {
+        Row: {
+          amount: number
+          code: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          justification: string
+          linked_opportunity_id: string | null
+          needed_by: string | null
+          outcome: string | null
+          priority: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          requested_by: string
+          status: string
+          subject: string
+          tenant_id: string
+          updated_at: string | null
+          validated_at: string | null
+          validated_by: string | null
+          validation_notes: string | null
+        }
+        Insert: {
+          amount: number
+          code?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          justification: string
+          linked_opportunity_id?: string | null
+          needed_by?: string | null
+          outcome?: string | null
+          priority?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by: string
+          status?: string
+          subject: string
+          tenant_id: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_notes?: string | null
+        }
+        Update: {
+          amount?: number
+          code?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          justification?: string
+          linked_opportunity_id?: string | null
+          needed_by?: string | null
+          outcome?: string | null
+          priority?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by?: string
+          status?: string
+          subject?: string
+          tenant_id?: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requests_linked_opportunity_id_fkey"
+            columns: ["linked_opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1751,6 +2004,18 @@ export type Database = {
         }[]
       }
       current_tenant_id: { Args: never; Returns: string }
+      insert_purchase_request_history: {
+        Args: {
+          p_changed_by: string
+          p_from_status: string
+          p_notes?: string
+          p_purchase_request_id: string
+          p_reason?: string
+          p_to_status: string
+        }
+        Returns: undefined
+      }
+      is_purchase_operator: { Args: never; Returns: boolean }
       user_has_grant: { Args: { grant_name: string }; Returns: boolean }
       verify_append_only: { Args: { p_table_name: string }; Returns: Json }
       verify_function_exists: {
