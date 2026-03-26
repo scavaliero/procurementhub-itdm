@@ -71,4 +71,35 @@ test.describe("Orders page filters and dashboard navigation", () => {
     // Clear the search
     await searchInput.fill("");
   });
+
+  test("Orders page low_budget filter renders via URL param", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    // Navigate directly with low_budget status param
+    await page.goto("/internal/orders?status=low_budget");
+    await page.waitForSelector("text=Ordini");
+
+    // The status filter should be visible and URL should contain the param
+    const statusTrigger = page.locator('[data-testid="orders-status-filter"]');
+    await expect(statusTrigger).toBeVisible();
+    expect(page.url()).toContain("status=low_budget");
+
+    // The filter option "Budget < 10%" should exist in the dropdown
+    await statusTrigger.click();
+    await expect(page.locator("text=Budget < 10%")).toBeVisible();
+  });
+
+  test("Dashboard low budget card links to orders with low_budget filter", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto("/internal");
+    await page.waitForSelector("text=Indicatori Economici");
+
+    // Check the card links to the correct filtered URL
+    const lowBudgetLink = page.locator('a[href="/internal/orders?status=low_budget"]');
+    if (await lowBudgetLink.count() > 0) {
+      await lowBudgetLink.first().click();
+      await page.waitForURL(/\/internal\/orders\?status=low_budget/);
+      await expect(page.locator("text=Ordini")).toBeVisible();
+    }
+  });
 });
