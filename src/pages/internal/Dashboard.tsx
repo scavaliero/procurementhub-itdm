@@ -26,24 +26,41 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle, cardClass, to,
+  title, value, icon: Icon, alert, warning, subtitle, cardClass, to,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   alert?: boolean;
+  warning?: boolean;
   subtitle?: string;
   cardClass?: string;
   to?: string;
 }) {
+  const borderClass = alert
+    ? "border-destructive/40 bg-destructive/5"
+    : warning
+    ? "border-amber-400/50 bg-amber-50"
+    : "";
+  const iconBg = alert
+    ? "bg-destructive/10"
+    : warning
+    ? "bg-amber-100"
+    : "bg-primary/8";
+  const iconColor = alert
+    ? "text-destructive"
+    : warning
+    ? "text-amber-600"
+    : "text-primary";
+
   const content = (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""} ${to ? "cursor-pointer" : ""}`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${borderClass} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${alert ? "bg-destructive/10" : "bg-primary/8"}`}>
-          <Icon className={`h-4 w-4 ${alert ? "text-destructive" : "text-primary"}`} />
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
       </CardHeader>
       <CardContent>
