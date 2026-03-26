@@ -72,14 +72,6 @@ export default function InternalOpportunityNew() {
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Load linked purchase request info
-  useEffect(() => {
-    if (!fromRequest) return;
-    purchaseRequestService.getById(fromRequest)
-      .then((req) => setFromRequestCode(req.code))
-      .catch(() => {});
-  }, [fromRequest]);
-
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => categoryService.list(),
@@ -100,6 +92,27 @@ export default function InternalOpportunityNew() {
     resolver: zodResolver(step1Schema),
     defaultValues: step1Data ?? { require_technical_offer: true, require_economic_offer: true },
   });
+
+  // Load linked purchase request info and pre-fill fields
+  useEffect(() => {
+    if (!fromRequest) return;
+    purchaseRequestService.getById(fromRequest)
+      .then((req) => {
+        setFromRequestCode(req.code);
+        // Pre-fill form fields from RDA data
+        if (req.subject) setValue("title", req.subject);
+        if (req.description) setValue("description", req.description);
+        if (req.amount) {
+          setValue("budget_estimated", Number(req.amount));
+          setValue("budget_max", Number(req.amount));
+        }
+        if (req.needed_by) {
+          setValue("end_date", req.needed_by);
+        }
+      })
+      .catch(() => {});
+  }, [fromRequest, setValue]);
+
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
   const saveDraftMutation = useMutation({
@@ -307,20 +320,16 @@ export default function InternalOpportunityNew() {
                   <Label>Data fine</Label>
                   <Input type="date" {...register("end_date")} />
                 </div>
-                {canViewBudget && (
-                  <>
-                    <div>
-                      <Label>Budget stimato (€) *</Label>
-                      <Input type="number" step="0.01" {...register("budget_estimated")} />
-                      {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
-                    </div>
-                    <div>
-                      <Label>Offerta massima (€) *</Label>
-                      <Input type="number" step="0.01" {...register("budget_max")} />
-                      {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
-                    </div>
-                  </>
-                )}
+                <div className={canViewBudget ? "" : "hidden"}>
+                  <Label>Budget stimato (€) *</Label>
+                  <Input type="number" step="0.01" {...register("budget_estimated")} />
+                  {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
+                </div>
+                <div className={canViewBudget ? "" : "hidden"}>
+                  <Label>Offerta massima (€) *</Label>
+                  <Input type="number" step="0.01" {...register("budget_max")} />
+                  {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
+                </div>
                 <div className="md:col-span-2 flex flex-col gap-3 pt-2">
                   <Label className="text-sm font-semibold">Documenti offerta richiesti</Label>
                   <div className="flex items-center gap-6">
