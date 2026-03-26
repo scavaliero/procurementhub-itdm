@@ -45,14 +45,11 @@ const STATUS_TRANSITIONS: Record<string, { next: string; label: string; icon: an
     { next: "open", label: "Approva e pubblica", icon: CheckCircle, variant: "default" },
     { next: "draft", label: "Rimanda in bozza", icon: ArrowLeft, variant: "outline" },
   ],
-  open: [
-    { next: "collecting_bids", label: "Avvia raccolta offerte", icon: Play, variant: "default" },
-  ],
+  // "open" has no manual transitions — auto-transitions to "collecting_bids" on first invite
   collecting_bids: [
     { next: "evaluating", label: "Chiudi raccolta e valuta", icon: ClipboardList, variant: "default" },
   ],
   // "evaluating" → "awarded" is handled ONLY via the evaluation page "Seleziona vincitore"
-  // which creates the awards record. No direct status button here.
   awarded: [
     { next: "closed", label: "Chiudi opportunità", icon: CheckCircle, variant: "outline" },
   ],
