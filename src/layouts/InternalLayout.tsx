@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Briefcase, ShoppingCart, FileText,
   Settings, ShieldCheck, Users, ScrollText, ClipboardList, CheckSquare, Package, CreditCard,
@@ -177,14 +177,19 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
       <SidebarGroupContent>
         <SidebarMenu>
           {items.filter((i) => i.show).map((item) => {
-            const active = location.pathname.startsWith(item.url);
+            const itemPath = item.url.split("?")[0];
+            const itemSearch = item.url.includes("?") ? item.url.split("?")[1] : "";
+            const active = location.pathname.startsWith(itemPath) && (!itemSearch || location.search.includes(itemSearch));
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active}>
-                  <NavLink
+                  <Link
                     to={item.url}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                    activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors ${
+                      active
+                        ? "bg-sidebar-accent text-sidebar-primary font-semibold"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary"
+                    }`}
                   >
                     <item.icon className="h-[18px] w-[18px] shrink-0" />
                     {!collapsed && (
@@ -197,7 +202,7 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
                         )}
                       </span>
                     )}
-                  </NavLink>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
