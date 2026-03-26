@@ -156,6 +156,10 @@ export default function InternalOpportunityNew() {
       return opp;
     },
     onSuccess: (opp) => {
+      // Link to purchase request if created from one
+      if (fromRequest && opp.id) {
+        purchaseRequestService.completeWithOpportunity(fromRequest, opp.id).catch(() => {});
+      }
       toast.success("Opportunità creata con successo");
       navigate(`/internal/opportunities/${opp.id}`);
     },
