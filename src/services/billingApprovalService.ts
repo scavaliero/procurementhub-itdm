@@ -212,6 +212,51 @@ export const billingApprovalService = {
       .eq("id", billingId);
     if (error) throw error;
 
+    // 4. Transition order to "in_progress" on first billing submission
+    const { data: orderData } = await supabase
+      .from("billing_approvals")
+      .select("order_id")
+      .eq("id", billingId)
+      .single();
+
+    if (orderData?.order_id) {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("id, status")
+        .eq("id", orderData.order_id)
+        .single();
+
+      if (order && ["issued", "accepted"].includes(order.status)) {
+        await supabase
+          .from("orders")
+          .update({ status: "in_progress" })
+          .eq("id", order.id);
+
+        // Also update the contract status to active if still planned
+        const { data: contract } = await supabase
+          .from("contracts")
+          .select("id, status")
+          .eq("order_id", order.id)
+          .maybeSingle();
+
+        if (contract && contract.status === "planned") {
+          await supabase
+            .from("contracts")
+            .update({ status: "active" })
+            .eq("id", contract.id);
+        }
+
+        await auditService.log({
+          tenant_id: tenantId,
+          entity_type: "order",
+          entity_id: order.id,
+          event_type: "order_in_progress",
+          old_state: { status: order.status },
+          new_state: { status: "in_progress", trigger: "first_billing_submitted" },
+        });
+      }
+    }
+
     await auditService.log({
       tenant_id: tenantId,
       entity_type: "billing_approval",
