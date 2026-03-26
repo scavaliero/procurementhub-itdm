@@ -78,7 +78,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
     return z.object({
       total_amount: amountSchema,
       technical_description: z.string().min(10, "Descrizione tecnica obbligatoria (min 10 caratteri)"),
-      execution_days: z.coerce.number().int().positive("Giorni di esecuzione obbligatori"),
       bid_validity_date: z.string().min(1, "Data validità obbligatoria"),
       proposed_conditions: z.string().optional(),
       notes: z.string().optional(),
@@ -96,7 +95,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       reset({
         total_amount: existingBid.total_amount ?? undefined,
         technical_description: existingBid.technical_description ?? "",
-        execution_days: existingBid.execution_days ?? undefined,
         bid_validity_date: existingBid.bid_validity_date ?? "",
         proposed_conditions: existingBid.proposed_conditions ?? "",
         notes: existingBid.notes ?? "",
@@ -113,7 +111,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       toast.success("Offerta ritirata. Puoi presentare una nuova offerta.");
       setShowWithdrawConfirm(false);
       qc.invalidateQueries({ queryKey: ["my-bid", opportunityId, supplierId] });
-      reset({ total_amount: undefined, technical_description: "", execution_days: undefined, bid_validity_date: "", proposed_conditions: "", notes: "" });
+      reset({ total_amount: undefined, technical_description: "", bid_validity_date: "", proposed_conditions: "", notes: "" });
     },
     onError: (err: any) => toast.error(err.message || "Errore nel ritiro"),
   });
@@ -123,7 +121,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       if (!supplierId || !profile) throw new Error("Dati mancanti");
       const values = getValues();
       const bid = await bidService.saveDraft(
-        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: values.total_amount || undefined, technical_description: values.technical_description, execution_days: values.execution_days || undefined, bid_validity_date: values.bid_validity_date, proposed_conditions: values.proposed_conditions, notes: values.notes },
+        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: values.total_amount || undefined, technical_description: values.technical_description, bid_validity_date: values.bid_validity_date, proposed_conditions: values.proposed_conditions, notes: values.notes },
         existingBid?.id
       );
       if (techFile) { await bidService.uploadTypedAttachment({ bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id, attachmentType: "technical_offer", file: techFile }); setTechFile(null); }
@@ -139,7 +137,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       if (!supplierId || !profile) throw new Error("Dati mancanti");
       if (budgetMax && data.total_amount > budgetMax) throw new Error(`L'importo supera l'offerta massima`);
       const bid = await bidService.saveDraft(
-        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: data.total_amount, technical_description: data.technical_description, execution_days: data.execution_days, bid_validity_date: data.bid_validity_date, proposed_conditions: data.proposed_conditions, notes: data.notes },
+        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: data.total_amount, technical_description: data.technical_description, bid_validity_date: data.bid_validity_date, proposed_conditions: data.proposed_conditions, notes: data.notes },
         existingBid?.id
       );
       if (techFile) await bidService.uploadTypedAttachment({ bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id, attachmentType: "technical_offer", file: techFile });
@@ -196,9 +194,9 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
         <Card>
           <CardContent className="pt-4 space-y-4">
             <ReadField label="Importo totale" value={existingBid.total_amount != null ? `€ ${Number(existingBid.total_amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : undefined} />
-            <ReadField label="Giorni di esecuzione" value={existingBid.execution_days?.toString()} />
             <ReadField label="Validità offerta" value={existingBid.bid_validity_date ? format(new Date(existingBid.bid_validity_date), "dd/MM/yyyy") : undefined} />
             <ReadField label="Data presentazione" value={existingBid.submitted_at ? format(new Date(existingBid.submitted_at), "dd/MM/yyyy HH:mm") : undefined} />
+            <ReadField label="Descrizione tecnica" value={existingBid.technical_description} multiline />
             <ReadField label="Descrizione tecnica" value={existingBid.technical_description} multiline />
             {existingBid.proposed_conditions && <ReadField label="Condizioni proposte" value={existingBid.proposed_conditions} multiline />}
             {existingBid.notes && <ReadField label="Note" value={existingBid.notes} multiline />}
@@ -282,11 +280,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
             <Label>Importo totale (€) *{budgetMax && <span className="text-xs text-muted-foreground ml-2">(max € {budgetMax.toLocaleString("it-IT")})</span>}</Label>
             <Input type="number" step="0.01" max={budgetMax ?? undefined} {...register("total_amount")} />
             {errors.total_amount && <p className="text-sm text-destructive mt-1">{errors.total_amount.message}</p>}
-          </div>
-          <div>
-            <Label>Giorni di esecuzione *</Label>
-            <Input type="number" {...register("execution_days")} />
-            {errors.execution_days && <p className="text-sm text-destructive mt-1">{errors.execution_days.message}</p>}
           </div>
           <div>
             <Label>Validità offerta *</Label>
