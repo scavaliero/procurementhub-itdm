@@ -103,6 +103,8 @@ export default function InternalOpportunityNew() {
         end_date: data.end_date || undefined,
         budget_estimated: data.budget_estimated,
         budget_max: data.budget_max,
+        require_technical_offer: data.require_technical_offer,
+        require_economic_offer: data.require_economic_offer,
       };
 
       if (draftId) {
