@@ -320,20 +320,16 @@ export default function InternalOpportunityNew() {
                   <Label>Data fine</Label>
                   <Input type="date" {...register("end_date")} />
                 </div>
-                {canViewBudget && (
-                  <>
-                    <div>
-                      <Label>Budget stimato (€) *</Label>
-                      <Input type="number" step="0.01" {...register("budget_estimated")} />
-                      {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
-                    </div>
-                    <div>
-                      <Label>Offerta massima (€) *</Label>
-                      <Input type="number" step="0.01" {...register("budget_max")} />
-                      {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
-                    </div>
-                  </>
-                )}
+                <div className={canViewBudget ? "" : "hidden"}>
+                  <Label>Budget stimato (€) *</Label>
+                  <Input type="number" step="0.01" {...register("budget_estimated")} />
+                  {errors.budget_estimated && <p className="text-sm text-destructive mt-1">{errors.budget_estimated.message}</p>}
+                </div>
+                <div className={canViewBudget ? "" : "hidden"}>
+                  <Label>Offerta massima (€) *</Label>
+                  <Input type="number" step="0.01" {...register("budget_max")} />
+                  {errors.budget_max && <p className="text-sm text-destructive mt-1">{errors.budget_max.message}</p>}
+                </div>
                 <div className="md:col-span-2 flex flex-col gap-3 pt-2">
                   <Label className="text-sm font-semibold">Documenti offerta richiesti</Label>
                   <div className="flex items-center gap-6">
