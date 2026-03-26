@@ -177,7 +177,9 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
       <SidebarGroupContent>
         <SidebarMenu>
           {items.filter((i) => i.show).map((item) => {
-            const active = location.pathname.startsWith(item.url);
+            const itemPath = item.url.split("?")[0];
+            const itemSearch = item.url.includes("?") ? item.url.split("?")[1] : "";
+            const active = location.pathname.startsWith(itemPath) && (!itemSearch || location.search.includes(itemSearch));
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active}>
