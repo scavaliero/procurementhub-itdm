@@ -1,5 +1,6 @@
 // setup_verify_v2.js — VendorHub Setup Verification v2.1
 // Portale completo: Wave 1 + Modulo Ufficio Acquisti v3.1
+// F9: .catch() su query builder Supabase v2 non supportato — wrappato con try/catch
 // Fix applicati rispetto a v1:
 //   F1: RPC SQL dedicate — no information_schema via PostgREST
 //   F2: RLS verificata via pg_class.relrowsecurity (server-side)
@@ -164,7 +165,7 @@ async function runAllChecks() {
   }
   ok('RPC di verifica installate (verify_table_exists, verify_trigger_exists, ecc.)')
 
-  const { data: sbTenant } = await sb.from('tenants').select('id').eq('id', SANDBOX_TENANT).single().catch(() => ({ data: null }))
+  const { data: sbTenant } = await sb.from('tenants').select('id').eq('id', SANDBOX_TENANT).single().then(r => r, () => ({ data: null }))
   if (sbTenant) ok('Tenant sandbox presente')
   else warn('Tenant sandbox non trovato — i test useranno il tenant principale', 'Esegui il Blocco SQL Sez. 3')
   const TEST_TENANT = sbTenant ? SANDBOX_TENANT : TENANT_ID
@@ -346,11 +347,11 @@ async function runAllChecks() {
 
   const { data: auditRow } = await sb.from('audit_logs')
     .insert({ tenant_id: TEST_TENANT, event_type: '__verify__', entity_type: '__test__' })
-    .select('id, event_type').single().catch(() => ({ data: null }))
+    .select('id, event_type').single().then(r => r, () => ({ data: null }))
   if (auditRow) {
     cleanupFns.push(() => sb.from('audit_logs').delete().eq('id', auditRow.id))
     await sb.from('audit_logs').update({ event_type: '__modified__' }).eq('id', auditRow.id)
-    const { data: after } = await sb.from('audit_logs').select('event_type').eq('id', auditRow.id).single().catch(() => ({ data: null }))
+    const { data: after } = await sb.from('audit_logs').select('event_type').eq('id', auditRow.id).single().then(r => r, () => ({ data: null }))
     if (after?.event_type === '__verify__')
       ok('Audit append-only: UPDATE ignorato (valore invariato)')
     else
@@ -383,7 +384,7 @@ async function runAllChecks() {
   // ────────────────────────────────────────────────────────────────────────
   sec(9, 'Dati seed (Blocco SQL 5.9)')
 
-  const { data: tenRow } = await sb.from('tenants').select('name').eq('id', TENANT_ID).single().catch(() => ({ data: null }))
+  const { data: tenRow } = await sb.from('tenants').select('name').eq('id', TENANT_ID).single().then(r => r, () => ({ data: null }))
   if (tenRow) ok(`Tenant principale: '${tenRow.name}'`)
   else fail('Tenant principale MANCANTE', 'Esegui Blocco SQL 5.9')
 
@@ -477,7 +478,7 @@ async function runAllChecks() {
         if (status === 'SUBSCRIBED') {
           const { data: profile } = await sb.from('profiles')
             .select('id').eq('tenant_id', TEST_TENANT).limit(1).single()
-            .catch(() => ({ data: null }))
+            .then(r => r, () => ({ data: null }))
           if (!profile) {
             resolve({ status: 'subscribed_no_profile', channel })
             return
@@ -485,7 +486,7 @@ async function runAllChecks() {
           const { data: notif } = await sb.from('notifications').insert({
             tenant_id: TEST_TENANT, recipient_id: profile.id,
             event_type: '__rt_e2e_test__', title: 'Setup verify RT test', is_read: true
-          }).select('id').single().catch(() => ({ data: null }))
+          }).select('id').single().then(r => r, () => ({ data: null }))
           if (notif?.id) {
             insertedNotifId = notif.id
             cleanupFns.push(() => sb.from('notifications').delete().eq('id', notif.id))
@@ -497,7 +498,7 @@ async function runAllChecks() {
       })
   })
 
-  await sb.removeChannel(rtResult.channel).catch(() => {})
+  await sb.removeChannel(rtResult.channel)
 
   if (rtResult.status === 'event_received') {
     ok('Realtime: WebSocket attivo')
@@ -598,7 +599,7 @@ async function runAllChecks() {
   // ────────────────────────────────────────────────────────────────────────
   sec(13, 'Secrets Edge Functions (verifica indiretta su profilo reale)')
 
-  const { data: anyProfile } = await sb.from('profiles').select('id').limit(1).single().catch(() => ({ data: null }))
+  const { data: anyProfile } = await sb.from('profiles').select('id').limit(1).single().then(r => r, () => ({ data: null }))
   if (!anyProfile) {
     warn('Nessun profilo trovato per test secrets approfondito', 'Crea un utente e riesegui per verifica completa')
   } else {
