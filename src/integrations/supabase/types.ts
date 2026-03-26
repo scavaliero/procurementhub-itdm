@@ -786,6 +786,8 @@ export type Database = {
           operational_notes: string | null
           participation_conditions: string | null
           requesting_unit: string | null
+          require_economic_offer: boolean
+          require_technical_offer: boolean
           start_date: string | null
           status: string
           subcategory_id: string | null
@@ -814,6 +816,8 @@ export type Database = {
           operational_notes?: string | null
           participation_conditions?: string | null
           requesting_unit?: string | null
+          require_economic_offer?: boolean
+          require_technical_offer?: boolean
           start_date?: string | null
           status?: string
           subcategory_id?: string | null
@@ -842,6 +846,8 @@ export type Database = {
           operational_notes?: string | null
           participation_conditions?: string | null
           requesting_unit?: string | null
+          require_economic_offer?: boolean
+          require_technical_offer?: boolean
           start_date?: string | null
           status?: string
           subcategory_id?: string | null
