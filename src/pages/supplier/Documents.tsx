@@ -151,7 +151,8 @@ export default function SupplierDocuments() {
 
   const kpiCards = [
     { key: "approved", label: "Approvati", value: kpiCounts.approved, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
-    { key: "pending", label: "In revisione", value: kpiCounts.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
+    { key: "expiring", label: "In scadenza", value: kpiCounts.expiring, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-100", alert: true },
+    { key: "pending", label: "In revisione", value: kpiCounts.pending, icon: Clock, color: "text-blue-600", bg: "bg-blue-100" },
     { key: "rejected", label: "Rifiutati", value: kpiCounts.rejected, icon: FileX, color: "text-destructive", bg: "bg-destructive/10", alert: true },
     { key: "missing", label: "Mancanti", value: kpiCounts.missing, icon: FileCheck, color: "text-muted-foreground", bg: "bg-muted" },
   ];
