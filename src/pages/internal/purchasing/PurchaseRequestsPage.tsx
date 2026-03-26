@@ -79,9 +79,10 @@ export default function PurchaseRequestsPage() {
   const isRequester = hasGrant("view_own_purchase_requests") && !isValidator && !isOperator;
 
   const queryFilters = useMemo(() => {
+    if (viewMode === "mine") return { mine: true };
     if (isRequester) return { mine: true };
     return {};
-  }, [isRequester]);
+  }, [isRequester, viewMode]);
 
   const { data: requests = [], isLoading } = usePurchaseRequests(queryFilters);
 
