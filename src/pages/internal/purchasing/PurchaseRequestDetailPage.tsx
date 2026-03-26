@@ -99,6 +99,10 @@ export default function PurchaseRequestDetailPage() {
   const isPending = submitMut.isPending || approveMut.isPending || escalateMut.isPending
     || approveFinanceMut.isPending || rejectMut.isPending || inPurchaseMut.isPending || cancelMut.isPending;
 
+  // Terminal states: no action buttons should appear
+  const isTerminal = ["completed", "cancelled", "rejected"].includes(pr.status)
+    || !!pr.outcome || !!pr.linked_opportunity_id;
+
   const handleConfirm = async () => {
     if (!id) return;
     switch (confirmAction) {
