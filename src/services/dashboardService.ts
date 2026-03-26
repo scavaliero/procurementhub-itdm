@@ -73,12 +73,13 @@ export const dashboardService = {
     return Array.from(map.entries()).map(([status, count]) => ({ status, count }));
   },
 
-  /** Count active contracts */
+  /** Count active orders (issued, accepted, in_progress) */
   async activeContracts(): Promise<number> {
     const { count, error } = await supabase
-      .from("contracts")
+      .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("status", "active");
+      .is("deleted_at", null)
+      .in("status", ["issued", "accepted", "in_progress"]);
     if (error) throw error;
     return count ?? 0;
   },
