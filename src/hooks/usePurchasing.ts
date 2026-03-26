@@ -164,6 +164,8 @@ export function useCreateDirectPurchase() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["direct-purchases"] });
       qc.invalidateQueries({ queryKey: ["purchase-requests"] });
+      qc.invalidateQueries({ queryKey: ["purchase-request"] });
+      qc.invalidateQueries({ queryKey: ["purchase-request-history"] });
       toast.success("Acquisto diretto registrato");
     },
     onError: (e: Error) => toast.error(e.message),

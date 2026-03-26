@@ -354,7 +354,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 4: Purchase operator */}
-          {hasGrant("manage_purchase_operations") && (
+          {!isTerminal && hasGrant("manage_purchase_operations") && (
             <>
               {["approved", "approved_finance"].includes(pr.status) && (
                 <Card>
