@@ -26,7 +26,7 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle, cardClass,
+  title, value, icon: Icon, alert, subtitle, cardClass, to,
 }: {
   title: string;
   value: number | string;
@@ -34,9 +34,10 @@ function KpiCard({
   alert?: boolean;
   subtitle?: string;
   cardClass?: string;
+  to?: string;
 }) {
-  return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
+  const content = (
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
@@ -53,6 +54,8 @@ function KpiCard({
       </CardContent>
     </Card>
   );
+  if (to) return <Link to={to}>{content}</Link>;
+  return content;
 }
 
 function SkeletonCards({ count = 4 }: { count?: number }) {
