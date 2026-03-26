@@ -256,7 +256,7 @@ export default function InternalDashboard() {
         <section className="space-y-4">
           <SectionHeader icon="💰" title="Indicatori Economici" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" to="/internal/orders" />
+            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" to="/internal/orders?status=active" />
             <KpiCard
               title="Benestare in approvazione"
               value={pendingBillings}
