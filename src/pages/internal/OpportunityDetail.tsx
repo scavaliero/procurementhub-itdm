@@ -70,6 +70,8 @@ export default function InternalOpportunityDetail() {
   const { profile } = useAuth();
   const { hasGrant } = useGrants();
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const { data: opp, isLoading } = useQuery({
     queryKey: ["opportunity", id],
     queryFn: () => opportunityService.getById(id!),
