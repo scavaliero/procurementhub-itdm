@@ -48,7 +48,14 @@ export default function InternalBillingApprovals() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const setStatusFilter = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (v && v !== "all") next.set("status", v);
+    else next.delete("status");
+    setSearchParams(next, { replace: true });
+  };
   const [showCreate, setShowCreate] = useState(false);
   const [approveDialog, setApproveDialog] = useState<string | null>(null);
   const [rejectDialog, setRejectDialog] = useState<string | null>(null);

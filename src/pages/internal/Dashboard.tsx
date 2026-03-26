@@ -236,7 +236,7 @@ export default function InternalDashboard() {
               icon={FileText}
               alert={pendingBillings > 0}
               cardClass="card-top-economic"
-              to="/internal/billing-approvals"
+              to="/internal/billing-approvals?status=pending_approval"
             />
             <KpiCard
               title="Contratti budget < 10%"
