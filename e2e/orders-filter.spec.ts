@@ -13,48 +13,79 @@ async function loginAsAdmin(page: any) {
 
 test.describe("Orders page filters and dashboard navigation", () => {
 
-  test("Dashboard card navigates to orders with status filter applied", async ({ page }) => {
+  test("Dashboard card navigates to orders with active filter", async ({ page }) => {
     await loginAsAdmin(page);
-
-    // Go to dashboard
     await page.goto("/internal");
     await page.waitForSelector("text=Contratti attivi");
 
-    // Click on "Contratti attivi" card which links to /internal/orders
-    const contractCard = page.locator('a[href="/internal/orders"]').first();
-    if (await contractCard.count() > 0) {
-      await contractCard.click();
-      await page.waitForURL(/\/internal\/orders/);
-      await expect(page.locator("text=Ordini")).toBeVisible();
-    }
+    const contractCard = page.locator('a[href="/internal/orders?status=active"]').first();
+    await expect(contractCard).toBeVisible();
+    await contractCard.click();
+    await page.waitForURL(/\/internal\/orders\?status=active/);
+    await expect(page.locator("text=Ordini")).toBeVisible();
   });
 
   test("Orders page renders search input and status filter", async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto("/internal/orders");
 
-    // Search input is present
     const searchInput = page.locator('[data-testid="orders-search"]');
     await expect(searchInput).toBeVisible();
 
-    // Status filter is present
     const statusFilter = page.locator('[data-testid="orders-status-filter"]');
     await expect(statusFilter).toBeVisible();
   });
 
-  test("Orders page reads status filter from URL params", async ({ page }) => {
+  test("Orders KPI cards are visible and clickable", async ({ page }) => {
     await loginAsAdmin(page);
-
-    // Navigate directly with status param
-    await page.goto("/internal/orders?status=issued");
+    await page.goto("/internal/orders");
     await page.waitForSelector("text=Ordini");
 
-    // The status filter should show the selected value
-    const statusTrigger = page.locator('[data-testid="orders-status-filter"]');
-    await expect(statusTrigger).toBeVisible();
+    // All 4 KPI cards should be visible
+    await expect(page.locator('[data-testid="orders-kpi-active"]')).toBeVisible();
+    await expect(page.locator('[data-testid="orders-kpi-pending_approval"]')).toBeVisible();
+    await expect(page.locator('[data-testid="orders-kpi-draft"]')).toBeVisible();
+    await expect(page.locator('[data-testid="orders-kpi-low_budget"]')).toBeVisible();
 
-    // URL should still contain the param
-    expect(page.url()).toContain("status=issued");
+    // Click "Attivi" KPI card to apply filter
+    await page.locator('[data-testid="orders-kpi-active"]').click();
+    expect(page.url()).toContain("status=active");
+
+    // Click again to toggle off
+    await page.locator('[data-testid="orders-kpi-active"]').click();
+    expect(page.url()).not.toContain("status=active");
+  });
+
+  test("Active filter excludes completed (fully billed) orders", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto("/internal/orders?status=active");
+    await page.waitForSelector("text=Ordini");
+
+    // Active filter should only show in_progress/issued/accepted orders
+    // and NOT show "Completato" badges
+    const completedBadges = page.locator("text=Completato");
+    const completedCount = await completedBadges.count();
+    expect(completedCount).toBe(0);
+  });
+
+  test("Active KPI count matches dashboard count", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    // Get count from dashboard card
+    await page.goto("/internal");
+    await page.waitForSelector("text=Contratti attivi");
+    const dashboardCard = page.locator('a[href="/internal/orders?status=active"]').first();
+    const dashboardCountText = await dashboardCard.locator("p.text-2xl").textContent();
+    const dashboardCount = parseInt(dashboardCountText?.trim() || "0", 10);
+
+    // Get count from orders page KPI card
+    await page.goto("/internal/orders");
+    await page.waitForSelector('[data-testid="orders-kpi-active"]');
+    const ordersCountText = await page.locator('[data-testid="orders-kpi-active"] p.text-2xl').textContent();
+    const ordersCount = parseInt(ordersCountText?.trim() || "0", 10);
+
+    // They should match
+    expect(ordersCount).toBe(dashboardCount);
   });
 
   test("Orders page search filters table rows", async ({ page }) => {
@@ -63,28 +94,20 @@ test.describe("Orders page filters and dashboard navigation", () => {
     await page.waitForSelector("text=Ordini");
 
     const searchInput = page.locator('[data-testid="orders-search"]');
-
-    // Type a very unlikely string to get zero results
     await searchInput.fill("zzzznonexistent99999");
     await expect(page.locator("text=Nessun ordine")).toBeVisible();
-
-    // Clear the search
     await searchInput.fill("");
   });
 
   test("Orders page low_budget filter renders via URL param", async ({ page }) => {
     await loginAsAdmin(page);
-
-    // Navigate directly with low_budget status param
     await page.goto("/internal/orders?status=low_budget");
     await page.waitForSelector("text=Ordini");
 
-    // The status filter should be visible and URL should contain the param
     const statusTrigger = page.locator('[data-testid="orders-status-filter"]');
     await expect(statusTrigger).toBeVisible();
     expect(page.url()).toContain("status=low_budget");
 
-    // The filter option "Budget < 10%" should exist in the dropdown
     await statusTrigger.click();
     await expect(page.locator("text=Budget < 10%")).toBeVisible();
   });
@@ -94,7 +117,6 @@ test.describe("Orders page filters and dashboard navigation", () => {
     await page.goto("/internal");
     await page.waitForSelector("text=Indicatori Economici");
 
-    // Check the card links to the correct filtered URL
     const lowBudgetLink = page.locator('a[href="/internal/orders?status=low_budget"]');
     if (await lowBudgetLink.count() > 0) {
       await lowBudgetLink.first().click();
