@@ -282,11 +282,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
             {errors.total_amount && <p className="text-sm text-destructive mt-1">{errors.total_amount.message}</p>}
           </div>
           <div>
-            <Label>Giorni di esecuzione *</Label>
-            <Input type="number" {...register("execution_days")} />
-            {errors.execution_days && <p className="text-sm text-destructive mt-1">{errors.execution_days.message}</p>}
-          </div>
-          <div>
             <Label>Validità offerta *</Label>
             <Input type="date" {...register("bid_validity_date")} />
             {errors.bid_validity_date && <p className="text-sm text-destructive mt-1">{errors.bid_validity_date.message}</p>}
