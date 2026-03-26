@@ -1,10 +1,19 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { orderService } from "@/services/orderService";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrants } from "@/hooks/useGrants";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -41,12 +50,37 @@ export default function InternalOrders() {
   const { hasGrant } = useGrants();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const statusFilter = searchParams.get("status") || "all";
+  const searchQuery = searchParams.get("q") || "";
+
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v && v !== "all") next.set(k, v);
+      else next.delete(k);
+    });
+    setSearchParams(next, { replace: true });
+  };
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["internal-orders"],
     queryFn: () => orderService.listWithBillingInfo(profile?.tenant_id ?? ""),
     enabled: !!profile,
   });
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o: any) => {
+      if (statusFilter !== "all" && o.status !== statusFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const haystack = `${o.code ?? ""} ${o.subject ?? ""} ${o.suppliers?.company_name ?? ""}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [orders, statusFilter, searchQuery]);
 
   const approveMutation = useMutation({
     mutationFn: (orderId: string) => orderService.approveOrder(orderId, profile!.tenant_id, profile!.id),
@@ -80,8 +114,36 @@ export default function InternalOrders() {
         Ordini
       </h2>
 
-      {orders.length === 0 ? (
-        <EmptyState title="Nessun ordine" description="Non ci sono ordini registrati." />
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Cerca codice, oggetto, fornitore…"
+            value={searchQuery}
+            onChange={(e) => updateParams({ q: e.target.value })}
+            className="pl-9"
+            data-testid="orders-search"
+          />
+        </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => updateParams({ status: v })}
+        >
+          <SelectTrigger className="w-[200px]" data-testid="orders-status-filter">
+            <SelectValue placeholder="Tutti gli stati" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tutti gli stati</SelectItem>
+            {Object.entries(STATUS_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <EmptyState title="Nessun ordine" description="Non ci sono ordini che corrispondono ai filtri." />
       ) : (
         <Card className="card-top-orders">
           <CardContent className="p-0">
@@ -100,10 +162,9 @@ export default function InternalOrders() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((o: any) => {
+                {filteredOrders.map((o: any) => {
                   const billedTotal = o.billed_total ?? 0;
                   const residual = Number(o.amount) - billedTotal;
-                  // Auto-display as completed if fully billed
                   const effectiveStatus = (billedTotal >= Number(o.amount) && ["accepted", "in_progress"].includes(o.status))
                     ? "completed"
                     : o.status;
