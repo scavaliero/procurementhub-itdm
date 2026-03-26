@@ -155,6 +155,7 @@ export default function InternalVendors() {
       search,
       dateFrom,
       dateTo,
+      docsAlert,
     ],
     queryFn: () =>
       vendorService.listSuppliersPaginated({
@@ -165,6 +166,7 @@ export default function InternalVendors() {
         search: search || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
+        docsAlert: (docsAlert as "expiring" | "expired") || undefined,
       }),
     enabled: !!profile,
   });
