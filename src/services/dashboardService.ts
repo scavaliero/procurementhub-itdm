@@ -95,14 +95,26 @@ export const dashboardService = {
     return count ?? 0;
   },
 
-  /** Count contracts with residual_pct < 10 (budget alert) */
+  /** Count active orders with residual_pct < 10 (budget alert) */
   async lowBudgetContracts(): Promise<number> {
-    const { data, error } = await supabase
+    // Get low-budget order IDs from the economic summary view
+    const { data: lowBudgetRows, error: lbErr } = await supabase
       .from("contract_economic_summary")
-      .select("contract_id")
+      .select("order_id")
       .lt("residual_pct", 10);
+    if (lbErr) throw lbErr;
+    if (!lowBudgetRows || lowBudgetRows.length === 0) return 0;
+
+    // Only count orders that are actually active (issued/accepted/in_progress)
+    const orderIds = lowBudgetRows.map((r) => r.order_id).filter(Boolean) as string[];
+    const { count, error } = await supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .in("id", orderIds)
+      .is("deleted_at", null)
+      .in("status", ["issued", "accepted", "in_progress"]);
     if (error) throw error;
-    return data?.length ?? 0;
+    return count ?? 0;
   },
 
   /** Last N opportunities */

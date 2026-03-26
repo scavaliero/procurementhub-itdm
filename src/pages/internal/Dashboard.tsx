@@ -272,7 +272,7 @@ export default function InternalDashboard() {
               alert={lowBudget > 0}
               subtitle="Residuo quasi esaurito"
               cardClass="card-top-economic"
-              to="/internal/orders"
+              to="/internal/orders?status=low_budget"
             />
           </div>
         </section>
