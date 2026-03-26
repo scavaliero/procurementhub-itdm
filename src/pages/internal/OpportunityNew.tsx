@@ -67,10 +67,17 @@ export default function InternalOpportunityNew() {
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
-  const [fromRequestCode, setFromRequestCode] = useState<string | null>(null);
   
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Load linked purchase request data BEFORE form renders
+  const { data: linkedRequest, isLoading: linkedLoading } = useQuery({
+    queryKey: ["purchase-request-for-opp", fromRequest],
+    queryFn: () => purchaseRequestService.getById(fromRequest!),
+    enabled: !!fromRequest,
+    staleTime: Infinity,
+  });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -82,6 +89,21 @@ export default function InternalOpportunityNew() {
     queryFn: () => opportunityService.getInternalProfiles(),
   });
 
+  // Build default values from linked request
+  const formDefaults = useMemo(() => {
+    const base: Partial<Step1Data> = { require_technical_offer: true, require_economic_offer: true };
+    if (linkedRequest) {
+      if (linkedRequest.subject) base.title = linkedRequest.subject;
+      if (linkedRequest.description) base.description = linkedRequest.description;
+      if (linkedRequest.amount) {
+        base.budget_estimated = Number(linkedRequest.amount);
+        base.budget_max = Number(linkedRequest.amount);
+      }
+      if (linkedRequest.needed_by) base.end_date = linkedRequest.needed_by;
+    }
+    return step1Data ?? base;
+  }, [linkedRequest, step1Data]);
+
   const {
     register,
     handleSubmit,
@@ -90,35 +112,18 @@ export default function InternalOpportunityNew() {
     setValue,
   } = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
-    defaultValues: step1Data ?? { require_technical_offer: true, require_economic_offer: true },
+    defaultValues: formDefaults as Step1Data,
   });
 
-  // Load linked purchase request info and pre-fill fields
-  useEffect(() => {
-    if (!fromRequest) return;
-    let cancelled = false;
-    purchaseRequestService.getById(fromRequest)
-      .then((req) => {
-        if (cancelled || !req) return;
-        setFromRequestCode(req.code ?? null);
-        // Pre-fill form fields from RDA data — wrapped in try/catch to prevent white-screen
-        try {
-          if (req.subject) setValue("title", req.subject);
-          if (req.description) setValue("description", req.description);
-          if (req.amount) {
-            setValue("budget_estimated", Number(req.amount));
-            setValue("budget_max", Number(req.amount));
-          }
-          if (req.needed_by) {
-            setValue("end_date", req.needed_by);
-          }
-        } catch (err) {
-          console.warn("[OpportunityNew] pre-fill from RDA failed:", err);
-        }
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [fromRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+  // If still loading linked request, show skeleton
+  if (fromRequest && linkedLoading) {
+    return (
+      <div className="p-6 space-y-3">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
