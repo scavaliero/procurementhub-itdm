@@ -172,6 +172,39 @@ export default function InternalDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  // ── Purchasing KPIs ──
+  const showPurchasing = hasGrant("create_purchase_request") || hasGrant("view_own_purchase_requests") ||
+    hasGrant("validate_purchase_request") || hasGrant("validate_purchase_request_high") ||
+    hasGrant("manage_purchase_operations") || hasGrant("view_purchase_panel");
+
+  const { data: pendingValidations = 0, isLoading: loadingPV } = useQuery({
+    queryKey: ["dashboard", "pending-purchase-validations"],
+    queryFn: () => dashboardService.pendingPurchaseValidations(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: inPurchase = 0 } = useQuery({
+    queryKey: ["dashboard", "in-purchase"],
+    queryFn: () => dashboardService.inPurchaseRequests(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: dpMonth = { count: 0, total: 0 } } = useQuery({
+    queryKey: ["dashboard", "direct-purchases-month"],
+    queryFn: () => dashboardService.directPurchasesThisMonth(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
+  const { data: dpNoInvoice = 0 } = useQuery({
+    queryKey: ["dashboard", "dp-no-invoice"],
+    queryFn: () => dashboardService.directPurchasesNoInvoice(),
+    enabled: showPurchasing,
+    refetchInterval: REFETCH_MS,
+  });
+
   const totalSuppliers = supplierStats?.reduce((s, r) => s + r.count, 0) ?? 0;
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
