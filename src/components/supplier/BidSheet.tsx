@@ -121,7 +121,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       if (!supplierId || !profile) throw new Error("Dati mancanti");
       const values = getValues();
       const bid = await bidService.saveDraft(
-        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: values.total_amount || undefined, technical_description: values.technical_description, execution_days: values.execution_days || undefined, bid_validity_date: values.bid_validity_date, proposed_conditions: values.proposed_conditions, notes: values.notes },
+        { opportunity_id: opportunityId, supplier_id: supplierId, tenant_id: profile.tenant_id, invitation_id: invitation?.id, total_amount: values.total_amount || undefined, technical_description: values.technical_description, bid_validity_date: values.bid_validity_date, proposed_conditions: values.proposed_conditions, notes: values.notes },
         existingBid?.id
       );
       if (techFile) { await bidService.uploadTypedAttachment({ bidId: bid.id, opportunityId, supplierId, tenantId: profile.tenant_id, attachmentType: "technical_offer", file: techFile }); setTechFile(null); }
