@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { vendorService } from "@/services/vendorService";
@@ -42,6 +42,8 @@ import {
   Eye,
   Unlock,
   ClipboardCheck,
+  FileWarning,
+  FileX2,
 } from "lucide-react";
 import { toast } from "sonner";
 
