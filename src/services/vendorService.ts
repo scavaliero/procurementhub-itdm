@@ -205,7 +205,32 @@ export const vendorService = {
     search?: string;
     dateFrom?: string;
     dateTo?: string;
+    docsAlert?: "expiring" | "expired";
   }): Promise<{ data: Supplier[]; count: number }> {
+    // If filtering by docs alert, first get matching supplier IDs
+    if (params.docsAlert) {
+      const supplierIds = await this.getSupplierIdsWithDocAlert(params.docsAlert);
+      if (supplierIds.length === 0) return { data: [], count: 0 };
+
+      let query = supabase
+        .from("suppliers")
+        .select("*", { count: "exact" })
+        .is("deleted_at", null)
+        .in("id", supplierIds)
+        .order("created_at", { ascending: false });
+
+      if (params.status) query = query.eq("status", params.status);
+      if (params.search) query = query.ilike("company_name", `%${params.search}%`);
+
+      const { data: allData, error: allErr } = await query;
+      if (allErr) throw allErr;
+
+      const total = allData?.length ?? 0;
+      const from = (params.page - 1) * params.pageSize;
+      const paged = (allData || []).slice(from, from + params.pageSize);
+      return { data: paged as Supplier[], count: total };
+    }
+
     const from = (params.page - 1) * params.pageSize;
     const to = from + params.pageSize - 1;
 
@@ -239,6 +264,56 @@ export const vendorService = {
     }
 
     return { data: (data || []) as Supplier[], count: count || 0 };
+  },
+
+  /** Get supplier IDs that have expiring or expired approved documents */
+  async getSupplierIdsWithDocAlert(type: "expiring" | "expired"): Promise<string[]> {
+    const now = new Date().toISOString().split("T")[0];
+
+    let query = supabase
+      .from("uploaded_documents")
+      .select("supplier_id")
+      .eq("status", "approved")
+      .is("deleted_at", null);
+
+    if (type === "expiring") {
+      const future = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+      query = query.gte("expiry_date", now).lte("expiry_date", future);
+    } else {
+      query = query.lt("expiry_date", now);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return [...new Set((data || []).map((d) => d.supplier_id))];
+  },
+
+  /** Get doc alert counts (expiring + expired) per supplier for a list of supplier IDs */
+  async getDocAlertCounts(supplierIds: string[]): Promise<Record<string, { expiring: number; expired: number }>> {
+    if (supplierIds.length === 0) return {};
+    const now = new Date().toISOString().split("T")[0];
+    const future = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+      .from("uploaded_documents")
+      .select("supplier_id, expiry_date")
+      .eq("status", "approved")
+      .is("deleted_at", null)
+      .in("supplier_id", supplierIds)
+      .not("expiry_date", "is", null)
+      .lte("expiry_date", future);
+    if (error) throw error;
+
+    const result: Record<string, { expiring: number; expired: number }> = {};
+    for (const row of data || []) {
+      if (!result[row.supplier_id]) result[row.supplier_id] = { expiring: 0, expired: 0 };
+      if (row.expiry_date! < now) {
+        result[row.supplier_id].expired++;
+      } else {
+        result[row.supplier_id].expiring++;
+      }
+    }
+    return result;
   },
 
   /**

@@ -44,6 +44,20 @@ export const dashboardService = {
     return count ?? 0;
   },
 
+  /** Count expired documents (expiry_date < today, status approved) */
+  async expiredDocuments(): Promise<number> {
+    const now = new Date().toISOString().split("T")[0];
+
+    const { count, error } = await supabase
+      .from("uploaded_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved")
+      .is("deleted_at", null)
+      .lt("expiry_date", now);
+    if (error) throw error;
+    return count ?? 0;
+  },
+
   /** Count opportunities grouped by status */
   async opportunitiesByStatus(): Promise<OpportunitiesByStatus[]> {
     const { data, error } = await supabase
