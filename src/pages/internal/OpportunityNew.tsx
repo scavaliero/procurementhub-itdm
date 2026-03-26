@@ -72,26 +72,6 @@ export default function InternalOpportunityNew() {
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Load linked purchase request info and pre-fill fields
-  useEffect(() => {
-    if (!fromRequest) return;
-    purchaseRequestService.getById(fromRequest)
-      .then((req) => {
-        setFromRequestCode(req.code);
-        // Pre-fill form fields from RDA data
-        if (req.subject) setValue("title", req.subject);
-        if (req.description) setValue("description", req.description);
-        if (req.amount) {
-          setValue("budget_estimated", Number(req.amount));
-          setValue("budget_max", Number(req.amount));
-        }
-        if (req.needed_by) {
-          setValue("end_date", req.needed_by);
-        }
-      })
-      .catch(() => {});
-  }, [fromRequest, setValue]);
-
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => categoryService.list(),
@@ -112,6 +92,27 @@ export default function InternalOpportunityNew() {
     resolver: zodResolver(step1Schema),
     defaultValues: step1Data ?? { require_technical_offer: true, require_economic_offer: true },
   });
+
+  // Load linked purchase request info and pre-fill fields
+  useEffect(() => {
+    if (!fromRequest) return;
+    purchaseRequestService.getById(fromRequest)
+      .then((req) => {
+        setFromRequestCode(req.code);
+        // Pre-fill form fields from RDA data
+        if (req.subject) setValue("title", req.subject);
+        if (req.description) setValue("description", req.description);
+        if (req.amount) {
+          setValue("budget_estimated", Number(req.amount));
+          setValue("budget_max", Number(req.amount));
+        }
+        if (req.needed_by) {
+          setValue("end_date", req.needed_by);
+        }
+      })
+      .catch(() => {});
+  }, [fromRequest, setValue]);
+
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
   const saveDraftMutation = useMutation({
