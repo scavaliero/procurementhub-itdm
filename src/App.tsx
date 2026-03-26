@@ -55,6 +55,9 @@ import ChangePassword from "@/pages/ChangePassword";
 import PurchaseRequestsPage from "@/pages/internal/purchasing/PurchaseRequestsPage";
 import NewPurchaseRequestPage from "@/pages/internal/purchasing/NewPurchaseRequestPage";
 import PurchaseRequestDetailPage from "@/pages/internal/purchasing/PurchaseRequestDetailPage";
+import PurchasePanelPage from "@/pages/internal/purchasing/PurchasePanelPage";
+import DirectPurchasesPage from "@/pages/internal/purchasing/DirectPurchasesPage";
+import NewDirectPurchasePage from "@/pages/internal/purchasing/NewDirectPurchasePage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
