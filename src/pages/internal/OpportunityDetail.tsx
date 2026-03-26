@@ -121,11 +121,31 @@ export default function InternalOpportunityDetail() {
   if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   if (!opp) return <EmptyState title="Opportunità non trovata" />;
 
-  const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
+   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
   const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
   const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
+  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && invitations.length === 0 && !hasOrder && ["draft", "pending_approval", "open"].includes(opp.status);
   const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await opportunityService.update(id!, { deleted_at: new Date().toISOString() } as any);
+      await auditService.log({
+        tenant_id: profile!.tenant_id,
+        entity_type: "opportunity",
+        entity_id: id!,
+        event_type: "opportunity_deleted",
+        new_state: { deleted: true },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Opportunità eliminata");
+      navigate("/internal/opportunities");
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Errore nell'eliminazione"),
+  });
 
   return (
     <div className="p-6 space-y-6">
