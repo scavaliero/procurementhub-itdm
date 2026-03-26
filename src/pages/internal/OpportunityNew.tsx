@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,9 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Upload, Save, Send } from "lucide-react";
 import { format } from "date-fns";
 import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
+import { purchaseRequestService } from "@/services/purchaseRequestService";
 
 const step1Schema = z.object({
   title: z.string().min(3, "Titolo obbligatorio (min 3 caratteri)"),
@@ -56,15 +59,26 @@ interface Criterion {
 
 export default function InternalOpportunityNew() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromRequest = searchParams.get("from_request");
   const { profile } = useAuth();
   const { hasGrant } = useGrants();
   const [step, setStep] = useState(0);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
+  const [fromRequestCode, setFromRequestCode] = useState<string | null>(null);
   
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Load linked purchase request info
+  useEffect(() => {
+    if (!fromRequest) return;
+    purchaseRequestService.getById(fromRequest)
+      .then((req) => setFromRequestCode(req.code))
+      .catch(() => {});
+  }, [fromRequest]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -142,6 +156,10 @@ export default function InternalOpportunityNew() {
       return opp;
     },
     onSuccess: (opp) => {
+      // Link to purchase request if created from one
+      if (fromRequest && opp.id) {
+        purchaseRequestService.completeWithOpportunity(fromRequest, opp.id).catch(() => {});
+      }
       toast.success("Opportunità creata con successo");
       navigate(`/internal/opportunities/${opp.id}`);
     },
@@ -202,6 +220,15 @@ export default function InternalOpportunityNew() {
         </Button>
         <h1 className="text-2xl font-bold">Nuova Opportunità</h1>
       </div>
+
+      {fromRequestCode && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Opportunità collegata alla Richiesta <strong>{fromRequestCode}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stepper */}
       <div className="flex items-center gap-2">

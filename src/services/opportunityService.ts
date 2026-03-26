@@ -29,12 +29,21 @@ export const opportunityService = {
     const from = page * size;
     const to = from + size - 1;
 
+    // Check if current user is a purchase operator (should only see own opportunities)
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+    const { data: isOperator } = await supabase.rpc("is_purchase_operator");
+
     let q = supabase
       .from("opportunities")
       .select("*, categories!opportunities_category_id_fkey(name), opportunity_invitations(id)", { count: "exact" })
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .range(from, to);
+
+    if (isOperator === true && currentUserId) {
+      q = q.eq("created_by", currentUserId);
+    }
 
     if (filters.status) q = q.eq("status", filters.status);
     if (filters.category_id) q = q.eq("category_id", filters.category_id);
