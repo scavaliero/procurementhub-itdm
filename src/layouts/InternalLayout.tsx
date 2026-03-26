@@ -1,11 +1,12 @@
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Briefcase, ShoppingCart, FileText,
-  Settings, ShieldCheck, Users, ScrollText,
+  Settings, ShieldCheck, Users, ScrollText, ClipboardList, CheckSquare, Package, CreditCard,
 } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
 import { useGrants } from "@/hooks/useGrants";
+import { usePurchaseRequests } from "@/hooks/usePurchasing";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
