@@ -24,7 +24,10 @@ import { format } from "date-fns";
 import { CheckCircle, XCircle, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+const ACTIVE_STATUSES = ["issued", "accepted", "in_progress"];
+
 const STATUS_LABELS: Record<string, string> = {
+  active: "Attivi",
   draft: "Bozza",
   pending_approval: "In approvazione",
   issued: "Emesso",
