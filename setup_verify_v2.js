@@ -533,12 +533,13 @@ async function runAllChecks() {
       fail(`'${name}': errore di rete — ${e.message}`, 'Verifica connettivita e SUPABASE_URL')
       return
     }
-    if (res.status === 404) {
+    let body = {}
+    try { body = await res.json() } catch(_) {}
+    // 404 senza body semantico = non deployata; con body JSON = risposta applicativa
+    if (res.status === 404 && (!body || Object.keys(body).length === 0 || body?.message === 'Relay Error')) {
       fail(`'${name}': NOT DEPLOYED (404)`, `Crea in Supabase > Edge Functions`)
       return
     }
-    let body = {}
-    try { body = await res.json() } catch(_) {}
     // Check secrets
     const bs = JSON.stringify(body).toLowerCase()
     if (bs.includes('supabase_service_role_key') || (bs.includes('secret') && bs.includes('missing'))
