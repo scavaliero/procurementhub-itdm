@@ -75,7 +75,9 @@ export default function InternalOrders() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o: any) => {
-      if (statusFilter !== "all" && o.status !== statusFilter) return false;
+      if (statusFilter === "active") {
+        if (!ACTIVE_STATUSES.includes(o.status)) return false;
+      } else if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const haystack = `${o.code ?? ""} ${o.subject ?? ""} ${o.suppliers?.company_name ?? ""}`.toLowerCase();
