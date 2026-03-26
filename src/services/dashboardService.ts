@@ -160,7 +160,76 @@ export const dashboardService = {
     return data ?? [];
   },
 
-  // ── Supplier KPIs ─────────────────────────────────────────
+  // ── Purchasing KPIs ───────────────────────────────────────
+
+  /** Count purchase requests by status */
+  async purchaseRequestsByStatus(): Promise<{ status: string; count: number }[]> {
+    const { data, error } = await supabase
+      .from("purchase_requests")
+      .select("status")
+      .is("deleted_at", null);
+    if (error) throw error;
+
+    const map = new Map<string, number>();
+    for (const row of data ?? []) {
+      map.set(row.status, (map.get(row.status) ?? 0) + 1);
+    }
+    return Array.from(map.entries()).map(([status, count]) => ({ status, count }));
+  },
+
+  /** Count pending purchase requests to validate (submitted + pending_validation) */
+  async pendingPurchaseValidations(): Promise<number> {
+    const { count, error } = await supabase
+      .from("purchase_requests")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .in("status", ["submitted", "pending_validation"]);
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  /** Count purchase requests in purchase */
+  async inPurchaseRequests(): Promise<number> {
+    const { count, error } = await supabase
+      .from("purchase_requests")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("status", "in_purchase");
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  /** Count direct purchases this month */
+  async directPurchasesThisMonth(): Promise<{ count: number; total: number }> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("direct_purchases")
+      .select("amount")
+      .is("deleted_at", null)
+      .gte("created_at", startOfMonth.toISOString());
+    if (error) throw error;
+
+    const items = data ?? [];
+    return {
+      count: items.length,
+      total: items.reduce((s, r) => s + Number(r.amount), 0),
+    };
+  },
+
+  /** Count direct purchases without invoice */
+  async directPurchasesNoInvoice(): Promise<number> {
+    const { count, error } = await supabase
+      .from("direct_purchases")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .is("invoice_storage_path", null);
+    if (error) throw error;
+    return count ?? 0;
+  },
+
 
   /** Get supplier status for the current user's supplier */
   async supplierStatus(supplierId: string) {
