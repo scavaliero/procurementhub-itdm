@@ -124,4 +124,72 @@ test.describe("Orders page filters and dashboard navigation", () => {
       await expect(page.locator("text=Ordini")).toBeVisible();
     }
   });
+
+  test("Low budget KPI excludes fully billed orders (residual 0%)", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto("/internal/orders");
+    await page.waitForSelector('[data-testid="orders-kpi-low_budget"]');
+
+    // Get the low budget count from the KPI card
+    const lowBudgetText = await page.locator('[data-testid="orders-kpi-low_budget"] p.text-2xl').textContent();
+    const lowBudgetCount = parseInt(lowBudgetText?.trim() || "0", 10);
+
+    // Click the low_budget KPI to filter
+    await page.locator('[data-testid="orders-kpi-low_budget"]').click();
+    await page.waitForTimeout(500);
+
+    // The number of visible table rows should match the KPI count
+    const tableRows = page.locator("table tbody tr");
+    const rowCount = await tableRows.count();
+    expect(rowCount).toBe(lowBudgetCount);
+
+    // None of the rows should show "Completato" badge
+    const completedBadges = page.locator("table tbody text=Completato");
+    expect(await completedBadges.count()).toBe(0);
+  });
+
+  test("Low budget KPI on dashboard matches orders page KPI", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    // Get count from dashboard
+    await page.goto("/internal");
+    await page.waitForSelector("text=Indicatori Economici");
+    const dashboardLink = page.locator('a[href="/internal/orders?status=low_budget"]');
+    let dashboardCount = 0;
+    if (await dashboardLink.count() > 0) {
+      const dashText = await dashboardLink.first().locator("p.text-2xl").textContent();
+      dashboardCount = parseInt(dashText?.trim() || "0", 10);
+    }
+
+    // Get count from orders page
+    await page.goto("/internal/orders");
+    await page.waitForSelector('[data-testid="orders-kpi-low_budget"]');
+    const ordersText = await page.locator('[data-testid="orders-kpi-low_budget"] p.text-2xl').textContent();
+    const ordersCount = parseInt(ordersText?.trim() || "0", 10);
+
+    expect(ordersCount).toBe(dashboardCount);
+  });
+
+  test("Status filter dropdown opens downward", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto("/internal/orders");
+    await page.waitForSelector('[data-testid="orders-status-filter"]');
+
+    // Get position of the trigger
+    const trigger = page.locator('[data-testid="orders-status-filter"]');
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox).not.toBeNull();
+
+    // Click to open
+    await trigger.click();
+    await page.waitForSelector('[role="listbox"]', { state: "visible" });
+
+    // The dropdown content should appear below the trigger
+    const dropdown = page.locator('[role="listbox"]');
+    const dropdownBox = await dropdown.boundingBox();
+    expect(dropdownBox).not.toBeNull();
+
+    // Dropdown top should be at or below trigger bottom
+    expect(dropdownBox!.y).toBeGreaterThanOrEqual(triggerBox!.y + triggerBox!.height - 5);
+  });
 });
