@@ -95,7 +95,6 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       reset({
         total_amount: existingBid.total_amount ?? undefined,
         technical_description: existingBid.technical_description ?? "",
-        execution_days: existingBid.execution_days ?? undefined,
         bid_validity_date: existingBid.bid_validity_date ?? "",
         proposed_conditions: existingBid.proposed_conditions ?? "",
         notes: existingBid.notes ?? "",
