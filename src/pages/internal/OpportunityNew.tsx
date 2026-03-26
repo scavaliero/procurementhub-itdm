@@ -96,22 +96,29 @@ export default function InternalOpportunityNew() {
   // Load linked purchase request info and pre-fill fields
   useEffect(() => {
     if (!fromRequest) return;
+    let cancelled = false;
     purchaseRequestService.getById(fromRequest)
       .then((req) => {
-        setFromRequestCode(req.code);
-        // Pre-fill form fields from RDA data
-        if (req.subject) setValue("title", req.subject);
-        if (req.description) setValue("description", req.description);
-        if (req.amount) {
-          setValue("budget_estimated", Number(req.amount));
-          setValue("budget_max", Number(req.amount));
-        }
-        if (req.needed_by) {
-          setValue("end_date", req.needed_by);
+        if (cancelled || !req) return;
+        setFromRequestCode(req.code ?? null);
+        // Pre-fill form fields from RDA data — wrapped in try/catch to prevent white-screen
+        try {
+          if (req.subject) setValue("title", req.subject);
+          if (req.description) setValue("description", req.description);
+          if (req.amount) {
+            setValue("budget_estimated", Number(req.amount));
+            setValue("budget_max", Number(req.amount));
+          }
+          if (req.needed_by) {
+            setValue("end_date", req.needed_by);
+          }
+        } catch (err) {
+          console.warn("[OpportunityNew] pre-fill from RDA failed:", err);
         }
       })
       .catch(() => {});
-  }, [fromRequest, setValue]);
+    return () => { cancelled = true; };
+  }, [fromRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
