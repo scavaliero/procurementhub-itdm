@@ -86,15 +86,20 @@ export default function SupplierDocuments() {
 
   // KPI counts for documents
   const kpiCounts = useMemo(() => {
-    let approvedCount = 0, pending = 0, rejected = 0, missing = 0;
+    let approvedCount = 0, expiring = 0, pending = 0, rejected = 0, missing = 0;
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     for (const dt of docTypes) {
       const doc = latestByType[dt.id];
       if (!doc) { missing++; continue; }
-      if (doc.status === "approved") approvedCount++;
+      if (doc.status === "approved") {
+        approvedCount++;
+        if (doc.expiry_date && new Date(doc.expiry_date) <= thirtyDays) expiring++;
+      }
       else if (doc.status === "uploaded") pending++;
       else if (doc.status === "rejected") rejected++;
     }
-    return { approved: approvedCount, pending, rejected, missing };
+    return { approved: approvedCount, expiring, pending, rejected, missing };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docTypes, uploadedDocs]);
 
