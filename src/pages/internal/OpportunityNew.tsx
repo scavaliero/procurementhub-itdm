@@ -59,15 +59,26 @@ interface Criterion {
 
 export default function InternalOpportunityNew() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromRequest = searchParams.get("from_request");
   const { profile } = useAuth();
   const { hasGrant } = useGrants();
   const [step, setStep] = useState(0);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
+  const [fromRequestCode, setFromRequestCode] = useState<string | null>(null);
   
   const [conditions, setConditions] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Load linked purchase request info
+  useEffect(() => {
+    if (!fromRequest) return;
+    purchaseRequestService.getById(fromRequest)
+      .then((req) => setFromRequestCode(req.code))
+      .catch(() => {});
+  }, [fromRequest]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
