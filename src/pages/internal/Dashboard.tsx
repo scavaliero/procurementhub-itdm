@@ -185,6 +185,8 @@ export default function InternalDashboard() {
                 ? totalSuppliers
                 : kpi.key === "_docs"
                 ? expiringDocs
+                : kpi.key === "_expired"
+                ? expiredDocs
                 : getCount(kpi.key);
               return (
                 <KpiCard
