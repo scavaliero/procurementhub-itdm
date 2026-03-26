@@ -99,6 +99,10 @@ export default function PurchaseRequestDetailPage() {
   const isPending = submitMut.isPending || approveMut.isPending || escalateMut.isPending
     || approveFinanceMut.isPending || rejectMut.isPending || inPurchaseMut.isPending || cancelMut.isPending;
 
+  // Terminal states: no action buttons should appear
+  const isTerminal = ["completed", "cancelled", "rejected"].includes(pr.status)
+    || !!pr.outcome || !!pr.linked_opportunity_id;
+
   const handleConfirm = async () => {
     if (!id) return;
     switch (confirmAction) {
@@ -250,8 +254,23 @@ export default function PurchaseRequestDetailPage() {
 
         {/* Sidebar Actions */}
         <div className="space-y-4">
+          {isTerminal && (
+            <Card>
+              <CardContent className="py-4 text-center">
+                <Badge variant="secondary" className={`text-sm ${STATUS_COLORS[pr.status] ?? ""}`}>
+                  {STATUS_LABELS[pr.status] ?? pr.status}
+                </Badge>
+                {pr.outcome && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Esito: {pr.outcome === "opportunity" ? "Opportunità creata" : pr.outcome === "direct_purchase" ? "Acquisto diretto" : pr.outcome}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* BLOCK 1: Owner + draft */}
-          {isOwner && pr.status === "draft" && (
+          {!isTerminal && isOwner && pr.status === "draft" && (
             <Card>
               <CardHeader><CardTitle className="text-sm">Azioni</CardTitle></CardHeader>
               <CardContent className="space-y-2">
@@ -269,7 +288,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 2: Manager validator + submitted */}
-          {hasGrant("validate_purchase_request") && pr.status === "submitted" && (
+          {!isTerminal && hasGrant("validate_purchase_request") && pr.status === "submitted" && (
             <Card>
               <CardHeader><CardTitle className="text-sm">Validazione</CardTitle></CardHeader>
               <CardContent className="space-y-3">
@@ -309,7 +328,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 3: Finance approver */}
-          {hasGrant("validate_purchase_request_high") && (
+          {!isTerminal && hasGrant("validate_purchase_request_high") && (
             <>
               {pr.status === "pending_validation" && (
                 <Card>
@@ -335,7 +354,7 @@ export default function PurchaseRequestDetailPage() {
           )}
 
           {/* BLOCK 4: Purchase operator */}
-          {hasGrant("manage_purchase_operations") && (
+          {!isTerminal && hasGrant("manage_purchase_operations") && (
             <>
               {["approved", "approved_finance"].includes(pr.status) && (
                 <Card>
