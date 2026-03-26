@@ -167,6 +167,8 @@ export default function InternalOpportunityEdit() {
         participation_conditions: data.participation_conditions || null,
         operational_notes: data.operational_notes || null,
         evaluation_criteria: criteria.length > 0 ? (criteria as any) : [],
+        require_technical_offer: data.require_technical_offer,
+        require_economic_offer: data.require_economic_offer,
       } as any);
 
       await auditService.log({
