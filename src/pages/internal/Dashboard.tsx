@@ -229,13 +229,14 @@ export default function InternalDashboard() {
         <section className="space-y-4">
           <SectionHeader icon="💰" title="Indicatori Economici" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" />
+            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" to="/internal/orders" />
             <KpiCard
               title="Benestare in approvazione"
               value={pendingBillings}
               icon={FileText}
               alert={pendingBillings > 0}
               cardClass="card-top-economic"
+              to="/internal/billing-approvals"
             />
             <KpiCard
               title="Contratti budget < 10%"
@@ -244,6 +245,7 @@ export default function InternalDashboard() {
               alert={lowBudget > 0}
               subtitle="Residuo quasi esaurito"
               cardClass="card-top-economic"
+              to="/internal/orders"
             />
           </div>
         </section>
