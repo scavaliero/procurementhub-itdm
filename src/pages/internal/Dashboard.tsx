@@ -212,6 +212,7 @@ export default function InternalDashboard() {
                   value={value}
                   icon={kpi.icon}
                   alert={kpi.alert && value > 0}
+                  warning={kpi.warning && value > 0}
                   subtitle={kpi.subtitle}
                   cardClass="card-top-suppliers"
                   to={kpi.to}
