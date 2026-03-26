@@ -18,7 +18,7 @@ import {
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2 } from "lucide-react";
+import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { DocumentCard } from "@/components/supplier/DocumentCard";
 import type { UploadedDocument } from "@/types";
@@ -86,23 +86,33 @@ export default function SupplierDocuments() {
 
   // KPI counts for documents
   const kpiCounts = useMemo(() => {
-    let approvedCount = 0, pending = 0, rejected = 0, missing = 0;
+    let approvedCount = 0, expiring = 0, pending = 0, rejected = 0, missing = 0;
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     for (const dt of docTypes) {
       const doc = latestByType[dt.id];
       if (!doc) { missing++; continue; }
-      if (doc.status === "approved") approvedCount++;
+      if (doc.status === "approved") {
+        approvedCount++;
+        if (doc.expiry_date && new Date(doc.expiry_date) <= thirtyDays) expiring++;
+      }
       else if (doc.status === "uploaded") pending++;
       else if (doc.status === "rejected") rejected++;
     }
-    return { approved: approvedCount, pending, rejected, missing };
+    return { approved: approvedCount, expiring, pending, rejected, missing };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docTypes, uploadedDocs]);
 
   // Filtered doc types
   const filteredDocTypes = useMemo(() => {
+    const now = new Date();
+    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     return docTypes.filter((dt) => {
       const doc = latestByType[dt.id];
       if (statusFilter === "approved" && doc?.status !== "approved") return false;
+      if (statusFilter === "expiring") {
+        if (!doc || doc.status !== "approved" || !doc.expiry_date || new Date(doc.expiry_date) > thirtyDays) return false;
+      }
       if (statusFilter === "pending" && doc?.status !== "uploaded") return false;
       if (statusFilter === "rejected" && doc?.status !== "rejected") return false;
       if (statusFilter === "missing" && doc) return false;
@@ -141,7 +151,8 @@ export default function SupplierDocuments() {
 
   const kpiCards = [
     { key: "approved", label: "Approvati", value: kpiCounts.approved, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
-    { key: "pending", label: "In revisione", value: kpiCounts.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
+    { key: "expiring", label: "In scadenza", value: kpiCounts.expiring, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-100", alert: true },
+    { key: "pending", label: "In revisione", value: kpiCounts.pending, icon: Clock, color: "text-blue-600", bg: "bg-blue-100" },
     { key: "rejected", label: "Rifiutati", value: kpiCounts.rejected, icon: FileX, color: "text-destructive", bg: "bg-destructive/10", alert: true },
     { key: "missing", label: "Mancanti", value: kpiCounts.missing, icon: FileCheck, color: "text-muted-foreground", bg: "bg-muted" },
   ];
@@ -158,7 +169,7 @@ export default function SupplierDocuments() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {kpiCards.map((kpi) => {
           const isSelected = statusFilter === kpi.key;
           const Icon = kpi.icon;

@@ -88,9 +88,14 @@ export default function SupplierOpportunities() {
   const filteredInvitations = useMemo(() => {
     return (invitations as any[]).filter((inv) => {
       const opp = inv.opportunities;
+      // KPI card filters
       if (statusFilter === "unseen" && inv.viewed_at) return false;
       if (statusFilter === "open" && opp?.status !== "open" && opp?.status !== "collecting_bids") return false;
       if (statusFilter === "evaluating" && opp?.status !== "evaluating") return false;
+      // Dropdown status filters (exact match)
+      if (statusFilter === "collecting_bids" && opp?.status !== "collecting_bids") return false;
+      if (statusFilter === "awarded" && opp?.status !== "awarded") return false;
+      if (statusFilter === "closed" && opp?.status !== "closed") return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const haystack = `${opp?.code ?? ""} ${opp?.title ?? ""} ${opp?.categories?.name ?? ""}`.toLowerCase();
@@ -164,16 +169,34 @@ export default function SupplierOpportunities() {
         })}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Cerca codice, titolo…"
-          value={searchQuery}
-          onChange={(e) => updateParams({ q: e.target.value })}
-          className="pl-9"
-          data-testid="opp-search"
-        />
+      {/* Search & Status Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Cerca codice, titolo…"
+            value={searchQuery}
+            onChange={(e) => updateParams({ q: e.target.value })}
+            className="pl-9"
+            data-testid="opp-search"
+          />
+        </div>
+        <Select
+          value={statusFilter === "all" ? "all" : statusFilter}
+          onValueChange={(v) => updateParams({ status: v })}
+        >
+          <SelectTrigger className="w-full sm:w-[200px]" data-testid="opp-status-filter">
+            <SelectValue placeholder="Tutti gli stati" />
+          </SelectTrigger>
+          <SelectContent position="popper" side="bottom" sideOffset={4} avoidCollisions={false}>
+            <SelectItem value="all">Tutti gli stati</SelectItem>
+            <SelectItem value="open">Aperta</SelectItem>
+            <SelectItem value="collecting_bids">Raccolta offerte</SelectItem>
+            <SelectItem value="evaluating">In valutazione</SelectItem>
+            <SelectItem value="awarded">Aggiudicata</SelectItem>
+            <SelectItem value="closed">Chiusa</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
