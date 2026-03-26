@@ -26,7 +26,7 @@ const oppStatusLabels: Record<string, string> = {
 };
 
 function KpiCard({
-  title, value, icon: Icon, alert, subtitle, cardClass,
+  title, value, icon: Icon, alert, subtitle, cardClass, to,
 }: {
   title: string;
   value: number | string;
@@ -34,9 +34,10 @@ function KpiCard({
   alert?: boolean;
   subtitle?: string;
   cardClass?: string;
+  to?: string;
 }) {
-  return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
+  const content = (
+    <Card className={`shadow-sm hover:shadow-md transition-shadow ${cardClass ?? ""} ${alert ? "border-destructive/40 bg-destructive/5" : ""} ${to ? "cursor-pointer" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title}
@@ -53,6 +54,8 @@ function KpiCard({
       </CardContent>
     </Card>
   );
+  if (to) return <Link to={to}>{content}</Link>;
+  return content;
 }
 
 function SkeletonCards({ count = 4 }: { count?: number }) {
@@ -149,16 +152,16 @@ export default function InternalDashboard() {
   const getCount = (status: string) => supplierStats?.find((r) => r.status === status)?.count ?? 0;
 
   const supplierKpis: {
-    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string;
+    key: string; title: string; icon: React.ElementType; alert?: boolean; subtitle?: string; to?: string;
   }[] = [
-    { key: "_total", title: "Fornitori totali", icon: Building2 },
-    { key: "pre_registered", title: "Pre-registrati", icon: Clock },
-    { key: "pending_review", title: "In revisione", icon: Eye },
-    { key: "enabled", title: "Abilitati", icon: Unlock },
-    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck },
-    { key: "accredited", title: "Accreditati", icon: UserCheck },
-    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true },
-    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni" },
+    { key: "_total", title: "Fornitori totali", icon: Building2, to: "/internal/vendors" },
+    { key: "pre_registered", title: "Pre-registrati", icon: Clock, to: "/internal/vendors" },
+    { key: "pending_review", title: "In revisione", icon: Eye, to: "/internal/vendors" },
+    { key: "enabled", title: "Abilitati", icon: Unlock, to: "/internal/vendors" },
+    { key: "in_accreditation", title: "In accreditamento", icon: ClipboardCheck, to: "/internal/vendors" },
+    { key: "accredited", title: "Accreditati", icon: UserCheck, to: "/internal/vendors" },
+    { key: "suspended", title: "Sospesi", icon: PauseCircle, alert: true, to: "/internal/vendors" },
+    { key: "_docs", title: "Documenti in scadenza", icon: FileWarning, alert: expiringDocs > 0, subtitle: "Prossimi 30 giorni", to: "/internal/vendors" },
   ];
 
   return (
@@ -185,6 +188,7 @@ export default function InternalDashboard() {
                   alert={kpi.alert && value > 0}
                   subtitle={kpi.subtitle}
                   cardClass="card-top-suppliers"
+                  to={kpi.to}
                 />
               );
             })}
@@ -207,6 +211,7 @@ export default function InternalDashboard() {
                   value={r.count}
                   icon={Briefcase}
                   cardClass="card-top-procurement"
+                  to="/internal/opportunities"
                 />
               ))}
               {(!oppStats || oppStats.length === 0) && (
@@ -224,13 +229,14 @@ export default function InternalDashboard() {
         <section className="space-y-4">
           <SectionHeader icon="💰" title="Indicatori Economici" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" />
+            <KpiCard title="Contratti attivi" value={activeContracts} icon={ShoppingCart} cardClass="card-top-economic" to="/internal/orders" />
             <KpiCard
               title="Benestare in approvazione"
               value={pendingBillings}
               icon={FileText}
               alert={pendingBillings > 0}
               cardClass="card-top-economic"
+              to="/internal/billing-approvals"
             />
             <KpiCard
               title="Contratti budget < 10%"
@@ -239,6 +245,7 @@ export default function InternalDashboard() {
               alert={lowBudget > 0}
               subtitle="Residuo quasi esaurito"
               cardClass="card-top-economic"
+              to="/internal/orders"
             />
           </div>
         </section>
