@@ -188,6 +188,7 @@ export default function InternalDashboard() {
                   alert={kpi.alert && value > 0}
                   subtitle={kpi.subtitle}
                   cardClass="card-top-suppliers"
+                  to={kpi.to}
                 />
               );
             })}
