@@ -116,15 +116,7 @@ export default function InternalOpportunityNew() {
     defaultValues: formDefaults as Step1Data,
   });
 
-  // If still loading linked request, show skeleton
-  if (fromRequest && linkedLoading) {
-    return (
-      <div className="p-6 space-y-3">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
+  // Skeleton moved after all hooks — see below
 
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
@@ -236,9 +228,18 @@ export default function InternalOpportunityNew() {
       toast.error("Completa prima lo step 1");
     }
   };
+  // If still loading linked request, show skeleton (must be after all hooks)
+  if (fromRequest && linkedLoading) {
+    return (
+      <div className="p-6 space-y-3">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div key={fromRequest ?? "no-rda"} className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: "Nuova Opportunità" }]} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/internal/opportunities")}>
@@ -247,14 +248,16 @@ export default function InternalOpportunityNew() {
         <h1 className="text-2xl font-bold">Nuova Opportunità</h1>
       </div>
 
-      {linkedRequest ? (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Opportunità collegata alla Richiesta <strong>{linkedRequest.code ?? fromRequest}</strong>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <div>
+        {linkedRequest && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Opportunità collegata alla Richiesta <strong>{linkedRequest.code ?? fromRequest}</strong>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       {/* Stepper */}
       <div className="flex items-center gap-2">

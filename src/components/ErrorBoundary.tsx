@@ -11,6 +11,12 @@ interface State {
   error: Error | null;
 }
 
+// Known DOM manipulation errors from browser extensions (Grammarly, LastPass, etc.)
+const isExtensionDomError = (error: Error) =>
+  error.message?.includes("removeChild") ||
+  error.message?.includes("insertBefore") ||
+  error.message?.includes("not a child of this node");
+
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -18,7 +24,18 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Auto-recover from browser-extension DOM errors
+    if (isExtensionDomError(error)) {
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    if (isExtensionDomError(error)) {
+      // Force re-render to recover
+      this.setState({ hasError: false, error: null });
+    }
   }
 
   render() {
