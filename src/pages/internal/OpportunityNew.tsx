@@ -239,7 +239,7 @@ export default function InternalOpportunityNew() {
   }
 
   return (
-    <div key={fromRequest ?? "no-rda"} className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       <Breadcrumb items={[{ label: "Dashboard", href: "/internal/dashboard" }, { label: "Opportunità", href: "/internal/opportunities" }, { label: "Nuova Opportunità" }]} />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/internal/opportunities")}>
@@ -248,14 +248,16 @@ export default function InternalOpportunityNew() {
         <h1 className="text-2xl font-bold">Nuova Opportunità</h1>
       </div>
 
-      {linkedRequest ? (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Opportunità collegata alla Richiesta <strong>{linkedRequest.code ?? fromRequest}</strong>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <div>
+        {linkedRequest && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Opportunità collegata alla Richiesta <strong>{linkedRequest.code ?? fromRequest}</strong>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       {/* Stepper */}
       <div className="flex items-center gap-2">
