@@ -11,11 +11,13 @@ interface State {
   error: Error | null;
 }
 
-// Known DOM manipulation errors from browser extensions (Grammarly, LastPass, etc.)
-const isExtensionDomError = (error: Error) =>
+// Known transient React/DOM errors that can be auto-recovered
+const isRecoverableError = (error: Error) =>
   error.message?.includes("removeChild") ||
   error.message?.includes("insertBefore") ||
-  error.message?.includes("not a child of this node");
+  error.message?.includes("not a child of this node") ||
+  error.message?.includes("Rendered more hooks") ||
+  error.message?.includes("Rendered fewer hooks");
 
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
