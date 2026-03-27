@@ -57,6 +57,7 @@ import NewPurchaseRequestPage from "@/pages/internal/purchasing/NewPurchaseReque
 import PurchaseRequestDetailPage from "@/pages/internal/purchasing/PurchaseRequestDetailPage";
 import PurchasePanelPage from "@/pages/internal/purchasing/PurchasePanelPage";
 import DirectPurchasesPage from "@/pages/internal/purchasing/DirectPurchasesPage";
+import DirectPurchaseDetailPage from "@/pages/internal/purchasing/DirectPurchaseDetailPage";
 import NewDirectPurchasePage from "@/pages/internal/purchasing/NewDirectPurchasePage";
 
 const App = () => (
@@ -140,6 +141,7 @@ const App = () => (
             <Route path="/internal/purchasing/panel" element={<PurchasePanelPage />} />
             <Route path="/internal/purchasing/direct" element={<DirectPurchasesPage />} />
             <Route path="/internal/purchasing/direct/new/:reqId?" element={<NewDirectPurchasePage />} />
+            <Route path="/internal/purchasing/direct/:id" element={<DirectPurchaseDetailPage />} />
           </Route>
 
           {/* Catch-all */}

@@ -43,6 +43,14 @@ export function useDirectPurchases(filters?: { search?: string }) {
   });
 }
 
+export function useDirectPurchase(id: string | undefined) {
+  return useQuery({
+    queryKey: ["direct-purchase", id],
+    queryFn: () => directPurchaseService.getById(id!),
+    enabled: !!id,
+  });
+}
+
 // ─── Mutation hooks ─────────────────────────────────────────────
 
 export function useSaveDraft() {
@@ -167,6 +175,32 @@ export function useCreateDirectPurchase() {
       qc.invalidateQueries({ queryKey: ["purchase-request"] });
       qc.invalidateQueries({ queryKey: ["purchase-request-history"] });
       toast.success("Acquisto diretto registrato");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useUpdateDirectPurchase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof directPurchaseService.update>[1] }) =>
+      directPurchaseService.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["direct-purchases"] });
+      qc.invalidateQueries({ queryKey: ["direct-purchase"] });
+      toast.success("Acquisto aggiornato");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteDirectPurchase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => directPurchaseService.softDelete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["direct-purchases"] });
+      toast.success("Acquisto eliminato");
     },
     onError: (e: Error) => toast.error(e.message),
   });

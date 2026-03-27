@@ -15,16 +15,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency, formatDateIT } from "@/utils/formatters";
 import { Plus, Search, Download, FileText, AlertTriangle, ShoppingBag, DollarSign } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
 import type { DirectPurchase } from "@/types/purchasing";
 
 export default function DirectPurchasesPage() {
   const navigate = useNavigate();
   const { hasGrant } = useGrants();
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<DirectPurchase | null>(null);
+  
 
   const { data: purchases = [], isLoading } = useDirectPurchases({ search: search || undefined });
 
@@ -158,7 +155,7 @@ export default function DirectPurchasesPage() {
               </TableHeader>
               <TableBody>
                 {(purchases as DirectPurchase[]).map((dp) => (
-                  <TableRow key={dp.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelected(dp)}>
+                  <TableRow key={dp.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/internal/purchasing/direct/${dp.id}`)}>
                     <TableCell className="font-mono text-sm">{dp.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{dp.supplier_name}</TableCell>
                     <TableCell className="text-sm">{formatDateIT(dp.purchase_date)}</TableCell>
@@ -190,97 +187,6 @@ export default function DirectPurchasesPage() {
           </CardContent>
         </Card>
       )}
-      {/* Detail Sheet */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          {selected && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="font-mono">{selected.code ?? "Acquisto"}</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6 space-y-4 text-sm">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-muted-foreground">Fornitore</p>
-                    <p className="font-medium">{selected.supplier_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Importo</p>
-                    <p className="font-bold text-lg">{formatCurrency(selected.amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Data acquisto</p>
-                    <p>{formatDateIT(selected.purchase_date)}</p>
-                  </div>
-                  {selected.supplier_vat && (
-                    <div>
-                      <p className="text-muted-foreground">P.IVA</p>
-                      <p className="font-mono">{selected.supplier_vat}</p>
-                    </div>
-                  )}
-                  {selected.supplier_email && (
-                    <div>
-                      <p className="text-muted-foreground">Email fornitore</p>
-                      <p>{selected.supplier_email}</p>
-                    </div>
-                  )}
-                  {selected.supplier_address && (
-                    <div className="col-span-2">
-                      <p className="text-muted-foreground">Indirizzo</p>
-                      <p>{selected.supplier_address}</p>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Oggetto</p>
-                  <p className="font-medium">{selected.subject}</p>
-                </div>
-                {selected.description && (
-                  <div>
-                    <p className="text-muted-foreground">Descrizione</p>
-                    <p>{selected.description}</p>
-                  </div>
-                )}
-                {selected.notes && (
-                  <div>
-                    <p className="text-muted-foreground">Note</p>
-                    <p>{selected.notes}</p>
-                  </div>
-                )}
-                {(selected.invoice_number || selected.invoice_date) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {selected.invoice_number && (
-                      <div>
-                        <p className="text-muted-foreground">Nr. Fattura</p>
-                        <p className="font-mono">{selected.invoice_number}</p>
-                      </div>
-                    )}
-                    {selected.invoice_date && (
-                      <div>
-                        <p className="text-muted-foreground">Data fattura</p>
-                        <p>{formatDateIT(selected.invoice_date)}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {selected.invoice_storage_path && (
-                  <Button variant="outline" className="w-full" onClick={(e) => handleDownloadInvoice(e, selected)}>
-                    <Download className="h-4 w-4 mr-1" /> Scarica fattura
-                  </Button>
-                )}
-                {selected.purchase_request_id && (
-                  <Button variant="link" className="w-full" onClick={() => {
-                    setSelected(null);
-                    navigate(`/internal/purchasing/requests/${selected.purchase_request_id}`);
-                  }}>
-                    <FileText className="h-4 w-4 mr-1" /> Vai alla richiesta collegata
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
