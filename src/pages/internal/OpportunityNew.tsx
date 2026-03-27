@@ -116,15 +116,7 @@ export default function InternalOpportunityNew() {
     defaultValues: formDefaults as Step1Data,
   });
 
-  // If still loading linked request, show skeleton
-  if (fromRequest && linkedLoading) {
-    return (
-      <div className="p-6 space-y-3">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
+  // Skeleton moved after all hooks — see below
 
 
   /** Create or update draft in DB — ensures category_id is persisted from step 1 */
