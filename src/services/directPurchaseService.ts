@@ -122,4 +122,36 @@ export const directPurchaseService = {
     if (error) throw error;
     return data.signedUrl;
   },
+
+  async update(id: string, input: Partial<CreateDirectPurchaseData>): Promise<DirectPurchase> {
+    const updateData: Record<string, unknown> = {};
+    if (input.supplier_name !== undefined) updateData.supplier_name = input.supplier_name;
+    if (input.supplier_vat !== undefined) updateData.supplier_vat = input.supplier_vat || null;
+    if (input.supplier_email !== undefined) updateData.supplier_email = input.supplier_email || null;
+    if (input.supplier_address !== undefined) updateData.supplier_address = input.supplier_address || null;
+    if (input.purchase_date !== undefined) updateData.purchase_date = input.purchase_date;
+    if (input.amount !== undefined) updateData.amount = input.amount;
+    if (input.subject !== undefined) updateData.subject = input.subject;
+    if (input.description !== undefined) updateData.description = input.description || null;
+    if (input.invoice_number !== undefined) updateData.invoice_number = input.invoice_number || null;
+    if (input.invoice_date !== undefined) updateData.invoice_date = input.invoice_date || null;
+    if (input.notes !== undefined) updateData.notes = input.notes || null;
+
+    const { data, error } = await supabase
+      .from("direct_purchases")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as DirectPurchase;
+  },
+
+  async softDelete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from("direct_purchases")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  },
 };

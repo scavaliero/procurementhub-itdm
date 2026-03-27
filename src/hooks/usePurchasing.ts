@@ -43,6 +43,14 @@ export function useDirectPurchases(filters?: { search?: string }) {
   });
 }
 
+export function useDirectPurchase(id: string | undefined) {
+  return useQuery({
+    queryKey: ["direct-purchase", id],
+    queryFn: () => directPurchaseService.getById(id!),
+    enabled: !!id,
+  });
+}
+
 // ─── Mutation hooks ─────────────────────────────────────────────
 
 export function useSaveDraft() {
