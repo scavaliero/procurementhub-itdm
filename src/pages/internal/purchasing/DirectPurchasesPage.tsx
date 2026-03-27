@@ -15,9 +15,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency, formatDateIT } from "@/utils/formatters";
 import { Plus, Search, Download, FileText, AlertTriangle, ShoppingBag, DollarSign } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
 import type { DirectPurchase } from "@/types/purchasing";
 
 export default function DirectPurchasesPage() {
