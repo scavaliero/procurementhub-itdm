@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    if (isExtensionDomError(error)) {
+    if (isRecoverableError(error)) {
       // Force re-render to recover
       this.setState({ hasError: false, error: null });
     }
