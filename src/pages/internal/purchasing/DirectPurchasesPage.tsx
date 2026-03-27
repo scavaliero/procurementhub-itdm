@@ -21,7 +21,7 @@ export default function DirectPurchasesPage() {
   const navigate = useNavigate();
   const { hasGrant } = useGrants();
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<DirectPurchase | null>(null);
+  
 
   const { data: purchases = [], isLoading } = useDirectPurchases({ search: search || undefined });
 
