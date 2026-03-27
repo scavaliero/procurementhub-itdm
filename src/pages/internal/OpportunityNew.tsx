@@ -228,6 +228,15 @@ export default function InternalOpportunityNew() {
       toast.error("Completa prima lo step 1");
     }
   };
+  // If still loading linked request, show skeleton (must be after all hooks)
+  if (fromRequest && linkedLoading) {
+    return (
+      <div className="p-6 space-y-3">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div key={fromRequest ?? "no-rda"} className="p-6 max-w-4xl mx-auto space-y-6">
