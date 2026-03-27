@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     // Auto-recover from browser-extension DOM errors
-    if (isExtensionDomError(error)) {
+    if (isRecoverableError(error)) {
       return { hasError: false, error: null };
     }
     return { hasError: true, error };
