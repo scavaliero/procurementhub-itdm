@@ -85,10 +85,10 @@ function SectionHeader({
 }
 
 export default function SupplierDashboard() {
-  const { profile } = useAuth();
+  const { profile, isLoading: authLoading } = useAuth();
   const supplierId = profile?.supplier_id;
 
-  const { data: supplierInfo, isLoading: loadingStatus } = useQuery({
+  const { data: supplierInfo, isLoading: loadingStatus, isError: errorStatus } = useQuery({
     queryKey: ["dashboard", "supplier-status", supplierId],
     queryFn: () => dashboardService.supplierStatus(supplierId!),
     enabled: !!supplierId,
@@ -115,6 +115,16 @@ export default function SupplierDashboard() {
     enabled: !!supplierId,
     refetchInterval: REFETCH_MS,
   });
+
+  // Show skeleton while auth or supplier data is still loading
+  if (authLoading || !profile || !supplierId) {
+    return (
+      <div className="p-4 sm:p-6 space-y-8">
+        <Skeleton className="h-8 w-48" />
+        <SkeletonCards count={4} />
+      </div>
+    );
+  }
 
   const isLoading = loadingStatus || loadingDocs || loadingInvites || loadingBids;
   const statusInfo = SUPPLIER_STATUS_CONFIG[supplierInfo?.status ?? ""] ?? {
