@@ -2004,6 +2004,17 @@ export type Database = {
         }[]
       }
       current_tenant_id: { Args: never; Returns: string }
+      insert_audit_log: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_event_type: string
+          p_new_state?: Json
+          p_old_state?: Json
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
       insert_purchase_request_history: {
         Args: {
           p_changed_by: string

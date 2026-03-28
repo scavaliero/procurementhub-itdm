@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, UserEffectiveGrant } from "@/types";
-import type { Json } from "@/integrations/supabase/types";
 
 export const authService = {
   async signIn(email: string, password: string) {
@@ -57,28 +56,15 @@ export const authService = {
         console.warn(`Audit ${eventType}: no profile found`);
         return;
       }
-      const insertData: {
-        tenant_id: string;
-        entity_type: string;
-        entity_id: string | null;
-        event_type: string;
-        user_id: string | null;
-        user_email: string;
-        user_role: string;
-        new_state?: Json;
-      } = {
-        tenant_id: profile.tenant_id,
-        entity_type: "auth",
-        entity_id: userId,
-        event_type: eventType,
-        user_id: userId,
-        user_email: email,
-        user_role: profile.user_type,
-      };
-      if (eventType === "login") {
-        insertData.new_state = { method: "password" } as unknown as Json;
-      }
-      const { error: auditErr } = await supabase.from("audit_logs").insert([insertData]);
+      const newState = eventType === "login" ? { method: "password" } : undefined;
+      const { error: auditErr } = await supabase.rpc("insert_audit_log", {
+        p_tenant_id: profile.tenant_id,
+        p_entity_type: "auth",
+        p_entity_id: userId,
+        p_event_type: eventType,
+        p_old_state: null,
+        p_new_state: newState ? JSON.parse(JSON.stringify(newState)) : null,
+      });
       if (auditErr) {
         console.error(`Audit ${eventType} insert error:`, auditErr);
       } else {

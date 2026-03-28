@@ -102,17 +102,7 @@ export const vendorService = {
     if (updErr) throw updErr;
     if (!updData) throw new Error("Aggiornamento stato non riuscito — verifica i permessi");
 
-    // Insert history
-    const { error: histErr } = await supabase
-      .from("supplier_status_history")
-      .insert({
-        supplier_id: params.supplierId,
-        from_status: params.fromStatus,
-        to_status: params.toStatus,
-        changed_by: user?.id || null,
-        reason: params.reason || null,
-      });
-    if (histErr) console.error("History error:", histErr);
+    // History is auto-logged by trg_supplier_status_change trigger
 
     // Audit
     await auditService.log({

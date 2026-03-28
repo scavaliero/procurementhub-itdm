@@ -120,14 +120,7 @@ export const documentService = {
           .update({ status: "in_accreditation" })
           .eq("id", supplier.id);
 
-        await supabase
-          .from("supplier_status_history")
-          .insert({
-            supplier_id: supplier.id,
-            from_status: "enabled",
-            to_status: "in_accreditation",
-            reason: "Primo documento caricato dal fornitore",
-          });
+        // History is auto-logged by trg_supplier_status_change trigger
 
         await auditService.log({
           tenant_id: supplier.tenant_id,
