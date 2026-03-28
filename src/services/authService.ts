@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, UserEffectiveGrant } from "@/types";
-import type { Json } from "@/integrations/supabase/types";
 
 export const authService = {
   async signIn(email: string, password: string) {
