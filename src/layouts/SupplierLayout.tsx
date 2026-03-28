@@ -92,13 +92,39 @@ function SupplierSidebarContent({ navItems }: { navItems: typeof fullNav }) {
 export default function SupplierLayout() {
   const { profile, signOut } = useAuth();
 
-  const { data: supplier } = useQuery({
+  const { data: supplier, isLoading: supplierLoading } = useQuery({
     queryKey: ["my-supplier"],
     queryFn: () => vendorService.getMySupplier(),
     enabled: !!profile,
   });
 
   const status = supplier?.status;
+
+  // Show a minimal layout while supplier data loads
+  if (supplierLoading || !supplier) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <header className="h-14 flex items-center justify-between px-4 bg-primary text-primary-foreground shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-extrabold tracking-tight">ITDM</span>
+            <span className="text-[9px] font-semibold opacity-60 uppercase leading-none">Group</span>
+            <span className="border-l border-primary-foreground/30 pl-2 ml-0.5 text-sm font-bold">
+              Procurement Hub
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <UserMenu basePath="/supplier" />
+          </div>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        </main>
+      </div>
+    );
+  }
 
   // pre_registered: NO sidebar, just onboarding
   if (status === "pre_registered") {
