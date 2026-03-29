@@ -2026,6 +2026,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_internal_user: { Args: { _user_id: string }; Returns: boolean }
       is_purchase_operator: { Args: never; Returns: boolean }
       user_has_grant: { Args: { grant_name: string }; Returns: boolean }
       verify_append_only: { Args: { p_table_name: string }; Returns: Json }
