@@ -75,14 +75,25 @@ export const authService = {
     }
   },
 
-  async getCurrentProfile(): Promise<Profile | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+  async getCurrentProfile(userId?: string): Promise<Profile | null> {
+    let resolvedUserId = userId;
+
+    if (!resolvedUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      resolvedUserId = user?.id;
+    }
+
+    if (!resolvedUserId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      resolvedUserId = session?.user?.id;
+    }
+
+    if (!resolvedUserId) return null;
 
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", resolvedUserId)
       .maybeSingle();
 
     if (error) throw error;
