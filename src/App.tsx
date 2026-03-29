@@ -62,96 +62,104 @@ import DirectPurchasesPage from "@/pages/internal/purchasing/DirectPurchasesPage
 import DirectPurchaseDetailPage from "@/pages/internal/purchasing/DirectPurchaseDetailPage";
 import NewDirectPurchasePage from "@/pages/internal/purchasing/NewDirectPurchasePage";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+const App = () => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
-          {/* Post-login redirect */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <PostLoginRedirect />
-              </ProtectedRoute>
-            }
-          />
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Supplier routes */}
-          <Route
-            element={
-              <SupplierRoute>
-                <SupplierLayout />
-              </SupplierRoute>
-            }
-          >
-            <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
-            <Route path="/supplier/onboarding" element={<SupplierOnboarding />} />
-            <Route path="/supplier/documents" element={<SupplierDocuments />} />
-            <Route path="/supplier/opportunities" element={<SupplierOpportunities />} />
-            <Route path="/supplier/opportunities/:id" element={<SupplierOpportunityDetail />} />
-            <Route path="/supplier/orders" element={<SupplierOrders />} />
-            <Route path="/supplier/billing-approvals" element={<SupplierBillingApprovals />} />
-            <Route path="/supplier/billing-approvals/:id" element={<SupplierBillingApprovalDetail />} />
-            <Route path="/supplier/notifications" element={<SupplierNotifications />} />
-            <Route path="/supplier/profile" element={<SupplierProfile />} />
-            <Route path="/supplier/change-password" element={<ChangePassword />} />
-          </Route>
+              {/* Post-login redirect */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <PostLoginRedirect />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Internal routes */}
-          <Route
-            element={
-              <InternalRoute>
-                <InternalLayout />
-              </InternalRoute>
-            }
-          >
-            <Route path="/internal/dashboard" element={<InternalDashboard />} />
-            <Route path="/internal/vendors" element={<InternalVendors />} />
-            <Route path="/internal/vendors/:id" element={<InternalVendorDetail />} />
-            <Route path="/internal/opportunities" element={<InternalOpportunities />} />
-            <Route path="/internal/opportunities/new" element={<InternalOpportunityNew />} />
-            <Route path="/internal/opportunities/:id" element={<InternalOpportunityDetail />} />
-            <Route path="/internal/opportunities/:id/edit" element={<InternalOpportunityEdit />} />
-            <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
-            <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
-            <Route path="/internal/orders" element={<InternalOrders />} />
-            <Route path="/internal/orders/:id" element={<InternalOrderDetail />} />
-            {/* Contract detail is now part of order detail */}
-            <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
-            <Route path="/internal/billing-approvals/:id" element={<InternalBillingApprovalDetail />} />
-            <Route path="/internal/notifications" element={<InternalNotifications />} />
-            <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
-            <Route path="/internal/config/categories" element={<ConfigCategories />} />
-            <Route path="/internal/admin/roles" element={<AdminRoles />} />
-            <Route path="/internal/admin/users" element={<AdminUsers />} />
-            <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
-            <Route path="/internal/profile" element={<InternalProfile />} />
-            <Route path="/internal/change-password" element={<ChangePassword />} />
-            {/* Purchasing module routes */}
-            <Route path="/internal/purchasing/requests" element={<PurchaseRequestsPage />} />
-            <Route path="/internal/purchasing/requests/new" element={<NewPurchaseRequestPage />} />
-            <Route path="/internal/purchasing/requests/:id" element={<PurchaseRequestDetailPage />} />
-            <Route path="/internal/purchasing/panel" element={<PurchasePanelPage />} />
-            <Route path="/internal/purchasing/direct" element={<DirectPurchasesPage />} />
-            <Route path="/internal/purchasing/direct/new/:reqId?" element={<NewDirectPurchasePage />} />
-            <Route path="/internal/purchasing/direct/:id" element={<DirectPurchaseDetailPage />} />
-          </Route>
+              {/* Supplier routes */}
+              <Route
+                element={
+                  <SupplierRoute>
+                    <SupplierLayout />
+                  </SupplierRoute>
+                }
+              >
+                <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+                <Route path="/supplier/onboarding" element={<SupplierOnboarding />} />
+                <Route path="/supplier/documents" element={<SupplierDocuments />} />
+                <Route path="/supplier/opportunities" element={<SupplierOpportunities />} />
+                <Route path="/supplier/opportunities/:id" element={<SupplierOpportunityDetail />} />
+                <Route path="/supplier/orders" element={<SupplierOrders />} />
+                <Route path="/supplier/billing-approvals" element={<SupplierBillingApprovals />} />
+                <Route path="/supplier/billing-approvals/:id" element={<SupplierBillingApprovalDetail />} />
+                <Route path="/supplier/notifications" element={<SupplierNotifications />} />
+                <Route path="/supplier/profile" element={<SupplierProfile />} />
+                <Route path="/supplier/change-password" element={<ChangePassword />} />
+              </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              {/* Internal routes */}
+              <Route
+                element={
+                  <InternalRoute>
+                    <InternalLayout />
+                  </InternalRoute>
+                }
+              >
+                <Route path="/internal/dashboard" element={<InternalDashboard />} />
+                <Route path="/internal/vendors" element={<InternalVendors />} />
+                <Route path="/internal/vendors/:id" element={<InternalVendorDetail />} />
+                <Route path="/internal/opportunities" element={<InternalOpportunities />} />
+                <Route path="/internal/opportunities/new" element={<InternalOpportunityNew />} />
+                <Route path="/internal/opportunities/:id" element={<InternalOpportunityDetail />} />
+                <Route path="/internal/opportunities/:id/edit" element={<InternalOpportunityEdit />} />
+                <Route path="/internal/opportunities/:id/evaluation" element={<InternalOpportunityEvaluation />} />
+                <Route path="/internal/opportunities/:id/create-order" element={<InternalCreateOrder />} />
+                <Route path="/internal/orders" element={<InternalOrders />} />
+                <Route path="/internal/orders/:id" element={<InternalOrderDetail />} />
+                {/* Contract detail is now part of order detail */}
+                <Route path="/internal/billing-approvals" element={<InternalBillingApprovals />} />
+                <Route path="/internal/billing-approvals/:id" element={<InternalBillingApprovalDetail />} />
+                <Route path="/internal/notifications" element={<InternalNotifications />} />
+                <Route path="/internal/config/document-types" element={<ConfigDocumentTypes />} />
+                <Route path="/internal/config/categories" element={<ConfigCategories />} />
+                <Route path="/internal/admin/roles" element={<AdminRoles />} />
+                <Route path="/internal/admin/users" element={<AdminUsers />} />
+                <Route path="/internal/admin/audit-logs" element={<AuditLogs />} />
+                <Route path="/internal/profile" element={<InternalProfile />} />
+                <Route path="/internal/change-password" element={<ChangePassword />} />
+                {/* Purchasing module routes */}
+                <Route path="/internal/purchasing/requests" element={<PurchaseRequestsPage />} />
+                <Route path="/internal/purchasing/requests/new" element={<NewPurchaseRequestPage />} />
+                <Route path="/internal/purchasing/requests/:id" element={<PurchaseRequestDetailPage />} />
+                <Route path="/internal/purchasing/panel" element={<PurchasePanelPage />} />
+                <Route path="/internal/purchasing/direct" element={<DirectPurchasesPage />} />
+                <Route path="/internal/purchasing/direct/new/:reqId?" element={<NewDirectPurchasePage />} />
+                <Route path="/internal/purchasing/direct/:id" element={<DirectPurchaseDetailPage />} />
+              </Route>
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;
