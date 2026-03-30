@@ -10,6 +10,7 @@ import { vendorService } from "@/services/vendorService";
 import { documentService } from "@/services/documentService";
 import { contactService } from "@/services/contactService";
 import { auditService } from "@/services/auditService";
+import { getEffectiveDocStatus } from "@/lib/documentUtils";
 import { notificationService } from "@/services/notificationService";
 import { useGrants } from "@/hooks/useGrants";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +66,7 @@ const DOC_LABELS: Record<
   approved: { label: "Approvato", variant: "default" },
   uploaded: { label: "In revisione", variant: "secondary" },
   rejected: { label: "Respinto", variant: "destructive" },
+  expired: { label: "Scaduto", variant: "destructive" },
 };
 
 /* ── Helpers ── */
@@ -562,7 +564,8 @@ export default function InternalVendorDetail() {
           ) : (
             docs.map((doc) => {
               const dt = dtMap[doc.document_type_id];
-              const db = DOC_LABELS[doc.status] || { label: doc.status, variant: "outline" as const };
+              const effectiveStatus = getEffectiveDocStatus(doc);
+              const db = DOC_LABELS[effectiveStatus] || { label: effectiveStatus, variant: "outline" as const };
               return (
                 <Card key={doc.id} className="card-top-docs">
                   <CardContent className="pt-4">

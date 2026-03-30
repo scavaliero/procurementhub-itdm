@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { DocumentCard } from "@/components/supplier/DocumentCard";
+import { getEffectiveDocStatus, isDocExpiringSoon } from "@/lib/documentUtils";
 import type { UploadedDocument } from "@/types";
 
 /** States where documents are locked (waiting for admin review) */
@@ -87,17 +88,17 @@ export default function SupplierDocuments() {
   // KPI counts for documents
   const kpiCounts = useMemo(() => {
     let approvedCount = 0, expiring = 0, pending = 0, rejected = 0, missing = 0;
-    const now = new Date();
-    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     for (const dt of docTypes) {
       const doc = latestByType[dt.id];
       if (!doc) { missing++; continue; }
-      if (doc.status === "approved") {
+      const effective = getEffectiveDocStatus(doc);
+      if (effective === "approved") {
         approvedCount++;
-        if (doc.expiry_date && new Date(doc.expiry_date) <= thirtyDays) expiring++;
+        if (isDocExpiringSoon(doc)) expiring++;
       }
-      else if (doc.status === "uploaded") pending++;
-      else if (doc.status === "rejected") rejected++;
+      else if (effective === "expired") { /* count as expired, not approved */ }
+      else if (effective === "uploaded") pending++;
+      else if (effective === "rejected") rejected++;
     }
     return { approved: approvedCount, expiring, pending, rejected, missing };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,16 +106,15 @@ export default function SupplierDocuments() {
 
   // Filtered doc types
   const filteredDocTypes = useMemo(() => {
-    const now = new Date();
-    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     return docTypes.filter((dt) => {
       const doc = latestByType[dt.id];
-      if (statusFilter === "approved" && doc?.status !== "approved") return false;
+      const effective = getEffectiveDocStatus(doc);
+      if (statusFilter === "approved" && effective !== "approved") return false;
       if (statusFilter === "expiring") {
-        if (!doc || doc.status !== "approved" || !doc.expiry_date || new Date(doc.expiry_date) > thirtyDays) return false;
+        if (!doc || !isDocExpiringSoon(doc)) return false;
       }
-      if (statusFilter === "pending" && doc?.status !== "uploaded") return false;
-      if (statusFilter === "rejected" && doc?.status !== "rejected") return false;
+      if (statusFilter === "pending" && effective !== "uploaded") return false;
+      if (statusFilter === "rejected" && effective !== "rejected") return false;
       if (statusFilter === "missing" && doc) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -136,10 +136,13 @@ export default function SupplierDocuments() {
 
   const mandatory = docTypes.filter((dt) => dt.is_mandatory);
   const approved = mandatory.filter(
-    (dt) => latestByType[dt.id]?.status === "approved"
+    (dt) => getEffectiveDocStatus(latestByType[dt.id]) === "approved"
   ).length;
   const mandatoryUploaded = mandatory.filter(
-    (dt) => latestByType[dt.id] && latestByType[dt.id].status !== "rejected"
+    (dt) => {
+      const eff = getEffectiveDocStatus(latestByType[dt.id]);
+      return eff !== "not_uploaded" && eff !== "rejected" && eff !== "expired";
+    }
   ).length;
   const progressPct = mandatory.length > 0 ? (approved / mandatory.length) * 100 : 0;
 
