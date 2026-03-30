@@ -48,6 +48,12 @@ export default function PurchasePanelPage() {
     setConfirmId(null);
   };
 
+  const kpiCounts = useMemo(() => ({
+    toPickUp: sections.toPickUp.length,
+    inProgress: sections.inProgress.length,
+    completed: sections.completed.length,
+  }), [sections]);
+
   if (!hasGrant("manage_purchase_operations") && !hasGrant("view_purchase_panel")) {
     return <EmptyState title="Accesso negato" description="Non hai i permessi per visualizzare questa pagina." />;
   }
@@ -62,11 +68,6 @@ export default function PurchasePanelPage() {
     );
   }
 
-  const kpiCounts = useMemo(() => ({
-    toPickUp: sections.toPickUp.length,
-    inProgress: sections.inProgress.length,
-    completed: sections.completed.length,
-  }), [sections]);
 
   const kpiCards = [
     { key: "toPickUp", label: "Da prendere in carico", value: kpiCounts.toPickUp, icon: ShoppingCart, color: "text-amber-600", bg: "bg-amber-100", alert: true },
