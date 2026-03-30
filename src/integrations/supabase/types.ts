@@ -1998,6 +1998,54 @@ export type Database = {
       }
     }
     Views: {
+      bid_evaluations_supplier: {
+        Row: {
+          admin_approved: boolean | null
+          bid_id: string | null
+          criteria_scores: Json | null
+          evaluated_at: string | null
+          evaluator_id: string | null
+          id: string | null
+          tech_approved: boolean | null
+          total_score: number | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          bid_id?: string | null
+          criteria_scores?: Json | null
+          evaluated_at?: string | null
+          evaluator_id?: string | null
+          id?: string | null
+          tech_approved?: boolean | null
+          total_score?: number | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          bid_id?: string | null
+          criteria_scores?: Json | null
+          evaluated_at?: string | null
+          evaluator_id?: string | null
+          id?: string | null
+          tech_approved?: boolean | null
+          total_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_evaluations_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_evaluations_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_economic_summary: {
         Row: {
           approved_billing_total: number | null
