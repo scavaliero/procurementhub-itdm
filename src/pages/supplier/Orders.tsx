@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { orderService } from "@/services/orderService";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,7 @@ const FILTER_STATUS_LABELS: Record<string, string> = {
 
 export default function SupplierOrders() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [rejectDialog, setRejectDialog] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -212,7 +213,7 @@ export default function SupplierOrders() {
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((o: any) => (
-                  <TableRow key={o.id}>
+                  <TableRow key={o.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/supplier/orders/${o.id}`)}>
                     <TableCell className="font-mono text-sm">{o.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{o.subject}</TableCell>
                     <TableCell>
@@ -228,7 +229,7 @@ export default function SupplierOrders() {
                         ? `${format(new Date(o.start_date), "dd/MM/yy")} – ${format(new Date(o.end_date), "dd/MM/yy")}`
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       {o.status === "issued" ? (
                         <div className="flex gap-1 justify-center">
                           <Button

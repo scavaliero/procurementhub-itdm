@@ -48,6 +48,12 @@ export default function PurchasePanelPage() {
     setConfirmId(null);
   };
 
+  const kpiCounts = useMemo(() => ({
+    toPickUp: sections.toPickUp.length,
+    inProgress: sections.inProgress.length,
+    completed: sections.completed.length,
+  }), [sections]);
+
   if (!hasGrant("manage_purchase_operations") && !hasGrant("view_purchase_panel")) {
     return <EmptyState title="Accesso negato" description="Non hai i permessi per visualizzare questa pagina." />;
   }
@@ -62,6 +68,13 @@ export default function PurchasePanelPage() {
     );
   }
 
+
+  const kpiCards = [
+    { key: "toPickUp", label: "Da prendere in carico", value: kpiCounts.toPickUp, icon: ShoppingCart, color: "text-amber-600", bg: "bg-amber-100", alert: true },
+    { key: "inProgress", label: "In lavorazione", value: kpiCounts.inProgress, icon: Briefcase, color: "text-blue-600", bg: "bg-blue-100" },
+    { key: "completed", label: "Completate (30gg)", value: kpiCounts.completed, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100" },
+  ];
+
   return (
     <div className="p-6 space-y-8">
       <Breadcrumb
@@ -73,6 +86,33 @@ export default function PurchasePanelPage() {
       <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
         <span className="text-base">🛒</span> Pannello Acquisti
       </h2>
+
+      {/* KPI Cards */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+        {kpiCards.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <Card
+              key={kpi.key}
+              className={`shadow-sm transition-all hover:shadow-md ${
+                kpi.alert && kpi.value > 0 ? "border-amber-400/40 bg-amber-50" : ""
+              }`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {kpi.label}
+                </CardTitle>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${kpi.bg}`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold tabular-nums">{kpi.value}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Section 1: Da prendere in carico */}
       <div className="space-y-3">

@@ -178,7 +178,7 @@ export default function SupplierBillingApprovals() {
                         variant="link"
                         size="sm"
                         className="p-0 h-auto text-xs"
-                        onClick={() => navigate(`/supplier/orders`)}
+                        onClick={() => navigate(`/supplier/orders/${b.order_id}`)}
                       >
                         {b.orders?.code ?? "—"}
                       </Button>

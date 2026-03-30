@@ -125,7 +125,10 @@ export default function InternalOpportunityDetail() {
   const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
   const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
   const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
-  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && invitations.length === 0 && !hasOrder && ["draft", "pending_approval", "open"].includes(opp.status);
+  const isAdmin = hasGrant("manage_tenant_settings");
+  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder && (
+    isAdmin || (invitations.length === 0 && ["draft", "pending_approval", "open"].includes(opp.status))
+  );
   const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
 
   const deleteMutation = useMutation({

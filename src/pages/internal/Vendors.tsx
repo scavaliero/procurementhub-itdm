@@ -73,14 +73,21 @@ function MetricCard({
   count,
   icon: Icon,
   color,
+  active,
+  onClick,
 }: {
   label: string;
   count: number;
   icon: React.ElementType;
   color: string;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className="card-top-suppliers">
+    <Card
+      className={`card-top-suppliers cursor-pointer transition-all hover:shadow-md ${active ? "ring-2 ring-primary" : ""}`}
+      onClick={onClick}
+    >
       <CardContent className="pt-5 pb-4 flex items-center gap-3">
         <div className={`rounded-lg p-2.5 ${color}`}>
           <Icon className="h-5 w-5 text-white" />
@@ -230,36 +237,48 @@ export default function InternalVendors() {
           count={statusCounts["pre_registered"] || 0}
           icon={Clock}
           color="bg-slate-500"
+          active={statusFilter === "pre_registered"}
+          onClick={() => updateParams({ status: statusFilter === "pre_registered" ? "" : "pre_registered" })}
         />
         <MetricCard
           label="In revisione"
           count={statusCounts["pending_review"] || 0}
           icon={Eye}
           color="bg-blue-500"
+          active={statusFilter === "pending_review"}
+          onClick={() => updateParams({ status: statusFilter === "pending_review" ? "" : "pending_review" })}
         />
         <MetricCard
           label="Abilitati"
           count={statusCounts["enabled"] || 0}
           icon={Unlock}
           color="bg-sky-500"
+          active={statusFilter === "enabled"}
+          onClick={() => updateParams({ status: statusFilter === "enabled" ? "" : "enabled" })}
         />
         <MetricCard
           label="In accreditamento"
           count={statusCounts["in_accreditation"] || 0}
           icon={ClipboardCheck}
           color="bg-amber-500"
+          active={statusFilter === "in_accreditation"}
+          onClick={() => updateParams({ status: statusFilter === "in_accreditation" ? "" : "in_accreditation" })}
         />
         <MetricCard
           label="Accreditati"
           count={statusCounts["accredited"] || 0}
           icon={CheckCircle2}
           color="bg-emerald-600"
+          active={statusFilter === "accredited"}
+          onClick={() => updateParams({ status: statusFilter === "accredited" ? "" : "accredited" })}
         />
         <MetricCard
           label="Sospesi"
           count={statusCounts["suspended"] || 0}
           icon={AlertTriangle}
           color="bg-red-500"
+          active={statusFilter === "suspended"}
+          onClick={() => updateParams({ status: statusFilter === "suspended" ? "" : "suspended" })}
         />
       </div>
 
