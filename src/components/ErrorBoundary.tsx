@@ -12,32 +12,43 @@ interface State {
 }
 
 // Known transient React/DOM errors that can be auto-recovered
+// NOTE: Do NOT include "Rendered more/fewer hooks" — those are structural
+// and auto-recovering from them causes infinite re-render loops (error #310).
 const isRecoverableError = (error: Error) =>
   error.message?.includes("removeChild") ||
   error.message?.includes("insertBefore") ||
-  error.message?.includes("not a child of this node") ||
-  error.message?.includes("Rendered more hooks") ||
-  error.message?.includes("Rendered fewer hooks");
+  error.message?.includes("not a child of this node");
 
 export class ErrorBoundary extends React.Component<Props, State> {
+  private recoveryAttempts = 0;
+  private lastErrorTime = 0;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Auto-recover from browser-extension DOM errors
-    if (isRecoverableError(error)) {
-      return { hasError: false, error: null };
-    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error) {
+    const now = Date.now();
+    // Only auto-recover from transient DOM errors, and cap retries
     if (isRecoverableError(error)) {
-      // Force re-render to recover
-      this.setState({ hasError: false, error: null });
+      if (now - this.lastErrorTime < 2000) {
+        this.recoveryAttempts++;
+      } else {
+        this.recoveryAttempts = 1;
+      }
+      this.lastErrorTime = now;
+
+      if (this.recoveryAttempts <= 3) {
+        this.setState({ hasError: false, error: null });
+        return;
+      }
     }
+    // Non-recoverable or too many retries: stay in error state
   }
 
   render() {
@@ -49,7 +60,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <p className="text-sm text-muted-foreground max-w-md text-center">
             {this.state.error?.message ?? "Errore imprevisto"}
           </p>
-          <Button variant="outline" onClick={() => this.setState({ hasError: false, error: null })}>
+          <Button variant="outline" onClick={() => { this.recoveryAttempts = 0; this.setState({ hasError: false, error: null }); }}>
             Riprova
           </Button>
         </div>
