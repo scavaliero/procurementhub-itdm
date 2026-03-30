@@ -228,7 +228,7 @@ export default function SupplierOrders() {
                         ? `${format(new Date(o.start_date), "dd/MM/yy")} – ${format(new Date(o.end_date), "dd/MM/yy")}`
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       {o.status === "issued" ? (
                         <div className="flex gap-1 justify-center">
                           <Button
