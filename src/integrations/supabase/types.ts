@@ -2027,7 +2027,12 @@ export type Database = {
         Returns: undefined
       }
       is_internal_user: { Args: { _user_id: string }; Returns: boolean }
+      is_invited_supplier: {
+        Args: { _opp_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_purchase_operator: { Args: never; Returns: boolean }
+      opportunity_tenant_id: { Args: { _opp_id: string }; Returns: string }
       user_has_grant: { Args: { grant_name: string }; Returns: boolean }
       verify_append_only: { Args: { p_table_name: string }; Returns: Json }
       verify_function_exists: {
