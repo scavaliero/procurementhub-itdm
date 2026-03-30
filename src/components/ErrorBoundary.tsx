@@ -12,12 +12,12 @@ interface State {
 }
 
 // Known transient React/DOM errors that can be auto-recovered
+// NOTE: Do NOT include "Rendered more/fewer hooks" — those are structural
+// and auto-recovering from them causes infinite re-render loops (error #310).
 const isRecoverableError = (error: Error) =>
   error.message?.includes("removeChild") ||
   error.message?.includes("insertBefore") ||
-  error.message?.includes("not a child of this node") ||
-  error.message?.includes("Rendered more hooks") ||
-  error.message?.includes("Rendered fewer hooks");
+  error.message?.includes("not a child of this node");
 
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
