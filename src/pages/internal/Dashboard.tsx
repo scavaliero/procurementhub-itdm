@@ -422,9 +422,7 @@ export default function InternalDashboard() {
                             </p>
                           </div>
                           <span className="text-sm font-semibold tabular-nums shrink-0 ml-2">
-                            €{Number(b.amount).toLocaleString("it-IT", {
-                              minimumFractionDigits: 2,
-                            })}
+                            {formatCurrency(Number(b.amount))}
                           </span>
                         </Link>
                       </li>

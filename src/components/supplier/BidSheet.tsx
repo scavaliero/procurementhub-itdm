@@ -278,7 +278,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       <form onSubmit={handleSubmit((data) => submitMutation.mutate(data))} className="space-y-4">
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <Label>Importo totale (€) *{budgetMax && <span className="text-xs text-muted-foreground ml-2">(max € {budgetMax.toLocaleString("it-IT")})</span>}</Label>
+            <Label>Importo totale (€) *{budgetMax && <span className="text-xs text-muted-foreground ml-2">(max {formatCurrency(budgetMax)})</span>}</Label>
             <Input type="number" step="0.01" max={budgetMax ?? undefined} {...register("total_amount")} />
             {errors.total_amount && <p className="text-sm text-destructive mt-1">{errors.total_amount.message}</p>}
           </div>
