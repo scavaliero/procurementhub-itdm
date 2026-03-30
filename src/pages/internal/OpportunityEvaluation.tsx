@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download, RotateCcw } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, X, Trophy, ChevronDown, ChevronRight, FileText, Download, RotateCcw, ShieldCheck } from "lucide-react";
 
 interface CriterionDef {
   name: string;
@@ -231,6 +231,28 @@ export default function InternalOpportunityEvaluation() {
     onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
+  // "Chiudi raccolta e valuta" — blocks new bids, admits all submitted, transitions to evaluating
+  const hasSubmittedBids = allSubmittedBidIds.length > 0;
+  const isCollecting = opp?.status === "collecting_bids";
+
+  const closeCollectionMutation = useMutation({
+    mutationFn: async () => {
+      if (!profile || !opportunityId) throw new Error("Dati mancanti");
+      // 1. Admit all submitted bids
+      for (const bidId of allSubmittedBidIds) {
+        await bidService.updateBidStatus(bidId, "admitted", profile.tenant_id);
+      }
+      // 2. Transition opportunity to evaluating
+      await opportunityService.update(opportunityId, { status: "evaluating" });
+    },
+    onSuccess: () => {
+      toast.success("Raccolta chiusa. Tutte le offerte sono state ammesse.");
+      qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Errore"),
+  });
+
   if (oppLoading || invLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   }
@@ -258,24 +280,36 @@ export default function InternalOpportunityEvaluation() {
             )}
           </div>
         </div>
-        {canAward && !isAwarded && admittedBids.length > 0 && (
-          <Button onClick={() => setAwardDialog(true)} className="gap-2">
-            <Trophy className="h-4 w-4" />
-            Seleziona vincitore
-          </Button>
-        )}
-        {isAwarded && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
-              Aggiudicata
-            </Badge>
-            {canCreateOrder && (
-              <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${opportunityId}/create-order`)}>
-                Genera ordine
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {isCollecting && hasSubmittedBids && canEvaluate && (
+            <Button
+              onClick={() => closeCollectionMutation.mutate()}
+              disabled={closeCollectionMutation.isPending}
+              className="gap-2"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {closeCollectionMutation.isPending ? "Chiusura in corso…" : "Chiudi raccolta e valuta"}
+            </Button>
+          )}
+          {canAward && !isAwarded && !isCollecting && admittedBids.length > 0 && (
+            <Button onClick={() => setAwardDialog(true)} className="gap-2">
+              <Trophy className="h-4 w-4" />
+              Seleziona vincitore
+            </Button>
+          )}
+          {isAwarded && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
+                Aggiudicata
+              </Badge>
+              {canCreateOrder && (
+                <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${opportunityId}/create-order`)}>
+                  Genera ordine
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {invitations.length === 0 ? (
