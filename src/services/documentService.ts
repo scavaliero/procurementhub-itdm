@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
+import { notificationService } from "@/services/notificationService";
 import type { DocumentType, UploadedDocument } from "@/types";
 
 export const documentService = {
