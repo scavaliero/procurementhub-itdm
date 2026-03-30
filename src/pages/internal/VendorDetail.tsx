@@ -65,6 +65,7 @@ const DOC_LABELS: Record<
   approved: { label: "Approvato", variant: "default" },
   uploaded: { label: "In revisione", variant: "secondary" },
   rejected: { label: "Respinto", variant: "destructive" },
+  expired: { label: "Scaduto", variant: "destructive" },
 };
 
 /* ── Helpers ── */
