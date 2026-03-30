@@ -184,7 +184,7 @@ export default function SupplierOpportunityDetail() {
     mutationFn: async (data: BidFormData) => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       if (budgetMax && data.total_amount > budgetMax) {
-        throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera l'offerta massima (€ ${budgetMax.toLocaleString("it-IT")})`);
+        throw new Error(`L'importo (${formatCurrency(data.total_amount)}) supera l'offerta massima (${formatCurrency(budgetMax)})`);
       }
 
       const bid = await bidService.saveDraft(
