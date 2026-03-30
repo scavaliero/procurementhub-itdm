@@ -52,6 +52,7 @@ const FILTER_STATUS_LABELS: Record<string, string> = {
 
 export default function SupplierOrders() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [rejectDialog, setRejectDialog] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
