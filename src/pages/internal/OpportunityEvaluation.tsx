@@ -231,6 +231,28 @@ export default function InternalOpportunityEvaluation() {
     onError: (err: Error) => toast.error(err.message || "Errore"),
   });
 
+  // "Chiudi raccolta e valuta" — blocks new bids, admits all submitted, transitions to evaluating
+  const hasSubmittedBids = allSubmittedBidIds.length > 0;
+  const isCollecting = opp?.status === "collecting_bids";
+
+  const closeCollectionMutation = useMutation({
+    mutationFn: async () => {
+      if (!profile || !opportunityId) throw new Error("Dati mancanti");
+      // 1. Admit all submitted bids
+      for (const bidId of allSubmittedBidIds) {
+        await bidService.updateBidStatus(bidId, "admitted", profile.tenant_id);
+      }
+      // 2. Transition opportunity to evaluating
+      await opportunityService.update(opportunityId, { status: "evaluating" });
+    },
+    onSuccess: () => {
+      toast.success("Raccolta chiusa. Tutte le offerte sono state ammesse.");
+      qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Errore"),
+  });
+
   if (oppLoading || invLoading) {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
   }
