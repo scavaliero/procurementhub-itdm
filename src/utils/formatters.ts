@@ -21,10 +21,10 @@ export function maskIBAN(iban: string | null | undefined): string {
  */
 export function formatCurrency(amount: number | null | undefined): string {
   if (amount == null) return "—";
-  return new Intl.NumberFormat("it-IT", {
+  return "€ " + new Intl.NumberFormat("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount) + " EUR";
+  }).format(amount);
 }
 
 /**
