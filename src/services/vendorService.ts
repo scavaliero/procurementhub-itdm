@@ -302,7 +302,7 @@ export const vendorService = {
     // Fetch approved docs expiring within 30 days
     const { data: expiringData, error: err1 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "approved")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds)
@@ -314,7 +314,7 @@ export const vendorService = {
     // Fetch expired docs: status='expired' OR (status='approved' AND expiry_date < today)
     const { data: expiredByStatus, error: err2 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "expired")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds);
@@ -322,7 +322,7 @@ export const vendorService = {
 
     const { data: expiredByDate, error: err3 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "approved")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds)
@@ -340,9 +340,8 @@ export const vendorService = {
     // Deduplicate expired docs (a doc could match both queries if status was not yet updated)
     const seenExpired = new Set<string>();
     for (const row of [...(expiredByStatus || []), ...(expiredByDate || [])]) {
-      const key = `${row.supplier_id}:${row.expiry_date}`;
-      if (seenExpired.has(key)) continue;
-      seenExpired.add(key);
+      if (seenExpired.has(row.id)) continue;
+      seenExpired.add(row.id);
       if (!result[row.supplier_id]) result[row.supplier_id] = { expiring: 0, expired: 0 };
       result[row.supplier_id].expired++;
     }
