@@ -567,56 +567,134 @@ export default function InternalVendorDetail() {
 
         {/* ── Tab Documenti ── */}
         <TabsContent value="documents" className="mt-4 space-y-3">
-          {docs.length === 0 ? (
-            <EmptyState title="Nessun documento caricato" description="Il fornitore non ha ancora caricato documenti." />
-          ) : (
-            docs.map((doc) => {
-              const dt = dtMap[doc.document_type_id];
-              const effectiveStatus = getEffectiveDocStatus(doc);
-              const db = DOC_LABELS[effectiveStatus] || { label: effectiveStatus, variant: "outline" as const };
-              return (
-                <Card key={doc.id} className="card-top-docs">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{dt?.name || doc.document_type_id}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {doc.original_filename} · v{doc.version}
-                          {doc.expiry_date && ` · Scade: ${fmtDate(doc.expiry_date)}`}
-                        </p>
-                        {doc.review_notes && (
-                          <p className="text-xs text-muted-foreground mt-1">Note: {doc.review_notes}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={db.variant}>{db.label}</Badge>
-                        {doc.storage_path && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadMut.mutate(doc.storage_path!)}>
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canReview && doc.status === "uploaded" && (
-                          <>
-                            <Button size="sm" disabled={reviewMut.isPending} onClick={() => reviewMut.mutate({ doc, action: "approved" })}>
-                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approva
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              disabled={reviewMut.isPending}
-                              onClick={() => { setRejectDoc(doc); setRejectDocNotes(""); }}
-                            >
-                              <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
-                            </Button>
-                          </>
-                        )}
-                      </div>
+          {(() => {
+            // Group docs by document_type_id, pick the latest per type
+            const grouped: Record<string, UploadedDocument[]> = {};
+            docs.forEach((d) => {
+              if (!grouped[d.document_type_id]) grouped[d.document_type_id] = [];
+              grouped[d.document_type_id].push(d);
+            });
+            // Sort each group by created_at desc
+            Object.values(grouped).forEach((arr) =>
+              arr.sort((a, b) => new Date(b.created_at ?? "").getTime() - new Date(a.created_at ?? "").getTime())
+            );
+            const currentDocs = Object.values(grouped).map((arr) => arr[0]);
+            const hasHistory = docs.length > currentDocs.length;
+
+            if (currentDocs.length === 0) {
+              return <EmptyState title="Nessun documento caricato" description="Il fornitore non ha ancora caricato documenti." />;
+            }
+
+            return (
+              <>
+                {hasHistory && (
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" onClick={() => setShowDocHistory(true)}>
+                      <History className="h-4 w-4 mr-1" /> Storico documenti
+                    </Button>
+                  </div>
+                )}
+                {currentDocs.map((doc) => {
+                  const dt = dtMap[doc.document_type_id];
+                  const effectiveStatus = getEffectiveDocStatus(doc);
+                  const db = DOC_LABELS[effectiveStatus] || { label: effectiveStatus, variant: "outline" as const };
+                  const historyCount = (grouped[doc.document_type_id]?.length ?? 1) - 1;
+                  return (
+                    <Card key={doc.id} className="card-top-docs">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">{dt?.name || doc.document_type_id}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {doc.original_filename} · v{doc.version}
+                              {doc.expiry_date && ` · Scade: ${fmtDate(doc.expiry_date)}`}
+                              {historyCount > 0 && ` · ${historyCount} versione/i precedente/i`}
+                            </p>
+                            {doc.review_notes && (
+                              <p className="text-xs text-muted-foreground mt-1">Note: {doc.review_notes}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={db.variant}>{db.label}</Badge>
+                            {doc.storage_path && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadMut.mutate(doc.storage_path!)}>
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canReview && doc.status === "uploaded" && (
+                              <>
+                                <Button size="sm" disabled={reviewMut.isPending} onClick={() => reviewMut.mutate({ doc, action: "approved" })}>
+                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approva
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  disabled={reviewMut.isPending}
+                                  onClick={() => { setRejectDoc(doc); setRejectDocNotes(""); }}
+                                >
+                                  <XCircle className="h-3.5 w-3.5 mr-1" /> Respingi
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* Document History Dialog */}
+                <Dialog open={showDocHistory} onOpenChange={setShowDocHistory}>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Storico documenti</DialogTitle>
+                      <DialogDescription>Tutte le versioni dei documenti caricati dal fornitore, raggruppate per tipo.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      {Object.entries(grouped).map(([typeId, typeDocs]) => {
+                        const dt = dtMap[typeId];
+                        return (
+                          <details key={typeId} className="group border rounded-lg">
+                            <summary className="cursor-pointer px-4 py-3 flex items-center justify-between hover:bg-muted/50 rounded-lg">
+                              <span className="font-medium text-sm">{dt?.name || typeId}</span>
+                              <Badge variant="outline" className="text-xs">{typeDocs.length} versione/i</Badge>
+                            </summary>
+                            <div className="px-4 pb-3 space-y-2">
+                              {typeDocs.map((doc, idx) => {
+                                const effectiveStatus = getEffectiveDocStatus(doc);
+                                const db = DOC_LABELS[effectiveStatus] || { label: effectiveStatus, variant: "outline" as const };
+                                return (
+                                  <div key={doc.id} className={`flex items-center justify-between gap-2 py-2 ${idx > 0 ? "border-t" : ""}`}>
+                                    <div className="min-w-0">
+                                      <p className="text-sm">{doc.original_filename} · v{doc.version}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {fmtDateTime(doc.created_at)}
+                                        {doc.expiry_date && ` · Scade: ${fmtDate(doc.expiry_date)}`}
+                                      </p>
+                                      {doc.review_notes && <p className="text-xs text-muted-foreground">Note: {doc.review_notes}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Badge variant={db.variant} className="text-xs">{db.label}</Badge>
+                                      {idx === 0 && <Badge variant="secondary" className="text-xs">Attuale</Badge>}
+                                      {doc.storage_path && (
+                                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => downloadMut.mutate(doc.storage_path!)}>
+                                          <Download className="h-3.5 w-3.5" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        );
+                      })}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
+                  </DialogContent>
+                </Dialog>
+              </>
+            );
+          })()}
         </TabsContent>
 
         {/* ── Tab Categorie ── */}
