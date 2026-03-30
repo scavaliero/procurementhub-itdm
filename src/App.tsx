@@ -26,6 +26,7 @@ import SupplierDocuments from "@/pages/supplier/Documents";
 import SupplierOpportunities from "@/pages/supplier/Opportunities";
 import SupplierOpportunityDetail from "@/pages/supplier/OpportunityDetail";
 import SupplierOrders from "@/pages/supplier/Orders";
+import SupplierOrderDetail from "@/pages/supplier/OrderDetail";
 import SupplierBillingApprovals from "@/pages/supplier/BillingApprovals";
 import SupplierBillingApprovalDetail from "@/pages/supplier/BillingApprovalDetail";
 import SupplierNotifications from "@/pages/supplier/Notifications";
