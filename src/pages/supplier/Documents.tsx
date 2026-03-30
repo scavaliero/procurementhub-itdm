@@ -255,16 +255,21 @@ export default function SupplierDocuments() {
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDocTypes.map((dt) => (
-            <DocumentCard
-              key={dt.id}
-              docType={dt}
-              uploaded={latestByType[dt.id]}
-              supplierId={supplier.id}
-              tenantId={supplier.tenant_id}
-              locked={isLocked}
-            />
-          ))}
+          {filteredDocTypes.map((dt) => {
+            // For doc types allowing multiple uploads (non-mandatory, e.g. CERT_AZIENDALI)
+            const allUploadsForType = uploadedDocs.filter((d) => d.document_type_id === dt.id);
+            return (
+              <DocumentCard
+                key={dt.id}
+                docType={dt}
+                uploaded={latestByType[dt.id]}
+                allUploads={allUploadsForType}
+                supplierId={supplier.id}
+                tenantId={supplier.tenant_id}
+                locked={isLocked}
+              />
+            );
+          })}
         </div>
       )}
 

@@ -362,7 +362,7 @@ export default function InternalOpportunityDetail() {
                 <Detail label="Stato" value={orderForOpp.status === "draft" ? "Bozza" : orderForOpp.status === "pending_approval" ? "In approvazione" : orderForOpp.status === "issued" ? "Emesso" : orderForOpp.status === "accepted" ? "Accettato" : orderForOpp.status === "completed" ? "Completato" : orderForOpp.status} />
                 <Detail label="Oggetto" value={orderForOpp.subject} />
                 <Detail label="Fornitore" value={(orderForOpp as any).suppliers?.company_name} />
-                <Detail label="Importo" value={orderForOpp.amount != null ? `€ ${Number(orderForOpp.amount).toLocaleString("it-IT")}` : undefined} />
+                <Detail label="Importo" value={orderForOpp.amount != null ? `€ ${Number(orderForOpp.amount).toLocaleString("it-IT", { minimumFractionDigits: 2 })}` : undefined} />
                 <Detail label="Periodo" value={orderForOpp.start_date && orderForOpp.end_date ? `${orderForOpp.start_date} — ${orderForOpp.end_date}` : undefined} />
                 {orderForOpp.description && (
                   <div className="md:col-span-2">
