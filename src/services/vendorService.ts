@@ -302,7 +302,7 @@ export const vendorService = {
     // Fetch approved docs expiring within 30 days
     const { data: expiringData, error: err1 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "approved")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds)
@@ -314,7 +314,7 @@ export const vendorService = {
     // Fetch expired docs: status='expired' OR (status='approved' AND expiry_date < today)
     const { data: expiredByStatus, error: err2 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "expired")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds);
@@ -322,7 +322,7 @@ export const vendorService = {
 
     const { data: expiredByDate, error: err3 } = await supabase
       .from("uploaded_documents")
-      .select("supplier_id, expiry_date")
+      .select("id, supplier_id, expiry_date")
       .eq("status", "approved")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds)
