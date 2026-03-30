@@ -211,9 +211,8 @@ export default function InternalOpportunityNew() {
 
   const determineStatus = () => {
     if (!step1Data) return "draft";
-    const budgetMax = step1Data.budget_max ?? 0;
-    if (budgetMax > 50000 && !canApprove) return "pending_approval";
-    return "open";
+    // Tutte le opportunità pubblicate devono passare per la fase di approvazione
+    return "pending_approval";
   };
 
   const handlePublish = () => {
