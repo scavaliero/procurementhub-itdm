@@ -212,7 +212,7 @@ export default function SupplierOrders() {
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((o: any) => (
-                  <TableRow key={o.id}>
+                  <TableRow key={o.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/supplier/orders/${o.id}`)}>
                     <TableCell className="font-mono text-sm">{o.code ?? "—"}</TableCell>
                     <TableCell className="font-medium">{o.subject}</TableCell>
                     <TableCell>
