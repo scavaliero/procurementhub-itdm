@@ -256,26 +256,41 @@ export const vendorService = {
     return { data: (data || []) as Supplier[], count: count || 0 };
   },
 
-  /** Get supplier IDs that have expiring or expired approved documents */
+  /** Get supplier IDs that have expiring or expired documents */
   async getSupplierIdsWithDocAlert(type: "expiring" | "expired"): Promise<string[]> {
     const now = new Date().toISOString().split("T")[0];
 
-    let query = supabase
+    if (type === "expiring") {
+      const future = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("uploaded_documents")
+        .select("supplier_id")
+        .eq("status", "approved")
+        .is("deleted_at", null)
+        .gte("expiry_date", now)
+        .lte("expiry_date", future);
+      if (error) throw error;
+      return [...new Set((data || []).map((d) => d.supplier_id))];
+    }
+
+    // Expired: status='expired' OR (status='approved' AND expiry_date < today)
+    const { data: byStatus, error: e1 } = await supabase
+      .from("uploaded_documents")
+      .select("supplier_id")
+      .eq("status", "expired")
+      .is("deleted_at", null);
+    if (e1) throw e1;
+
+    const { data: byDate, error: e2 } = await supabase
       .from("uploaded_documents")
       .select("supplier_id")
       .eq("status", "approved")
-      .is("deleted_at", null);
+      .is("deleted_at", null)
+      .not("expiry_date", "is", null)
+      .lt("expiry_date", now);
+    if (e2) throw e2;
 
-    if (type === "expiring") {
-      const future = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
-      query = query.gte("expiry_date", now).lte("expiry_date", future);
-    } else {
-      query = query.lt("expiry_date", now);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return [...new Set((data || []).map((d) => d.supplier_id))];
+    return [...new Set([...(byStatus || []), ...(byDate || [])].map((d) => d.supplier_id))];
   },
 
   /** Get doc alert counts (expiring + expired) per supplier for a list of supplier IDs */
