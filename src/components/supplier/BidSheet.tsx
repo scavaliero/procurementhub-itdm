@@ -7,6 +7,7 @@ import { opportunityService } from "@/services/opportunityService";
 import { invitationService } from "@/services/invitationService";
 import { bidService, type ValidateBidResult } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/utils/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,7 +75,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
     if (budgetMax) {
-      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di € ${budgetMax.toLocaleString("it-IT")}`);
+      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di ${formatCurrency(budgetMax)}`);
     }
     return z.object({
       total_amount: amountSchema,
@@ -278,7 +279,7 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
       <form onSubmit={handleSubmit((data) => submitMutation.mutate(data))} className="space-y-4">
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <Label>Importo totale (€) *{budgetMax && <span className="text-xs text-muted-foreground ml-2">(max € {budgetMax.toLocaleString("it-IT")})</span>}</Label>
+            <Label>Importo totale (€) *{budgetMax && <span className="text-xs text-muted-foreground ml-2">(max {formatCurrency(budgetMax)})</span>}</Label>
             <Input type="number" step="0.01" max={budgetMax ?? undefined} {...register("total_amount")} />
             {errors.total_amount && <p className="text-sm text-destructive mt-1">{errors.total_amount.message}</p>}
           </div>

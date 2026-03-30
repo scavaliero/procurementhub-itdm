@@ -8,6 +8,7 @@ import { opportunityService } from "@/services/opportunityService";
 import { invitationService } from "@/services/invitationService";
 import { bidService, type ValidateBidResult } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/utils/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,7 +98,7 @@ export default function SupplierOpportunityDetail() {
   const bidSchema = useMemo(() => {
     let amountSchema = z.coerce.number().positive("Importo obbligatorio");
     if (budgetMax) {
-      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di € ${budgetMax.toLocaleString("it-IT")}`);
+      amountSchema = amountSchema.max(budgetMax, `L'importo non può superare l'offerta massima di ${formatCurrency(budgetMax)}`);
     }
     return z.object({
       total_amount: amountSchema,
@@ -183,7 +184,7 @@ export default function SupplierOpportunityDetail() {
     mutationFn: async (data: BidFormData) => {
       if (!supplierId || !profile || !opportunityId) throw new Error("Dati mancanti");
       if (budgetMax && data.total_amount > budgetMax) {
-        throw new Error(`L'importo (€ ${data.total_amount.toLocaleString("it-IT")}) supera l'offerta massima (€ ${budgetMax.toLocaleString("it-IT")})`);
+        throw new Error(`L'importo (${formatCurrency(data.total_amount)}) supera l'offerta massima (${formatCurrency(budgetMax)})`);
       }
 
       const bid = await bidService.saveDraft(
@@ -422,7 +423,7 @@ export default function SupplierOpportunityDetail() {
                     Importo totale (€) *
                     {budgetMax && (
                       <span className="text-xs text-muted-foreground ml-2">
-                        (max € {budgetMax.toLocaleString("it-IT")})
+                        (max {formatCurrency(budgetMax)})
                       </span>
                     )}
                   </Label>

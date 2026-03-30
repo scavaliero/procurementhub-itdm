@@ -46,7 +46,8 @@ const CONTRACT_STATUS_COLORS: Record<string, string> = {
 };
 
 function fmtCurrency(v: number | null | undefined) {
-  return `€ ${Number(v ?? 0).toLocaleString("it-IT", { minimumFractionDigits: 2 })}`;
+  if (v == null) return "—";
+  return `€ ${Number(v).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";

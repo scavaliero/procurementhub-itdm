@@ -30,6 +30,7 @@ import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardL
 import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "@/utils/formatters";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza", pending_approval: "In approvazione", open: "Aperta",
@@ -250,8 +251,8 @@ export default function InternalOpportunityDetail() {
               <Detail label="Apertura" value={opp.opens_at ? format(new Date(opp.opens_at), "dd/MM/yyyy HH:mm") : undefined} />
               <Detail label="Data inizio" value={opp.start_date} />
               <Detail label="Data fine" value={opp.end_date} />
-              {opp.budget_estimated != null && <Detail label="Budget stimato" value={`€ ${opp.budget_estimated.toLocaleString("it-IT")}`} />}
-              {opp.budget_max != null && <Detail label="Offerta massima" value={`€ ${opp.budget_max.toLocaleString("it-IT")}`} />}
+              {opp.budget_estimated != null && <Detail label="Budget stimato" value={formatCurrency(opp.budget_estimated)} />}
+              {opp.budget_max != null && <Detail label="Offerta massima" value={formatCurrency(opp.budget_max)} />}
               {opp.description && (
                 <div className="md:col-span-2">
                   <p className="text-sm text-muted-foreground">Descrizione</p>
