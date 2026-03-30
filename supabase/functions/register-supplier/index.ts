@@ -33,6 +33,9 @@ Deno.serve(async (req) => {
     const pec = payload.pec ? String(payload.pec).trim().toLowerCase() : null;
     const password = String(payload.password ?? "");
     const categoryId = payload.category_id ? String(payload.category_id).trim() : null;
+    const legalAddress = payload.legal_address && typeof payload.legal_address === "object"
+      ? payload.legal_address
+      : null;
 
     if (!companyName || !vatNumber || !normalizedEmail || !password || !contactName) {
       return new Response(JSON.stringify({ error: "Campi obbligatori mancanti" }), {
@@ -41,7 +44,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1) Resolve active tenant BEFORE creating auth user (prevents orphan users)
+    // 1) Resolve active tenant
     const { data: tenant, error: tenantErr } = await supabaseAdmin
       .from("tenants")
       .select("id")
@@ -53,7 +56,7 @@ Deno.serve(async (req) => {
     if (!tenant?.id) throw new Error("Nessun tenant configurato");
     const tenantId = tenant.id;
 
-    // 2) Create auth user with standard signup flow so confirmation email is sent reliably
+    // 2) Create auth user
     const redirectToRaw = payload.redirect_to ? String(payload.redirect_to).trim() : "";
     const emailRedirectTo = redirectToRaw || undefined;
 
@@ -66,9 +69,7 @@ Deno.serve(async (req) => {
       },
     });
 
-    if (signupErr) {
-      throw signupErr;
-    }
+    if (signupErr) throw signupErr;
 
     const signedUpUser = signupData.user;
     const isExistingUser =
@@ -79,10 +80,9 @@ Deno.serve(async (req) => {
     }
 
     createdUserId = signedUpUser.id;
-
     if (!createdUserId) throw new Error("Utente non creato");
 
-    // 3) Create supplier
+    // 3) Create supplier (with legal_address)
     const { data: supplier, error: supErr } = await supabaseAdmin
       .from("suppliers")
       .insert({
@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
         pec,
         status: "pre_registered",
         tenant_id: tenantId,
+        legal_address: legalAddress,
       })
       .select("id")
       .single();
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
       });
     if (historyErr) throw historyErr;
 
-    // 7) Category association (optional)
+    // 7) Category association
     if (categoryId) {
       const { error: categoryErr } = await supabaseAdmin.from("supplier_categories").insert({
         supplier_id: createdSupplierId,
@@ -148,60 +149,71 @@ Deno.serve(async (req) => {
       if (categoryErr) throw categoryErr;
     }
 
-    // 8) Notifications (non-blocking)
-    try {
-      await supabaseAdmin.functions.invoke("send-notification", {
-        body: {
-          event_type: "pre_registration",
-          recipient_id: createdUserId,
-          tenant_id: tenantId,
-          link_url: "/supplier/onboarding",
-          related_entity_id: createdSupplierId,
-          related_entity_type: "supplier",
-          variables: { company_name: companyName },
-        },
-      });
+    // 8) Notifications — fire-and-forget (non-blocking) to avoid slow response
+    const notifVars = { company_name: companyName, contact_name: contactName, email: normalizedEmail };
 
-      await supabaseAdmin.functions.invoke("send-notification", {
-        body: {
-          event_type: "pre_registration",
-          recipient_email: "procurement@itdm.it",
-          tenant_id: tenantId,
-          variables: { company_name: companyName, contact_name: contactName, email: normalizedEmail },
-        },
-      });
-    } catch (e) {
-      console.error("Notification error:", e);
-    }
+    // Supplier notification
+    supabaseAdmin.functions.invoke("send-notification", {
+      body: {
+        event_type: "pre_registration",
+        recipient_id: createdUserId,
+        tenant_id: tenantId,
+        link_url: "/supplier/onboarding",
+        related_entity_id: createdSupplierId,
+        related_entity_type: "supplier",
+        variables: notifVars,
+      },
+    }).catch((e: unknown) => console.error("Supplier notification error:", e));
+
+    // Admin email notification
+    supabaseAdmin.functions.invoke("send-notification", {
+      body: {
+        event_type: "pre_registration",
+        recipient_email: "procurement@itdm.it",
+        tenant_id: tenantId,
+        variables: notifVars,
+      },
+    }).catch((e: unknown) => console.error("Admin email notification error:", e));
+
+    // Admin in-app notifications — find all internal users with manage_users grant
+    supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("user_type", "internal")
+      .eq("is_active", true)
+      .then(({ data: admins }) => {
+        if (!admins || admins.length === 0) return;
+        for (const admin of admins) {
+          supabaseAdmin.functions.invoke("send-notification", {
+            body: {
+              event_type: "pre_registration",
+              recipient_id: admin.id,
+              tenant_id: tenantId,
+              link_url: `/internal/vendors/${createdSupplierId}`,
+              related_entity_id: createdSupplierId,
+              related_entity_type: "supplier",
+              variables: notifVars,
+            },
+          }).catch((e: unknown) => console.error("Admin in-app notification error:", e));
+        }
+      })
+      .catch((e: unknown) => console.error("Admin lookup error:", e));
 
     return new Response(
       JSON.stringify({ userId: createdUserId, supplierId: createdSupplierId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
-    // Rollback to avoid orphan records if any step fails after user creation
+    // Rollback
     if (createdUserId) {
-      try {
-        await supabaseAdmin.from("profiles").delete().eq("id", createdUserId);
-      } catch (_) {
-        // no-op
-      }
+      try { await supabaseAdmin.from("profiles").delete().eq("id", createdUserId); } catch (_) {}
     }
-
     if (createdSupplierId) {
-      try {
-        await supabaseAdmin.from("suppliers").delete().eq("id", createdSupplierId);
-      } catch (_) {
-        // no-op
-      }
+      try { await supabaseAdmin.from("suppliers").delete().eq("id", createdSupplierId); } catch (_) {}
     }
-
     if (createdUserId) {
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(createdUserId);
-      } catch (_) {
-        // no-op
-      }
+      try { await supabaseAdmin.auth.admin.deleteUser(createdUserId); } catch (_) {}
     }
 
     console.error("Registration error:", err);

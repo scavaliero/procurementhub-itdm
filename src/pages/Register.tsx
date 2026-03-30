@@ -31,7 +31,10 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
-    defaultValues: { privacy: false as unknown as true },
+    defaultValues: {
+      privacy: false as unknown as true,
+      legal_address: { street: "", city: "", province: "", zip: "" },
+    },
   });
 
   const { data: categories = [] } = useQuery({
@@ -47,9 +50,10 @@ export default function RegisterPage() {
         contact_name: data.contact_name,
         email: data.email,
         phone: data.phone || undefined,
-        pec: data.pec || undefined,
+        pec: data.pec,
         password: data.password,
-        category_id: data.category_id || undefined,
+        category_id: data.category_id,
+        legal_address: data.legal_address as { street: string; city: string; province: string; zip: string },
       }),
     onSuccess: (result: any) => {
       if (result?.resent) {
@@ -68,7 +72,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Top bar */}
       <header className="bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
@@ -81,7 +84,6 @@ export default function RegisterPage() {
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <Card className="w-full max-w-lg shadow-lg border-0 overflow-hidden">
           <div className="h-1.5 bg-primary" />
@@ -97,6 +99,7 @@ export default function RegisterPage() {
               onSubmit={handleSubmit((data) => mutation.mutate(data))}
               className="space-y-4"
             >
+              {/* Company name + VAT */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="company_name">Ragione sociale *</Label>
@@ -122,6 +125,44 @@ export default function RegisterPage() {
                 )}
               </div>
 
+              {/* Legal address */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Sede legale *</Label>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="street" className="text-xs text-muted-foreground">Indirizzo</Label>
+                    <Input id="street" placeholder="Via/Piazza, n. civico" {...register("legal_address.street")} />
+                    {errors.legal_address?.street && (
+                      <p className="text-xs text-destructive">{errors.legal_address.street.message}</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-1 space-y-1.5">
+                      <Label htmlFor="zip" className="text-xs text-muted-foreground">CAP</Label>
+                      <Input id="zip" maxLength={5} placeholder="00100" {...register("legal_address.zip")} />
+                      {errors.legal_address?.zip && (
+                        <p className="text-xs text-destructive">{errors.legal_address.zip.message}</p>
+                      )}
+                    </div>
+                    <div className="col-span-1 space-y-1.5">
+                      <Label htmlFor="city" className="text-xs text-muted-foreground">Città</Label>
+                      <Input id="city" placeholder="Roma" {...register("legal_address.city")} />
+                      {errors.legal_address?.city && (
+                        <p className="text-xs text-destructive">{errors.legal_address.city.message}</p>
+                      )}
+                    </div>
+                    <div className="col-span-1 space-y-1.5">
+                      <Label htmlFor="province" className="text-xs text-muted-foreground">Prov.</Label>
+                      <Input id="province" maxLength={2} placeholder="RM" {...register("legal_address.province")} />
+                      {errors.legal_address?.province && (
+                        <p className="text-xs text-destructive">{errors.legal_address.province.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact + Phone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="contact_name">Nome referente *</Label>
@@ -145,7 +186,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="pec">PEC</Label>
+                <Label htmlFor="pec">PEC *</Label>
                 <Input id="pec" type="email" {...register("pec")} />
                 {errors.pec && (
                   <p className="text-xs text-destructive">{errors.pec.message}</p>
@@ -160,25 +201,27 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {categories.length > 0 && (
-                <div className="space-y-1.5">
-                  <Label>Categoria merceologica</Label>
-                  <Select onValueChange={(v) => setValue("category_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleziona categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories
-                        .filter((c) => c.is_active)
-                        .map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.code} — {c.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {/* Category - mandatory */}
+              <div className="space-y-1.5">
+                <Label>Categoria merceologica *</Label>
+                <Select onValueChange={(v) => setValue("category_id", v, { shouldValidate: true })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories
+                      .filter((c) => c.is_active)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.code} — {c.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                {errors.category_id && (
+                  <p className="text-xs text-destructive">{errors.category_id.message}</p>
+                )}
+              </div>
 
               <div className="flex items-start gap-2">
                 <Checkbox
@@ -210,7 +253,6 @@ export default function RegisterPage() {
         </Card>
       </main>
 
-      {/* Footer */}
       <footer className="py-4 text-center text-xs text-muted-foreground border-t">
         © {new Date().getFullYear()} ITDM Group | Procurement Hub — Tutti i diritti riservati
       </footer>

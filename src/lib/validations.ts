@@ -37,6 +37,13 @@ const passwordSchema = z
   .regex(/\d/, "Deve contenere almeno un numero")
   .regex(/[^A-Za-z0-9]/, "Deve contenere almeno un carattere speciale");
 
+const addressSchema = z.object({
+  street: z.string().trim().min(2, "Indirizzo obbligatorio").max(200, "Massimo 200 caratteri"),
+  city: z.string().trim().min(2, "Città obbligatoria").max(100, "Massimo 100 caratteri"),
+  province: z.string().trim().min(2, "Provincia obbligatoria").max(2, "Usa la sigla (es. MI)"),
+  zip: z.string().trim().regex(/^\d{5}$/, "CAP deve essere di 5 cifre"),
+});
+
 export const registrationSchema = z.object({
   company_name: z
     .string()
@@ -84,10 +91,9 @@ export const registrationSchema = z.object({
     .string()
     .trim()
     .email("Formato PEC non valido")
-    .max(255, "Massimo 255 caratteri")
-    .optional()
-    .or(z.literal("")),
-  category_id: z.string().uuid().optional().or(z.literal("")),
+    .max(255, "Massimo 255 caratteri"),
+  category_id: z.string().uuid("Categoria merceologica obbligatoria"),
+  legal_address: addressSchema,
   privacy: z.literal(true, {
     errorMap: () => ({ message: "Devi accettare l'informativa privacy" }),
   }),
