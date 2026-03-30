@@ -10,6 +10,7 @@ import { vendorService } from "@/services/vendorService";
 import { documentService } from "@/services/documentService";
 import { contactService } from "@/services/contactService";
 import { auditService } from "@/services/auditService";
+import { getEffectiveDocStatus } from "@/lib/documentUtils";
 import { notificationService } from "@/services/notificationService";
 import { useGrants } from "@/hooks/useGrants";
 import { useAuth } from "@/hooks/useAuth";
