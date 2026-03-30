@@ -564,7 +564,8 @@ export default function InternalVendorDetail() {
           ) : (
             docs.map((doc) => {
               const dt = dtMap[doc.document_type_id];
-              const db = DOC_LABELS[doc.status] || { label: doc.status, variant: "outline" as const };
+              const effectiveStatus = getEffectiveDocStatus(doc);
+              const db = DOC_LABELS[effectiveStatus] || { label: effectiveStatus, variant: "outline" as const };
               return (
                 <Card key={doc.id} className="card-top-docs">
                   <CardContent className="pt-4">

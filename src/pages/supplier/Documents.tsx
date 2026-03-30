@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Send, Lock, Search, FileCheck, FileX, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { DocumentCard } from "@/components/supplier/DocumentCard";
+import { getEffectiveDocStatus, isDocExpiringSoon } from "@/lib/documentUtils";
 import type { UploadedDocument } from "@/types";
 
 /** States where documents are locked (waiting for admin review) */
