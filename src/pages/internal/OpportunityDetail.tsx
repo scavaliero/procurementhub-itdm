@@ -87,7 +87,7 @@ export default function InternalOpportunityDetail() {
   const { data: hasOrder = false } = useQuery({
     queryKey: ["order-exists-for-opp", id],
     queryFn: () => orderService.existsForOpportunity(id!),
-    enabled: !!id,
+    enabled: !!id && !!profile,
   });
 
   const { data: orderForOpp } = useQuery({
