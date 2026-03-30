@@ -10,9 +10,10 @@ export const vendorService = {
     contact_name: string;
     email: string;
     phone?: string;
-    pec?: string;
+    pec: string;
     password: string;
-    category_id?: string;
+    category_id: string;
+    legal_address: { street: string; city: string; province: string; zip: string };
   }) {
     const { data, error } = await supabase.functions.invoke("register-supplier", {
       body: {
@@ -21,9 +22,10 @@ export const vendorService = {
         contact_name: params.contact_name,
         email: params.email,
         phone: params.phone || null,
-        pec: params.pec || null,
+        pec: params.pec,
         password: params.password,
-        category_id: params.category_id || null,
+        category_id: params.category_id,
+        legal_address: params.legal_address,
         redirect_to: `${window.location.origin}/auth/callback`,
       },
     });
