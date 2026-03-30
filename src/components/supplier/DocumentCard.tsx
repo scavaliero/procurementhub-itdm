@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2, Lock,
+  Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2, Lock, Plus,
 } from "lucide-react";
 import { DocumentDatePicker } from "./DocumentDatePicker";
 import type { DocumentType, UploadedDocument } from "@/types";
@@ -24,17 +24,22 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 interface DocumentCardProps {
   docType: DocumentType;
   uploaded: UploadedDocument | undefined;
+  allUploads?: UploadedDocument[];
   supplierId: string;
   tenantId: string;
   locked: boolean;
 }
 
-export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }: DocumentCardProps) {
+export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenantId, locked }: DocumentCardProps) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [issueDate, setIssueDate] = useState<Date | undefined>();
   const [expiryDate, setExpiryDate] = useState<Date | undefined>();
   const [isUploading, setIsUploading] = useState(false);
+
+  // Determine if this doc type supports multiple uploads (non-mandatory, like CERT_AZIENDALI)
+  const isMultiUpload = !docType.is_mandatory && docType.code === "CERT_AZIENDALI";
+  const uploads = isMultiUpload ? (allUploads ?? []) : [];
 
   const deleteMutation = useMutation({
     mutationFn: (docId: string) => documentService.deleteDocument(docId),
@@ -95,10 +100,17 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
             )}
             <CardTitle className="text-sm font-medium truncate">{docType.name}</CardTitle>
           </div>
-          <Badge variant={cfg.variant} className="text-xs gap-1 shrink-0">
-            <StatusIcon className="h-3 w-3" />
-            {cfg.label}
-          </Badge>
+          {!isMultiUpload && (
+            <Badge variant={cfg.variant} className="text-xs gap-1 shrink-0">
+              <StatusIcon className="h-3 w-3" />
+              {cfg.label}
+            </Badge>
+          )}
+          {isMultiUpload && (
+            <Badge variant="secondary" className="text-xs shrink-0">
+              {uploads.length} caricati
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -114,14 +126,39 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
           </div>
         )}
 
-        {uploaded?.review_notes && uploaded.status === "rejected" && (
+        {/* Multi-upload: show all uploaded files */}
+        {isMultiUpload && uploads.length > 0 && (
+          <div className="space-y-2">
+            {uploads.map((doc) => {
+              const docStatus = getEffectiveDocStatus(doc);
+              const dCfg = statusConfig[docStatus] || statusConfig.not_uploaded;
+              return (
+                <div key={doc.id} className="flex items-center justify-between text-xs border rounded px-2 py-1.5">
+                  <span className="truncate flex-1 mr-2">{doc.original_filename}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {doc.expiry_date && <span className="text-muted-foreground">Scade: {new Date(doc.expiry_date).toLocaleDateString("it-IT")}</span>}
+                    <Badge variant={dCfg.variant} className="text-[10px]">{dCfg.label}</Badge>
+                    {!locked && doc.status === "rejected" && (
+                      <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => deleteMutation.mutate(doc.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Single upload display */}
+        {!isMultiUpload && uploaded?.review_notes && uploaded.status === "rejected" && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
             <p className="text-xs font-medium text-destructive">Motivo rifiuto:</p>
             <p className="text-xs text-destructive/80 mt-0.5">{uploaded.review_notes}</p>
           </div>
         )}
 
-        {isExpiringSoon && (
+        {!isMultiUpload && isExpiringSoon && (
           <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2">
             <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
               ⚠ Documento in scadenza il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
@@ -129,7 +166,7 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
           </div>
         )}
 
-        {isExpired && (
+        {!isMultiUpload && isExpired && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
             <p className="text-xs font-medium text-destructive">
               Documento scaduto il {new Date(uploaded!.expiry_date!).toLocaleDateString("it-IT")}
@@ -137,18 +174,18 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
           </div>
         )}
 
-        {uploaded?.expiry_date && uploaded.status !== "rejected" && !isExpiringSoon && !isExpired && (
+        {!isMultiUpload && uploaded?.expiry_date && uploaded.status !== "rejected" && !isExpiringSoon && !isExpired && (
           <p className="text-xs text-muted-foreground">
             Scadenza: {new Date(uploaded.expiry_date).toLocaleDateString("it-IT")}
           </p>
         )}
-        {uploaded?.original_filename && uploaded.status !== "rejected" && !isExpired && (
+        {!isMultiUpload && uploaded?.original_filename && uploaded.status !== "rejected" && !isExpired && (
           <p className="text-xs truncate">{uploaded.original_filename}</p>
         )}
 
         {!locked && (
           <>
-            {uploaded?.status === "rejected" && (
+            {!isMultiUpload && uploaded?.status === "rejected" && (
               <Button
                 size="sm"
                 variant="destructive"
@@ -161,7 +198,7 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
               </Button>
             )}
 
-            {(!uploaded || uploaded.status !== "rejected") && (
+            {(!uploaded || uploaded.status !== "rejected" || isMultiUpload) && (
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <DocumentDatePicker
@@ -201,16 +238,20 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
                     disabled={isUploading}
                     onClick={() => fileRef.current?.click()}
                   >
-                    <Upload className="h-3.5 w-3.5 mr-1" />
-                    {isUploading
-                      ? "Caricamento…"
-                      : isExpired
-                      ? "Sostituisci documento scaduto"
-                      : isExpiringSoon
-                      ? "Sostituisci documento"
-                      : uploaded
-                      ? "Ricarica"
-                      : "Carica"}
+                    {isMultiUpload ? (
+                      <><Plus className="h-3.5 w-3.5 mr-1" /> {isUploading ? "Caricamento…" : "Aggiungi certificazione"}</>
+                    ) : (
+                      <><Upload className="h-3.5 w-3.5 mr-1" />
+                      {isUploading
+                        ? "Caricamento…"
+                        : isExpired
+                        ? "Sostituisci documento scaduto"
+                        : isExpiringSoon
+                        ? "Sostituisci documento"
+                        : uploaded
+                        ? "Ricarica"
+                        : "Carica"}</>
+                    )}
                   </Button>
                 </div>
               </>

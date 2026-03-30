@@ -66,7 +66,8 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
   const deadlinePassed = opp?.bids_deadline ? new Date(opp.bids_deadline) < new Date() : false;
   const isExcluded = existingBid?.status === "excluded";
   const isSubmitted = !!existingBid && existingBid.status !== "draft";
-  const canWithdraw = existingBid?.status === "submitted" && !deadlinePassed;
+  const isAwarded = opp?.status === "awarded" || opp?.status === "closed";
+  const canWithdraw = existingBid?.status === "submitted" && !deadlinePassed && !isAwarded;
   const formDisabled = isSubmitted || deadlinePassed;
   const budgetMax = opp?.budget_max ?? null;
 

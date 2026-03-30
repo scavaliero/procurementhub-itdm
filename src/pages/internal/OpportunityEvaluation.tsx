@@ -208,7 +208,7 @@ export default function InternalOpportunityEvaluation() {
       const winner = admittedBids.find((b) => b.bidId === selectedWinner);
       if (!winner) throw new Error("Offerta non trovata");
       if (winner.exceedsBudget) {
-        throw new Error(`L'offerta di ${winner.supplierName} (€ ${winner.totalAmount.toLocaleString("it-IT")}) supera l'offerta massima (€ ${budgetMax?.toLocaleString("it-IT")}). Non è possibile aggiudicare.`);
+        throw new Error(`L'offerta di ${winner.supplierName} (€ ${winner.totalAmount.toLocaleString("it-IT", { minimumFractionDigits: 2 })}) supera l'offerta massima (€ ${budgetMax?.toLocaleString("it-IT", { minimumFractionDigits: 2 })}). Non è possibile aggiudicare.`);
       }
       await bidService.awardOpportunity({
         opportunityId: opportunityId!,

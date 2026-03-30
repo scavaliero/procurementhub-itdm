@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { auditService } from "@/services/auditService";
+import { notificationService } from "@/services/notificationService";
 import type { DocumentType, UploadedDocument } from "@/types";
 
 export const documentService = {
@@ -110,7 +111,7 @@ export const documentService = {
     try {
       const { data: supplier } = await supabase
         .from("suppliers")
-        .select("id, status, tenant_id")
+        .select("id, status, tenant_id, company_name")
         .eq("id", params.supplierId)
         .single();
 
@@ -119,8 +120,6 @@ export const documentService = {
           .from("suppliers")
           .update({ status: "in_accreditation" })
           .eq("id", supplier.id);
-
-        // History is auto-logged by trg_supplier_status_change trigger
 
         await auditService.log({
           tenant_id: supplier.tenant_id,
@@ -131,8 +130,26 @@ export const documentService = {
           new_state: { status: "in_accreditation" },
         });
       }
+
+      // Notify admin users about document upload (non-blocking)
+      if (supplier) {
+        supabase.functions.invoke("send-notification", {
+          body: {
+            event_type: "onboarding_completed",
+            recipient_email: "procurement@itdm.it",
+            tenant_id: supplier.tenant_id,
+            link_url: `/internal/vendors/${supplier.id}`,
+            related_entity_id: supplier.id,
+            related_entity_type: "supplier",
+            variables: {
+              company_name: supplier.company_name,
+              message: `Il fornitore ${supplier.company_name} ha caricato un documento`,
+            },
+          },
+        }).catch(() => {});
+      }
     } catch {
-      // Non-blocking: don't fail the upload if transition fails
+      // Non-blocking: don't fail the upload if transition or notification fails
     }
 
     return data as UploadedDocument;
