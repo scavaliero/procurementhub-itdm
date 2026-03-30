@@ -151,6 +151,7 @@ const App = () => {
                 <Route path="/internal/purchasing/direct" element={<DirectPurchasesPage />} />
                 <Route path="/internal/purchasing/direct/new/:reqId?" element={<NewDirectPurchasePage />} />
                 <Route path="/internal/purchasing/direct/:id" element={<DirectPurchaseDetailPage />} />
+                <Route path="/internal/purchasing/limits" element={<PurchaseLimitsPage />} />
               </Route>
 
               {/* Catch-all */}

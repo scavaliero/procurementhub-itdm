@@ -167,6 +167,12 @@ function PurchasingSidebarSection({ collapsed, hasGrant }: { collapsed: boolean;
       icon: CreditCard,
       show: hasGrant("manage_purchase_operations") || hasGrant("validate_purchase_request_high"),
     },
+    {
+      title: "Limiti Acquisto",
+      url: "/internal/purchasing/limits",
+      icon: Gauge,
+      show: hasGrant("manage_tenant_settings"),
+    },
   ];
 
   return (
