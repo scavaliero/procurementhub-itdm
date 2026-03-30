@@ -136,10 +136,13 @@ export default function SupplierDocuments() {
 
   const mandatory = docTypes.filter((dt) => dt.is_mandatory);
   const approved = mandatory.filter(
-    (dt) => latestByType[dt.id]?.status === "approved"
+    (dt) => getEffectiveDocStatus(latestByType[dt.id]) === "approved"
   ).length;
   const mandatoryUploaded = mandatory.filter(
-    (dt) => latestByType[dt.id] && latestByType[dt.id].status !== "rejected"
+    (dt) => {
+      const eff = getEffectiveDocStatus(latestByType[dt.id]);
+      return eff !== "not_uploaded" && eff !== "rejected" && eff !== "expired";
+    }
   ).length;
   const progressPct = mandatory.length > 0 ? (approved / mandatory.length) * 100 : 0;
 
