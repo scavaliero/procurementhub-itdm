@@ -423,7 +423,7 @@ export default function SupplierOpportunityDetail() {
                     Importo totale (€) *
                     {budgetMax && (
                       <span className="text-xs text-muted-foreground ml-2">
-                        (max € {budgetMax.toLocaleString("it-IT")})
+                        (max {formatCurrency(budgetMax)})
                       </span>
                     )}
                   </Label>
