@@ -112,6 +112,7 @@ export default function InternalVendorDetail() {
   const [banUser, setBanUser] = useState(false);
   const [rejectDoc, setRejectDoc] = useState<UploadedDocument | null>(null);
   const [rejectDocNotes, setRejectDocNotes] = useState("");
+  const [showDocHistory, setShowDocHistory] = useState(false);
 
   /* ── Queries ── */
   const { data: supplier, isLoading } = useQuery({
