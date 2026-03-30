@@ -81,7 +81,7 @@ export default function InternalOpportunityDetail() {
   const { data: invitations = [] } = useQuery({
     queryKey: ["invitations", id],
     queryFn: () => invitationService.getInvitationsByOpportunity(id!),
-    enabled: !!id,
+    enabled: !!id && !!profile,
   });
 
   const { data: hasOrder = false } = useQuery({
