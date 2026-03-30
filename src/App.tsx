@@ -61,6 +61,7 @@ import PurchasePanelPage from "@/pages/internal/purchasing/PurchasePanelPage";
 import DirectPurchasesPage from "@/pages/internal/purchasing/DirectPurchasesPage";
 import DirectPurchaseDetailPage from "@/pages/internal/purchasing/DirectPurchaseDetailPage";
 import NewDirectPurchasePage from "@/pages/internal/purchasing/NewDirectPurchasePage";
+import PurchaseLimitsPage from "@/pages/internal/purchasing/PurchaseLimitsPage";
 
 const App = () => {
   const [mounted, setMounted] = useState(false);
