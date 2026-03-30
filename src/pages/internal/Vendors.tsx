@@ -73,14 +73,21 @@ function MetricCard({
   count,
   icon: Icon,
   color,
+  active,
+  onClick,
 }: {
   label: string;
   count: number;
   icon: React.ElementType;
   color: string;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <Card className="card-top-suppliers">
+    <Card
+      className={`card-top-suppliers cursor-pointer transition-all hover:shadow-md ${active ? "ring-2 ring-primary" : ""}`}
+      onClick={onClick}
+    >
       <CardContent className="pt-5 pb-4 flex items-center gap-3">
         <div className={`rounded-lg p-2.5 ${color}`}>
           <Icon className="h-5 w-5 text-white" />
