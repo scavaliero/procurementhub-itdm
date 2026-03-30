@@ -60,7 +60,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <p className="text-sm text-muted-foreground max-w-md text-center">
             {this.state.error?.message ?? "Errore imprevisto"}
           </p>
-          <Button variant="outline" onClick={() => this.setState({ hasError: false, error: null })}>
+          <Button variant="outline" onClick={() => { this.recoveryAttempts = 0; this.setState({ hasError: false, error: null }); }}>
             Riprova
           </Button>
         </div>
