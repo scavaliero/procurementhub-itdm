@@ -76,13 +76,10 @@ export function DocumentCard({ docType, uploaded, supplierId, tenantId, locked }
     }
   };
 
-  const isExpiringSoon = uploaded?.status === "approved" && uploaded?.expiry_date &&
-    new Date(uploaded.expiry_date) > new Date() &&
-    new Date(uploaded.expiry_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const isExpired = uploaded?.status === "approved" && uploaded?.expiry_date &&
-    new Date(uploaded.expiry_date) < new Date();
+  const isExpiringSoon = isDocExpiringSoon(uploaded);
+  const isExpired = getEffectiveDocStatus(uploaded) === "expired";
 
-  const effectiveStatus = isExpired ? "expired" : uploaded?.status || "not_uploaded";
+  const effectiveStatus = getEffectiveDocStatus(uploaded);
   const cfg = statusConfig[effectiveStatus] || statusConfig.not_uploaded;
   const StatusIcon = cfg.icon;
 
