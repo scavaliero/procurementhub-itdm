@@ -75,7 +75,7 @@ export default function InternalOpportunityDetail() {
   const { data: opp, isLoading } = useQuery({
     queryKey: ["opportunity", id],
     queryFn: () => opportunityService.getById(id!),
-    enabled: !!id,
+    enabled: !!id && !!profile,
   });
 
   const { data: invitations = [] } = useQuery({
