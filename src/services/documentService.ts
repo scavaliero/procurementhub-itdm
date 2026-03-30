@@ -133,17 +133,18 @@ export const documentService = {
 
       // Notify admin users about document upload (non-blocking)
       if (supplier) {
-        const docTypeName = params.file.name;
-        notificationService.send({
-          event_type: "onboarding_completed",
-          tenant_id: supplier.tenant_id,
-          link_url: `/internal/vendors/${supplier.id}`,
-          related_entity_id: supplier.id,
-          related_entity_type: "supplier",
-          variables: {
-            company_name: supplier.company_name,
-            document_name: docTypeName,
-            message: `Il fornitore ${supplier.company_name} ha caricato un documento`,
+        supabase.functions.invoke("send-notification", {
+          body: {
+            event_type: "onboarding_completed",
+            recipient_email: "procurement@itdm.it",
+            tenant_id: supplier.tenant_id,
+            link_url: `/internal/vendors/${supplier.id}`,
+            related_entity_id: supplier.id,
+            related_entity_type: "supplier",
+            variables: {
+              company_name: supplier.company_name,
+              message: `Il fornitore ${supplier.company_name} ha caricato un documento`,
+            },
           },
         }).catch(() => {});
       }
