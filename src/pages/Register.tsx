@@ -53,7 +53,7 @@ export default function RegisterPage() {
         pec: data.pec,
         password: data.password,
         category_id: data.category_id,
-        legal_address: data.legal_address,
+        legal_address: data.legal_address as { street: string; city: string; province: string; zip: string },
       }),
     onSuccess: (result: any) => {
       if (result?.resent) {
