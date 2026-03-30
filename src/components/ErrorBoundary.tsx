@@ -20,24 +20,35 @@ const isRecoverableError = (error: Error) =>
   error.message?.includes("not a child of this node");
 
 export class ErrorBoundary extends React.Component<Props, State> {
+  private recoveryAttempts = 0;
+  private lastErrorTime = 0;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Auto-recover from browser-extension DOM errors
-    if (isRecoverableError(error)) {
-      return { hasError: false, error: null };
-    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error) {
+    const now = Date.now();
+    // Only auto-recover from transient DOM errors, and cap retries
     if (isRecoverableError(error)) {
-      // Force re-render to recover
-      this.setState({ hasError: false, error: null });
+      if (now - this.lastErrorTime < 2000) {
+        this.recoveryAttempts++;
+      } else {
+        this.recoveryAttempts = 1;
+      }
+      this.lastErrorTime = now;
+
+      if (this.recoveryAttempts <= 3) {
+        this.setState({ hasError: false, error: null });
+        return;
+      }
     }
+    // Non-recoverable or too many retries: stay in error state
   }
 
   render() {
