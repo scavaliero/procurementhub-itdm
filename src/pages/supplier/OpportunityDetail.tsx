@@ -46,7 +46,7 @@ export default function SupplierOpportunityDetail() {
   const { data: opp, isLoading: oppLoading } = useQuery({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => opportunityService.getById(opportunityId!),
-    enabled: !!opportunityId,
+    enabled: !!opportunityId && !!profile,
   });
 
   const { data: invitation } = useQuery({
