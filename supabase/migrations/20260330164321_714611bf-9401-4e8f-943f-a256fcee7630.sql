@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS pol_user_roles_self_ins ON public.user_roles;
