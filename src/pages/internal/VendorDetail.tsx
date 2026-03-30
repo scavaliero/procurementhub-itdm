@@ -361,9 +361,16 @@ export default function InternalVendorDetail() {
         break;
 
       case "approve": {
-        const pending = docs.filter((d) => d.status !== "approved");
-        if (pending.length > 0) {
-          toast.error(`Impossibile approvare: ${pending.length} documenti non ancora approvati.`);
+        // Check ALL mandatory doc types have an approved doc
+        const mandatoryDocTypes = docTypes.filter((dt) => dt.is_mandatory);
+        const missingOrNotApproved = mandatoryDocTypes.filter((dt) => {
+          const latestDoc = docs
+            .filter((d) => d.document_type_id === dt.id)
+            .sort((a, b) => new Date(b.created_at ?? "").getTime() - new Date(a.created_at ?? "").getTime())[0];
+          return !latestDoc || getEffectiveDocStatus(latestDoc) !== "approved";
+        });
+        if (missingOrNotApproved.length > 0) {
+          toast.error(`Impossibile approvare: ${missingOrNotApproved.length} documenti obbligatori mancanti o non approvati (${missingOrNotApproved.map(d => d.name).join(", ")})`);
           return;
         }
         statusMut.mutate(
