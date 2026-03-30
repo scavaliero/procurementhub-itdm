@@ -280,24 +280,36 @@ export default function InternalOpportunityEvaluation() {
             )}
           </div>
         </div>
-        {canAward && !isAwarded && admittedBids.length > 0 && (
-          <Button onClick={() => setAwardDialog(true)} className="gap-2">
-            <Trophy className="h-4 w-4" />
-            Seleziona vincitore
-          </Button>
-        )}
-        {isAwarded && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
-              Aggiudicata
-            </Badge>
-            {canCreateOrder && (
-              <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${opportunityId}/create-order`)}>
-                Genera ordine
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {isCollecting && hasSubmittedBids && canEvaluate && (
+            <Button
+              onClick={() => closeCollectionMutation.mutate()}
+              disabled={closeCollectionMutation.isPending}
+              className="gap-2"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {closeCollectionMutation.isPending ? "Chiusura in corso…" : "Chiudi raccolta e valuta"}
+            </Button>
+          )}
+          {canAward && !isAwarded && !isCollecting && admittedBids.length > 0 && (
+            <Button onClick={() => setAwardDialog(true)} className="gap-2">
+              <Trophy className="h-4 w-4" />
+              Seleziona vincitore
+            </Button>
+          )}
+          {isAwarded && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
+                Aggiudicata
+              </Badge>
+              {canCreateOrder && (
+                <Button variant="outline" onClick={() => navigate(`/internal/opportunities/${opportunityId}/create-order`)}>
+                  Genera ordine
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {invitations.length === 0 ? (
