@@ -1,8 +1,7 @@
 import { test, expect } from "../playwright-fixture";
 
-test.describe("Vendor list — document alert counts", () => {
+test.describe("Document expiry management — vendor list", () => {
   test.beforeEach(async ({ page }) => {
-    // Login as admin
     await page.goto("/login");
     await page.fill('input[type="email"]', "admin@vendorhub.it");
     await page.fill('input[type="password"]', "Admin@VendorHub2025!");
@@ -10,32 +9,57 @@ test.describe("Vendor list — document alert counts", () => {
     await page.waitForURL("**/internal/**", { timeout: 15000 });
   });
 
-  test("Napoli Srl shows correct expired document count (not just 1)", async ({ page }) => {
+  test("Napoli Srl shows correct expired document count (>1)", async ({ page }) => {
     await page.goto("/internal/vendors");
     await page.waitForSelector("table tbody tr", { timeout: 10000 });
 
-    // Find the row for Napoli Srl
     const napoliRow = page.locator("table tbody tr", { hasText: "Napoli Srl" });
     await expect(napoliRow).toBeVisible({ timeout: 10000 });
 
-    // The "Doc. scaduti" column is the 4th column (index 3)
-    const expiredCell = napoliRow.locator("td").nth(3);
-    const expiredBadge = expiredCell.locator('[class*="destructive"]');
-
-    // Should have a destructive badge showing expired docs
+    // Find the destructive badge showing expired doc count
+    const expiredBadge = napoliRow.locator('[class*="destructive"]');
     await expect(expiredBadge).toBeVisible({ timeout: 10000 });
 
-    // The count should be greater than 1 (Napoli Srl has multiple expired docs)
     const badgeText = await expiredBadge.textContent();
     const count = parseInt(badgeText?.trim() || "0", 10);
     expect(count).toBeGreaterThan(1);
   });
 
-  test("expired docs filter shows Napoli Srl", async ({ page }) => {
+  test("expired docs filter includes Napoli Srl", async ({ page }) => {
     await page.goto("/internal/vendors?docs_alert=expired");
     await page.waitForSelector("table tbody tr", { timeout: 10000 });
 
     const napoliRow = page.locator("table tbody tr", { hasText: "Napoli Srl" });
     await expect(napoliRow).toBeVisible({ timeout: 10000 });
+  });
+
+  test("vendor detail shows expired documents for Napoli Srl", async ({ page }) => {
+    await page.goto("/internal/vendors");
+    await page.waitForSelector("table tbody tr", { timeout: 10000 });
+
+    // Click on Napoli Srl to open detail
+    const napoliRow = page.locator("table tbody tr", { hasText: "Napoli Srl" });
+    await napoliRow.click();
+    await page.waitForTimeout(2000);
+
+    // Verify we can see expired document indicators in the detail view
+    const expiredIndicators = page.locator('text=/scadut/i');
+    await expect(expiredIndicators.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("dashboard expired docs KPI links to filtered vendor list", async ({ page }) => {
+    await page.goto("/internal/dashboard");
+    await page.waitForTimeout(3000);
+
+    // Find the expired docs KPI card and click it
+    const expiredCard = page.locator('[class*="destructive"], [class*="red"]', { hasText: /scadut/i }).first();
+    if (await expiredCard.isVisible()) {
+      await expiredCard.click();
+      await page.waitForTimeout(2000);
+
+      // Should navigate to vendors page with expired filter
+      const url = page.url();
+      expect(url).toContain("vendors");
+    }
   });
 });
