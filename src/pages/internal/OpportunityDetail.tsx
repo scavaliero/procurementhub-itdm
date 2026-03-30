@@ -30,6 +30,7 @@ import { ArrowLeft, Users, Send, Search, FileText, CheckCircle, Play, ClipboardL
 import OpportunityAttachments from "@/components/opportunity/OpportunityAttachments";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "@/utils/formatters";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Bozza", pending_approval: "In approvazione", open: "Aperta",

@@ -7,6 +7,7 @@ import { opportunityService } from "@/services/opportunityService";
 import { invitationService } from "@/services/invitationService";
 import { bidService, type ValidateBidResult } from "@/services/bidService";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/utils/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
