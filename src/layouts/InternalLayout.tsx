@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Building2, Briefcase, ShoppingCart, FileText,
-  Settings, ShieldCheck, Users, ScrollText, ClipboardList, CheckSquare, Package, CreditCard,
+  Settings, ShieldCheck, Users, ScrollText, ClipboardList, CheckSquare, Package, CreditCard, Gauge,
 } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
