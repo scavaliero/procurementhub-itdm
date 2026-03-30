@@ -160,14 +160,21 @@ export default function InternalOpportunities() {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metricCards.map((m) => (
-          <Card key={m.key} className={`border-l-4 ${m.color}`}>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">{m.label}</p>
-              <p className="text-2xl font-bold">{statusCounts?.[m.key] ?? 0}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {metricCards.map((m) => {
+          const isSelected = statusParam === m.key;
+          return (
+            <Card
+              key={m.key}
+              className={`border-l-4 ${m.color} cursor-pointer transition-all hover:shadow-md ${isSelected ? "ring-2 ring-primary" : ""}`}
+              onClick={() => updateParams({ status: isSelected ? "" : m.key })}
+            >
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground">{m.label}</p>
+                <p className="text-2xl font-bold">{statusCounts?.[m.key] ?? 0}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Filters */}
