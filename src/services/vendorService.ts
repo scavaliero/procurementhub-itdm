@@ -284,24 +284,52 @@ export const vendorService = {
     const now = new Date().toISOString().split("T")[0];
     const future = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
 
-    const { data, error } = await supabase
+    // Fetch approved docs expiring within 30 days
+    const { data: expiringData, error: err1 } = await supabase
       .from("uploaded_documents")
       .select("supplier_id, expiry_date")
       .eq("status", "approved")
       .is("deleted_at", null)
       .in("supplier_id", supplierIds)
       .not("expiry_date", "is", null)
+      .gte("expiry_date", now)
       .lte("expiry_date", future);
-    if (error) throw error;
+    if (err1) throw err1;
+
+    // Fetch expired docs: status='expired' OR (status='approved' AND expiry_date < today)
+    const { data: expiredByStatus, error: err2 } = await supabase
+      .from("uploaded_documents")
+      .select("supplier_id, expiry_date")
+      .eq("status", "expired")
+      .is("deleted_at", null)
+      .in("supplier_id", supplierIds);
+    if (err2) throw err2;
+
+    const { data: expiredByDate, error: err3 } = await supabase
+      .from("uploaded_documents")
+      .select("supplier_id, expiry_date")
+      .eq("status", "approved")
+      .is("deleted_at", null)
+      .in("supplier_id", supplierIds)
+      .not("expiry_date", "is", null)
+      .lt("expiry_date", now);
+    if (err3) throw err3;
 
     const result: Record<string, { expiring: number; expired: number }> = {};
-    for (const row of data || []) {
+
+    for (const row of expiringData || []) {
       if (!result[row.supplier_id]) result[row.supplier_id] = { expiring: 0, expired: 0 };
-      if (row.expiry_date! < now) {
-        result[row.supplier_id].expired++;
-      } else {
-        result[row.supplier_id].expiring++;
-      }
+      result[row.supplier_id].expiring++;
+    }
+
+    // Deduplicate expired docs (a doc could match both queries if status was not yet updated)
+    const seenExpired = new Set<string>();
+    for (const row of [...(expiredByStatus || []), ...(expiredByDate || [])]) {
+      const key = `${row.supplier_id}:${row.expiry_date}`;
+      if (seenExpired.has(key)) continue;
+      seenExpired.add(key);
+      if (!result[row.supplier_id]) result[row.supplier_id] = { expiring: 0, expired: 0 };
+      result[row.supplier_id].expired++;
     }
     return result;
   },
