@@ -118,19 +118,6 @@ export default function InternalOpportunityDetail() {
     onError: (err: Error) => toast.error(err.message || "Errore aggiornamento stato"),
   });
 
-  if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
-  if (!opp) return <EmptyState title="Opportunità non trovata" />;
-
-   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
-  const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
-  const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
-  const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
-  const isAdmin = hasGrant("manage_tenant_settings");
-  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder && (
-    isAdmin || (invitations.length === 0 && ["draft", "pending_approval", "open"].includes(opp.status))
-  );
-  const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
-
   const deleteMutation = useMutation({
     mutationFn: async () => {
       await opportunityService.update(id!, { deleted_at: new Date().toISOString() } as any);
@@ -149,6 +136,19 @@ export default function InternalOpportunityDetail() {
     },
     onError: (err: Error) => toast.error(err.message || "Errore nell'eliminazione"),
   });
+
+  if (isLoading) return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
+  if (!opp) return <EmptyState title="Opportunità non trovata" />;
+
+   const criteria = Array.isArray(opp.evaluation_criteria) ? opp.evaluation_criteria : [];
+  const canInvite = hasGrant("invite_suppliers") && ["open", "collecting_bids"].includes(opp.status);
+  const canEdit = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !["awarded", "closed", "cancelled"].includes(opp.status) && !hasOrder;
+  const canChangeStatus = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder;
+  const isAdmin = hasGrant("manage_tenant_settings");
+  const canDelete = (hasGrant("create_opportunity") || hasGrant("approve_opportunity")) && !hasOrder && (
+    isAdmin || (invitations.length === 0 && ["draft", "pending_approval", "open"].includes(opp.status))
+  );
+  const transitions = STATUS_TRANSITIONS[opp.status] ?? [];
 
   return (
     <div className="p-6 space-y-6">
