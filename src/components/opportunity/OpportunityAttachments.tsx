@@ -61,11 +61,23 @@ function AttachmentSection({
 
   const deleteMutation = useMutation({
     mutationFn: (path: string) => opportunityService.deleteAttachment(path),
+    onMutate: async (path: string) => {
+      await qc.cancelQueries({ queryKey: qk });
+      const prev = qc.getQueryData(qk);
+      const fileName = path.split("/").pop();
+      qc.setQueryData(qk, (old: any[] | undefined) =>
+        (old ?? []).filter((f: any) => f.name !== fileName)
+      );
+      return { prev };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk });
       toast.success("File eliminato");
     },
-    onError: () => toast.error("Errore nell'eliminazione"),
+    onError: (_err, _path, context) => {
+      if (context?.prev) qc.setQueryData(qk, context.prev);
+      toast.error("Errore nell'eliminazione del file");
+    },
   });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
