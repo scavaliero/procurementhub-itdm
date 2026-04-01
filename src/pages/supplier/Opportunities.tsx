@@ -21,8 +21,6 @@ import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock, XCircle } from "lu
 import { format } from "date-fns";
 import { toast } from "sonner";
 import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
-import { format } from "date-fns";
-import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
 const OPP_STATUS_LABELS: Record<string, string> = {
   draft: "Bozza",
