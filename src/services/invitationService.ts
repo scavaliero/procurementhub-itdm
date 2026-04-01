@@ -127,4 +127,12 @@ export const invitationService = {
       .eq("id", invitationId);
     if (error) throw error;
   },
+
+  async declineInvitation(invitationId: string) {
+    const { error } = await supabase
+      .from("opportunity_invitations")
+      .update({ status: "declined" })
+      .eq("id", invitationId);
+    if (error) throw error;
+  },
 };
