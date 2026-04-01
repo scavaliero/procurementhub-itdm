@@ -27,6 +27,7 @@ export default function PurchasePanelPage() {
   const inPurchaseMut = useSetInPurchase();
 
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const { data: allRequests = [], isLoading } = usePurchaseRequests();
 
@@ -91,12 +92,14 @@ export default function PurchasePanelPage() {
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
+          const isActive = activeSection === kpi.key;
           return (
             <Card
               key={kpi.key}
-              className={`shadow-sm transition-all hover:shadow-md ${
+              className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${
                 kpi.alert && kpi.value > 0 ? "border-amber-400/40 bg-amber-50" : ""
-              }`}
+              } ${isActive ? "ring-2 ring-primary border-primary" : ""}`}
+              onClick={() => setActiveSection(isActive ? null : kpi.key)}
             >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -114,7 +117,7 @@ export default function PurchasePanelPage() {
         })}
       </div>
 
-      {/* Section 1: Da prendere in carico */}
+      {(!activeSection || activeSection === "toPickUp") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Da prendere in carico
@@ -149,8 +152,9 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Section 2: In lavorazione */}
+      {(!activeSection || activeSection === "inProgress") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           In lavorazione
@@ -187,8 +191,9 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Section 3: Completate */}
+      {(!activeSection || activeSection === "completed") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Completate (ultimi 30 giorni)
@@ -220,6 +225,7 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Confirm dialog */}
       <Dialog open={!!confirmId} onOpenChange={() => setConfirmId(null)}>
