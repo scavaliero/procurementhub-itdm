@@ -92,12 +92,14 @@ export default function PurchasePanelPage() {
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
+          const isActive = activeSection === kpi.key;
           return (
             <Card
               key={kpi.key}
-              className={`shadow-sm transition-all hover:shadow-md ${
+              className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${
                 kpi.alert && kpi.value > 0 ? "border-amber-400/40 bg-amber-50" : ""
-              }`}
+              } ${isActive ? "ring-2 ring-primary border-primary" : ""}`}
+              onClick={() => setActiveSection(isActive ? null : kpi.key)}
             >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
