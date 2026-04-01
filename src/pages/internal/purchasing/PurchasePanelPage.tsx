@@ -154,7 +154,7 @@ export default function PurchasePanelPage() {
       </div>
       )}
 
-      {/* Section 2: In lavorazione */}
+      {(!activeSection || activeSection === "inProgress") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           In lavorazione
@@ -191,6 +191,7 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Section 3: Completate */}
       <div className="space-y-3">
