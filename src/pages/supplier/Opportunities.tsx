@@ -86,10 +86,15 @@ export default function SupplierOpportunities() {
     onError: () => toast.error("Errore nel rifiuto"),
   });
 
+  // Filter out declined invitations
+  const activeInvitations = useMemo(() => {
+    return (invitations as any[]).filter((inv) => inv.status !== "declined");
+  }, [invitations]);
+
   // KPI counts
   const kpiCounts = useMemo(() => {
     let total = 0, unseen = 0, open = 0, evaluating = 0;
-    for (const inv of invitations as any[]) {
+    for (const inv of activeInvitations) {
       total++;
       if (!inv.viewed_at) unseen++;
       const status = inv.opportunities?.status;
@@ -97,7 +102,7 @@ export default function SupplierOpportunities() {
       if (status === "evaluating") evaluating++;
     }
     return { total, unseen, open, evaluating };
-  }, [invitations]);
+  }, [activeInvitations]);
 
   // Filtered list
   const filteredInvitations = useMemo(() => {
