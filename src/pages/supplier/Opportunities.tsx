@@ -76,6 +76,18 @@ export default function SupplierOpportunities() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["supplier-invitations"] }),
   });
 
+  const [declineTarget, setDeclineTarget] = useState<string | null>(null);
+
+  const declineMutation = useMutation({
+    mutationFn: (invId: string) => invitationService.declineInvitation(invId),
+    onSuccess: () => {
+      toast.success("Opportunità rifiutata e rimossa dall'elenco");
+      qc.invalidateQueries({ queryKey: ["supplier-invitations"] });
+      setDeclineTarget(null);
+    },
+    onError: () => toast.error("Errore nel rifiuto"),
+  });
+
   // KPI counts
   const kpiCounts = useMemo(() => {
     let total = 0, unseen = 0, open = 0, evaluating = 0;
