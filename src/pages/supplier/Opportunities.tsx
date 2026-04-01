@@ -106,7 +106,7 @@ export default function SupplierOpportunities() {
 
   // Filtered list
   const filteredInvitations = useMemo(() => {
-    return (invitations as any[]).filter((inv) => {
+    return activeInvitations.filter((inv) => {
       const opp = inv.opportunities;
       // KPI card filters
       if (statusFilter === "unseen" && inv.viewed_at) return false;
