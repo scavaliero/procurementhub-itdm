@@ -76,8 +76,9 @@ export default function BillingApprovalDetail() {
   });
 
   const isDraft = billing?.status === "draft";
+  const isRejected = billing?.status === "rejected";
   const isPending = billing?.status === "pending_approval";
-  const canEdit = canCreate && isDraft;
+  const canEdit = canCreate && (isDraft || isRejected);
   const canDelete = canCreate && (isDraft || billing?.status === "rejected");
 
   function startEdit() {
