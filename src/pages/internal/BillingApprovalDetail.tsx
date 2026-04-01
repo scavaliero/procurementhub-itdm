@@ -91,15 +91,21 @@ export default function BillingApprovalDetail() {
   }
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      billingApprovalService.update(id!, {
+    mutationFn: async () => {
+      const updates: Record<string, any> = {
         period_start: editPeriodStart ? format(editPeriodStart, "yyyy-MM-dd") : undefined,
         period_end: editPeriodEnd ? format(editPeriodEnd, "yyyy-MM-dd") : undefined,
         amount: editAmount,
         activity_description: editActivity || null,
-      }),
+      };
+      // If rejected, reset to draft so it can be re-submitted
+      if (isRejected) {
+        updates.status = "draft";
+      }
+      await billingApprovalService.update(id!, updates);
+    },
     onSuccess: () => {
-      toast.success("Benestare aggiornato");
+      toast.success(isRejected ? "Benestare riportato in bozza e aggiornato" : "Benestare aggiornato");
       qc.invalidateQueries({ queryKey: ["billing-approval", id] });
       qc.invalidateQueries({ queryKey: ["billing-approvals"] });
       setEditing(false);
