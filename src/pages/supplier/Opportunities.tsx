@@ -123,7 +123,7 @@ export default function SupplierOpportunities() {
       }
       return true;
     });
-  }, [invitations, statusFilter, searchQuery]);
+  }, [activeInvitations, statusFilter, searchQuery]);
 
   const handleClick = (inv: any) => {
     if (!inv.viewed_at) {
