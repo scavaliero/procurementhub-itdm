@@ -117,7 +117,7 @@ export default function PurchasePanelPage() {
         })}
       </div>
 
-      {/* Section 1: Da prendere in carico */}
+      {(!activeSection || activeSection === "toPickUp") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Da prendere in carico
@@ -152,6 +152,7 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Section 2: In lavorazione */}
       <div className="space-y-3">
