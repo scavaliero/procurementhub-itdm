@@ -38,7 +38,7 @@ export const billingApprovalService = {
   },
 
   /** Update a draft billing approval */
-  async update(id: string, fields: { period_start?: string; period_end?: string; amount?: number; activity_description?: string | null }) {
+  async update(id: string, fields: { period_start?: string; period_end?: string; amount?: number; activity_description?: string | null; status?: string }) {
     const { error } = await supabase
       .from("billing_approvals")
       .update(fields)

@@ -47,6 +47,30 @@ const formSchema = z.object({
 }, {
   message: "L'offerta massima non può superare il budget stimato",
   path: ["budget_max"],
+}).refine((data) => {
+  if (data.bids_deadline && new Date(data.bids_deadline) <= new Date()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "La scadenza offerte deve essere una data futura",
+  path: ["bids_deadline"],
+}).refine((data) => {
+  if (data.opens_at && data.bids_deadline && new Date(data.opens_at) >= new Date(data.bids_deadline)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "La data di apertura deve precedere la scadenza offerte",
+  path: ["opens_at"],
+}).refine((data) => {
+  if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+    return false;
+  }
+  return true;
+}, {
+  message: "La data di fine deve essere successiva alla data di inizio",
+  path: ["end_date"],
 });
 
 type FormData = z.infer<typeof formSchema>;

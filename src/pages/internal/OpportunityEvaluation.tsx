@@ -224,6 +224,8 @@ export default function InternalOpportunityEvaluation() {
       toast.success("Aggiudicazione completata");
       qc.invalidateQueries({ queryKey: ["evaluation-bids", opportunityId] });
       qc.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
+      qc.invalidateQueries({ queryKey: ["opportunity-status-counts"] });
       setAwardDialog(false);
       setSelectedWinner("");
       setAwardJustification("");

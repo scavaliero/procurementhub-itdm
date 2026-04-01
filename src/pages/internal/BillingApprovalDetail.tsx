@@ -76,8 +76,9 @@ export default function BillingApprovalDetail() {
   });
 
   const isDraft = billing?.status === "draft";
+  const isRejected = billing?.status === "rejected";
   const isPending = billing?.status === "pending_approval";
-  const canEdit = canCreate && isDraft;
+  const canEdit = canCreate && (isDraft || isRejected);
   const canDelete = canCreate && (isDraft || billing?.status === "rejected");
 
   function startEdit() {
@@ -90,15 +91,21 @@ export default function BillingApprovalDetail() {
   }
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      billingApprovalService.update(id!, {
+    mutationFn: async () => {
+      const updates: Record<string, any> = {
         period_start: editPeriodStart ? format(editPeriodStart, "yyyy-MM-dd") : undefined,
         period_end: editPeriodEnd ? format(editPeriodEnd, "yyyy-MM-dd") : undefined,
         amount: editAmount,
         activity_description: editActivity || null,
-      }),
+      };
+      // If rejected, reset to draft so it can be re-submitted
+      if (isRejected) {
+        updates.status = "draft";
+      }
+      await billingApprovalService.update(id!, updates);
+    },
     onSuccess: () => {
-      toast.success("Benestare aggiornato");
+      toast.success(isRejected ? "Benestare riportato in bozza e aggiornato" : "Benestare aggiornato");
       qc.invalidateQueries({ queryKey: ["billing-approval", id] });
       qc.invalidateQueries({ queryKey: ["billing-approvals"] });
       setEditing(false);
@@ -245,7 +252,7 @@ export default function BillingApprovalDetail() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={editPeriodStart} onSelect={setEditPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" />
+                    <Calendar mode="single" selected={editPeriodStart} onSelect={setEditPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => { const today = new Date(); today.setHours(23, 59, 59, 999); return date > today; }} />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -259,7 +266,7 @@ export default function BillingApprovalDetail() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={editPeriodEnd} onSelect={setEditPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => editPeriodStart ? date < editPeriodStart : false} />
+                    <Calendar mode="single" selected={editPeriodEnd} onSelect={setEditPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => { const today = new Date(); today.setHours(23, 59, 59, 999); if (date > today) return true; if (editPeriodStart && date < editPeriodStart) return true; return false; }} />
                   </PopoverContent>
                 </Popover>
               </div>

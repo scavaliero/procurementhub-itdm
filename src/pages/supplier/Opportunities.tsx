@@ -13,10 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock } from "lucide-react";
+import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
 const OPP_STATUS_LABELS: Record<string, string> = {
@@ -71,10 +74,27 @@ export default function SupplierOpportunities() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["supplier-invitations"] }),
   });
 
+  const [declineTarget, setDeclineTarget] = useState<string | null>(null);
+
+  const declineMutation = useMutation({
+    mutationFn: (invId: string) => invitationService.declineInvitation(invId),
+    onSuccess: () => {
+      toast.success("Opportunità rifiutata e rimossa dall'elenco");
+      qc.invalidateQueries({ queryKey: ["supplier-invitations"] });
+      setDeclineTarget(null);
+    },
+    onError: () => toast.error("Errore nel rifiuto"),
+  });
+
+  // Filter out declined invitations
+  const activeInvitations = useMemo(() => {
+    return (invitations as any[]).filter((inv) => inv.status !== "declined");
+  }, [invitations]);
+
   // KPI counts
   const kpiCounts = useMemo(() => {
     let total = 0, unseen = 0, open = 0, evaluating = 0;
-    for (const inv of invitations as any[]) {
+    for (const inv of activeInvitations) {
       total++;
       if (!inv.viewed_at) unseen++;
       const status = inv.opportunities?.status;
@@ -82,11 +102,11 @@ export default function SupplierOpportunities() {
       if (status === "evaluating") evaluating++;
     }
     return { total, unseen, open, evaluating };
-  }, [invitations]);
+  }, [activeInvitations]);
 
   // Filtered list
   const filteredInvitations = useMemo(() => {
-    return (invitations as any[]).filter((inv) => {
+    return activeInvitations.filter((inv) => {
       const opp = inv.opportunities;
       // KPI card filters
       if (statusFilter === "unseen" && inv.viewed_at) return false;
@@ -103,7 +123,7 @@ export default function SupplierOpportunities() {
       }
       return true;
     });
-  }, [invitations, statusFilter, searchQuery]);
+  }, [activeInvitations, statusFilter, searchQuery]);
 
   const handleClick = (inv: any) => {
     if (!inv.viewed_at) {
@@ -207,6 +227,7 @@ export default function SupplierOpportunities() {
         <div className="space-y-3">
           {filteredInvitations.map((inv: any) => {
             const opp = inv.opportunities;
+            const canDecline = opp?.status === "open" || opp?.status === "collecting_bids";
             return (
               <Card
                 key={inv.id}
@@ -229,13 +250,48 @@ export default function SupplierOpportunities() {
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {canDecline && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => { e.stopPropagation(); setDeclineTarget(inv.id); }}
+                        title="Rifiuta opportunità"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+
+      {/* Decline Dialog */}
+      <Dialog open={!!declineTarget} onOpenChange={() => setDeclineTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rifiuta opportunità</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Sei sicuro di voler rifiutare questa opportunità? Verrà rimossa dal tuo elenco.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeclineTarget(null)}>Annulla</Button>
+            <Button
+              variant="destructive"
+              disabled={declineMutation.isPending}
+              onClick={() => { if (declineTarget) declineMutation.mutate(declineTarget); }}
+            >
+              {declineMutation.isPending ? "Rifiuto…" : "Conferma rifiuto"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

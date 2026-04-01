@@ -80,7 +80,11 @@ export default function SupplierBidSheet({ opportunityId, invitation, onClose }:
     return z.object({
       total_amount: amountSchema,
       technical_description: z.string().min(10, "Descrizione tecnica obbligatoria (min 10 caratteri)"),
-      bid_validity_date: z.string().min(1, "Data validità obbligatoria"),
+      bid_validity_date: z.string().min(1, "Data validità obbligatoria").refine((val) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return new Date(val) >= today;
+      }, "La data di validità deve essere oggi o una data futura"),
       proposed_conditions: z.string().optional(),
       notes: z.string().optional(),
     });

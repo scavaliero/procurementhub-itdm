@@ -356,7 +356,11 @@ export default function InternalBillingApprovals() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" />
+                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(23, 59, 59, 999);
+                      return date > today;
+                    }} />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -370,7 +374,13 @@ export default function InternalBillingApprovals() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => periodStart ? date < periodStart : false} />
+                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(23, 59, 59, 999);
+                      if (date > today) return true;
+                      if (periodStart && date < periodStart) return true;
+                      return false;
+                    }} />
                   </PopoverContent>
                 </Popover>
               </div>

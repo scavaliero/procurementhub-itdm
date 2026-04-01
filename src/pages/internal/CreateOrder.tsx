@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orderService } from "@/services/orderService";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ export default function InternalCreateOrder() {
   const { id: opportunityId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const qc = useQueryClient();
   const prefilled = useRef(false);
 
   const [subject, setSubject] = useState("");
@@ -95,6 +96,9 @@ export default function InternalCreateOrder() {
     },
     onSuccess: () => {
       toast.success("Ordine creato — in attesa di approvazione");
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
+      qc.invalidateQueries({ queryKey: ["order-exists-for-opp", opportunityId] });
       navigate("/internal/orders");
     },
     onError: (err: Error) => toast.error(err.message || "Errore"),
