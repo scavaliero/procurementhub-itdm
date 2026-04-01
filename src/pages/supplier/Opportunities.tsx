@@ -227,6 +227,7 @@ export default function SupplierOpportunities() {
         <div className="space-y-3">
           {filteredInvitations.map((inv: any) => {
             const opp = inv.opportunities;
+            const canDecline = opp?.status === "open" || opp?.status === "collecting_bids";
             return (
               <Card
                 key={inv.id}
@@ -249,13 +250,48 @@ export default function SupplierOpportunities() {
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {canDecline && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => { e.stopPropagation(); setDeclineTarget(inv.id); }}
+                        title="Rifiuta opportunità"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+
+      {/* Decline Dialog */}
+      <Dialog open={!!declineTarget} onOpenChange={() => setDeclineTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rifiuta opportunità</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Sei sicuro di voler rifiutare questa opportunità? Verrà rimossa dal tuo elenco.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeclineTarget(null)}>Annulla</Button>
+            <Button
+              variant="destructive"
+              disabled={declineMutation.isPending}
+              onClick={() => { if (declineTarget) declineMutation.mutate(declineTarget); }}
+            >
+              {declineMutation.isPending ? "Rifiuto…" : "Conferma rifiuto"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
