@@ -193,7 +193,7 @@ export default function PurchasePanelPage() {
       </div>
       )}
 
-      {/* Section 3: Completate */}
+      {(!activeSection || activeSection === "completed") && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           Completate (ultimi 30 giorni)
@@ -225,6 +225,7 @@ export default function PurchasePanelPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Confirm dialog */}
       <Dialog open={!!confirmId} onOpenChange={() => setConfirmId(null)}>
