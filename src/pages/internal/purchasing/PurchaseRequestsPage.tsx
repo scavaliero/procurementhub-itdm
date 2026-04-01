@@ -149,6 +149,28 @@ export default function PurchaseRequestsPage() {
 
   const showKpi = isValidator || isOperator;
 
+  const activeKpiFilter = searchParams.get("kpi") || "";
+
+  const handleKpiClick = (kpiKey: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (activeKpiFilter === kpiKey) {
+      // Toggle off
+      next.delete("kpi");
+      next.delete("status");
+    } else {
+      next.set("kpi", kpiKey);
+      // Set the relevant status filter
+      if (kpiKey === "pending") {
+        next.set("status", "submitted");
+      } else if (kpiKey === "approved_month") {
+        next.set("status", "approved");
+      } else {
+        next.delete("status");
+      }
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   const kpiCards = [
     { key: "pending", label: "In attesa", value: kpiCounts.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-100" },
     { key: "approved_month", label: "Approvate (mese)", value: kpiCounts.approvedMonth, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100" },
@@ -180,8 +202,13 @@ export default function PurchaseRequestsPage() {
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
           {kpiCards.map((kpi) => {
             const Icon = kpi.icon;
+            const isActive = activeKpiFilter === kpi.key;
             return (
-              <Card key={kpi.key} className="shadow-sm">
+              <Card
+                key={kpi.key}
+                className={`shadow-sm cursor-pointer transition-all hover:shadow-md ${isActive ? "ring-2 ring-primary border-primary" : ""}`}
+                onClick={() => handleKpiClick(kpi.key)}
+              >
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     {kpi.label}

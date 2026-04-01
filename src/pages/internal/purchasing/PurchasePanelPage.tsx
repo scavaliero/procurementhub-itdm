@@ -27,6 +27,7 @@ export default function PurchasePanelPage() {
   const inPurchaseMut = useSetInPurchase();
 
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const { data: allRequests = [], isLoading } = usePurchaseRequests();
 
