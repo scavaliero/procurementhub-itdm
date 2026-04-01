@@ -13,9 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock } from "lucide-react";
+import { ChevronRight, Search, Eye, EyeOff, Briefcase, Clock, XCircle } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 import { format } from "date-fns";
 import SupplierOpportunityDetail from "@/components/supplier/OpportunityDetail";
 
