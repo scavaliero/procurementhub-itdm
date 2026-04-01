@@ -28,6 +28,7 @@ export default function InternalCreateOrder() {
   const { id: opportunityId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const qc = useQueryClient();
   const prefilled = useRef(false);
 
   const [subject, setSubject] = useState("");
