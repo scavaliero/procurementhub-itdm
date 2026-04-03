@@ -104,7 +104,8 @@ export default function InternalCreateOrder() {
       toast.success("Ordine creato — in attesa di approvazione");
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["opportunities"] });
-      qc.invalidateQueries({ queryKey: ["order-exists-for-opp", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["active-order-for-opp", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity-status-counts"] });
       navigate("/internal/orders");
     },
     onError: (err: Error) => toast.error(err.message || "Errore"),
