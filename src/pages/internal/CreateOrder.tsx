@@ -114,15 +114,17 @@ export default function InternalCreateOrder() {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
   }
 
-  if (orderExists) {
-    return <EmptyState title="Ordine già generato" description="È già stato generato un ordine per questa opportunità. Non è possibile crearne un altro." />;
+  if (existingActiveOrder) {
+    return <EmptyState title="Ordine già generato" description="Esiste già un ordine attivo per questa opportunità." />;
   }
 
   if (!award) {
     return <EmptyState title="Aggiudicazione non trovata" description="Questa opportunità non è ancora stata aggiudicata." />;
   }
 
-  const isValid = subject.trim() && amount > 0 && startDate && endDate;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isValid = subject.trim() && amount > 0 && startDate && endDate && startDate >= today && endDate > startDate && !dateError;
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
