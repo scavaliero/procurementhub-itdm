@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import { LayoutDashboard, Building2, FileText, Briefcase, ShoppingCart, LogOut } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
