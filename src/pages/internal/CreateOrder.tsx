@@ -195,6 +195,8 @@ export default function InternalCreateOrder() {
             </div>
           </div>
 
+          {dateError && <p className="text-sm text-destructive">{dateError}</p>}
+
           <div className="space-y-2">
             <Label>Condizioni contrattuali</Label>
             <Textarea value={contractConditions} onChange={(e) => setContractConditions(e.target.value)} rows={3} />

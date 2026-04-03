@@ -78,8 +78,10 @@ export default function BillingApprovalDetail() {
   const isDraft = billing?.status === "draft";
   const isRejected = billing?.status === "rejected";
   const isPending = billing?.status === "pending_approval";
+  const isApproved = billing?.status === "approved";
   const canEdit = canCreate && (isDraft || isRejected);
   const canDelete = canCreate && (isDraft || billing?.status === "rejected");
+  const canMarkInvoiced = canApprove && isApproved;
 
   function startEdit() {
     if (!billing) return;
