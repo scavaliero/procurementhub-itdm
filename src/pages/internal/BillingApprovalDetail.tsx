@@ -269,7 +269,7 @@ export default function BillingApprovalDetail() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={editPeriodStart} onSelect={setEditPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => { const today = new Date(); today.setHours(23, 59, 59, 999); return date > today; }} />
+                    <Calendar mode="single" selected={editPeriodStart} onSelect={setEditPeriodStart} locale={it} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
