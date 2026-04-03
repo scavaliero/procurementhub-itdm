@@ -158,6 +158,16 @@ export default function BillingApprovalDetail() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const invoicedMutation = useMutation({
+    mutationFn: () => billingApprovalService.markAsInvoiced(id!, profile!.tenant_id),
+    onSuccess: () => {
+      toast.success("Benestare segnato come fatturato");
+      qc.invalidateQueries({ queryKey: ["billing-approval", id] });
+      qc.invalidateQueries({ queryKey: ["billing-approvals"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
