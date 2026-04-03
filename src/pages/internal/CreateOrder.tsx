@@ -39,6 +39,7 @@ export default function InternalCreateOrder() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [contractConditions, setContractConditions] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [dateError, setDateError] = useState("");
 
   const { data: award, isLoading } = useQuery({
     queryKey: ["award-for-order", opportunityId],
@@ -46,9 +47,14 @@ export default function InternalCreateOrder() {
     enabled: !!opportunityId,
   });
 
-  const { data: orderExists = false } = useQuery({
-    queryKey: ["order-exists-for-opp", opportunityId],
-    queryFn: () => orderService.existsForOpportunity(opportunityId!),
+  // Check if an ACTIVE (non-cancelled/rejected) order exists
+  const { data: existingActiveOrder } = useQuery({
+    queryKey: ["active-order-for-opp", opportunityId],
+    queryFn: async () => {
+      const order = await orderService.getByOpportunityId(opportunityId!);
+      if (order && !["cancelled", "rejected"].includes(order.status)) return order;
+      return null;
+    },
     enabled: !!opportunityId,
   });
 
