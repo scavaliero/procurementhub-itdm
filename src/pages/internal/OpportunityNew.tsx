@@ -350,6 +350,7 @@ export default function InternalOpportunityNew() {
                 <div>
                   <Label>Apertura</Label>
                   <Input type="datetime-local" {...register("opens_at")} />
+                  {errors.opens_at && <p className="text-sm text-destructive mt-1">{errors.opens_at.message}</p>}
                 </div>
                 <div>
                   <Label>Data inizio</Label>
