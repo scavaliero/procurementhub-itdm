@@ -350,6 +350,7 @@ export default function InternalOpportunityNew() {
                 <div>
                   <Label>Apertura</Label>
                   <Input type="datetime-local" {...register("opens_at")} />
+                  {errors.opens_at && <p className="text-sm text-destructive mt-1">{errors.opens_at.message}</p>}
                 </div>
                 <div>
                   <Label>Data inizio</Label>
@@ -358,6 +359,7 @@ export default function InternalOpportunityNew() {
                 <div>
                   <Label>Data fine</Label>
                   <Input type="date" {...register("end_date")} />
+                  {errors.end_date && <p className="text-sm text-destructive mt-1">{errors.end_date.message}</p>}
                 </div>
                 <div className={canViewBudget ? "" : "hidden"}>
                   <Label>Budget stimato (€) *</Label>

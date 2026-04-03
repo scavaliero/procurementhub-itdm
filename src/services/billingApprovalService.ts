@@ -394,6 +394,23 @@ export const billingApprovalService = {
     });
   },
 
+  /** Mark billing as invoiced (approved → invoiced) */
+  async markAsInvoiced(billingId: string, tenantId: string) {
+    const { error } = await supabase
+      .from("billing_approvals")
+      .update({ status: "invoiced" })
+      .eq("id", billingId);
+    if (error) throw error;
+
+    await auditService.log({
+      tenant_id: tenantId,
+      entity_type: "billing_approval",
+      entity_id: billingId,
+      event_type: "billing_invoiced",
+      new_state: { status: "invoiced" },
+    });
+  },
+
   /** Upload billing attachment */
   async uploadAttachment(billingId: string, file: File): Promise<string> {
     const path = `${billingId}/${crypto.randomUUID()}_${file.name}`;

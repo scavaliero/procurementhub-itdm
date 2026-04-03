@@ -39,6 +39,7 @@ export default function InternalCreateOrder() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [contractConditions, setContractConditions] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [dateError, setDateError] = useState("");
 
   const { data: award, isLoading } = useQuery({
     queryKey: ["award-for-order", opportunityId],
@@ -46,9 +47,14 @@ export default function InternalCreateOrder() {
     enabled: !!opportunityId,
   });
 
-  const { data: orderExists = false } = useQuery({
-    queryKey: ["order-exists-for-opp", opportunityId],
-    queryFn: () => orderService.existsForOpportunity(opportunityId!),
+  // Check if an ACTIVE (non-cancelled/rejected) order exists
+  const { data: existingActiveOrder } = useQuery({
+    queryKey: ["active-order-for-opp", opportunityId],
+    queryFn: async () => {
+      const order = await orderService.getByOpportunityId(opportunityId!);
+      if (order && !["cancelled", "rejected"].includes(order.status)) return order;
+      return null;
+    },
     enabled: !!opportunityId,
   });
 
@@ -98,7 +104,8 @@ export default function InternalCreateOrder() {
       toast.success("Ordine creato — in attesa di approvazione");
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["opportunities"] });
-      qc.invalidateQueries({ queryKey: ["order-exists-for-opp", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["active-order-for-opp", opportunityId] });
+      qc.invalidateQueries({ queryKey: ["opportunity-status-counts"] });
       navigate("/internal/orders");
     },
     onError: (err: Error) => toast.error(err.message || "Errore"),
@@ -108,15 +115,17 @@ export default function InternalCreateOrder() {
     return <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
   }
 
-  if (orderExists) {
-    return <EmptyState title="Ordine già generato" description="È già stato generato un ordine per questa opportunità. Non è possibile crearne un altro." />;
+  if (existingActiveOrder) {
+    return <EmptyState title="Ordine già generato" description="Esiste già un ordine attivo per questa opportunità." />;
   }
 
   if (!award) {
     return <EmptyState title="Aggiudicazione non trovata" description="Questa opportunità non è ancora stata aggiudicata." />;
   }
 
-  const isValid = subject.trim() && amount > 0 && startDate && endDate;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isValid = subject.trim() && amount > 0 && startDate && endDate && startDate >= today && endDate > startDate && !dateError;
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
@@ -166,7 +175,7 @@ export default function InternalCreateOrder() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} locale={it} initialFocus className="p-3 pointer-events-auto" />
+                  <Calendar mode="single" selected={startDate} onSelect={(d) => { setStartDate(d); if (d && d < today) setDateError("La data inizio deve essere da oggi in poi"); else setDateError(""); }} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => date < today} />
                 </PopoverContent>
               </Popover>
             </div>
@@ -180,11 +189,13 @@ export default function InternalCreateOrder() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => startDate ? date < startDate : false} />
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => { if (startDate && date <= startDate) return true; if (date < today) return true; return false; }} />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
+
+          {dateError && <p className="text-sm text-destructive">{dateError}</p>}
 
           <div className="space-y-2">
             <Label>Condizioni contrattuali</Label>
