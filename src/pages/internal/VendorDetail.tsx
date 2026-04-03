@@ -390,7 +390,7 @@ export default function InternalVendorDetail() {
 
       case "integrate":
         if (!dialogMsg.trim()) { toast.error("Inserisci un messaggio"); return; }
-        statusMut.mutate({ toStatus: supplier.status, reason: dialogMsg });
+        statusMut.mutate({ toStatus: "enabled", reason: dialogMsg });
         break;
 
       case "suspend":

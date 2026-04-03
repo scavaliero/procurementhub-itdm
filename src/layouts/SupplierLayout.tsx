@@ -65,18 +65,17 @@ function SupplierSidebarContent({ navItems }: { navItems: typeof fullNav }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const active = location.pathname.startsWith(item.url);
+                const active = location.pathname === item.url || (location.pathname.startsWith(item.url + "/"));
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <NavLink
+                      <Link
                         to={item.url}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors ${active ? "bg-sidebar-accent text-sidebar-primary font-semibold" : ""}`}
                       >
                         <item.icon className="h-[18px] w-[18px] shrink-0" />
                         {!collapsed && <span className="text-sm">{item.title}</span>}
-                      </NavLink>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

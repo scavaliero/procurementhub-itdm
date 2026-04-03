@@ -188,7 +188,7 @@ export default function InternalCreateOrder() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => startDate ? date < startDate : false} />
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} locale={it} initialFocus className="p-3 pointer-events-auto" disabled={(date) => { if (startDate && date <= startDate) return true; if (date < today) return true; return false; }} />
                 </PopoverContent>
               </Popover>
             </div>
