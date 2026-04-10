@@ -13,9 +13,10 @@ interface DocumentDatePickerProps {
   required?: boolean;
   value: Date | undefined;
   onChange: (date: Date | undefined) => void;
+  minDate?: Date;
 }
 
-export function DocumentDatePicker({ label, required, value, onChange }: DocumentDatePickerProps) {
+export function DocumentDatePicker({ label, required, value, onChange, minDate }: DocumentDatePickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -45,6 +46,7 @@ export function DocumentDatePicker({ label, required, value, onChange }: Documen
               onChange(d);
               setOpen(false);
             }}
+            disabled={minDate ? (date) => date < minDate : undefined}
             initialFocus
             className={cn("p-3 pointer-events-auto")}
           />
