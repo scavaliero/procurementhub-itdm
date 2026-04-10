@@ -36,6 +36,7 @@ export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenant
   const [issueDate, setIssueDate] = useState<Date | undefined>();
   const [expiryDate, setExpiryDate] = useState<Date | undefined>();
   const [isUploading, setIsUploading] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   // Determine if this doc type supports multiple uploads (non-mandatory, like CERT_AZIENDALI)
   const isMultiUpload = !docType.is_mandatory && docType.code === "CERT_AZIENDALI";
