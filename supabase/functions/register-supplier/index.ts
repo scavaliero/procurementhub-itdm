@@ -44,6 +44,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 0) Check duplicate VAT number
+    const vatHash = btoa(vatNumber);
+    const { data: existingVat } = await supabaseAdmin
+      .from("suppliers")
+      .select("id")
+      .eq("vat_number_hash", vatHash)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (existingVat) {
+      return new Response(
+        JSON.stringify({ error: "Questa Partita IVA è già registrata. Se hai bisogno di assistenza, contatta il supporto." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // 1) Resolve active tenant
     const { data: tenant, error: tenantErr } = await supabaseAdmin
       .from("tenants")
