@@ -58,8 +58,22 @@ export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenant
       return;
     }
 
+    if (expiryDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (expiryDate < today) {
+        toast.error("La data di scadenza non può essere precedente alla data odierna");
+        return;
+      }
+    }
+
     setIsUploading(true);
     try {
+      // If replacing a rejected document, soft-delete the old one first
+      if (uploaded?.status === "rejected") {
+        await documentService.deleteDocument(uploaded.id);
+      }
+
       await documentService.uploadDocument({
         supplierId,
         documentTypeId: docType.id,
@@ -185,77 +199,63 @@ export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenant
 
         {!locked && (
           <>
-            {!isMultiUpload && uploaded?.status === "rejected" && (
+            <div className="grid grid-cols-2 gap-2">
+              <DocumentDatePicker
+                label="Data emissione"
+                value={issueDate}
+                onChange={setIssueDate}
+              />
+              <DocumentDatePicker
+                label="Data scadenza"
+                required={!!docType.requires_expiry}
+                value={expiryDate}
+                onChange={setExpiryDate}
+                minDate={new Date()}
+              />
+            </div>
+            <div>
+              <input
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
+                    if (file.size > maxBytes) {
+                      toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
+                      return;
+                    }
+                    handleUpload(file);
+                  }
+                }}
+              />
               <Button
                 size="sm"
-                variant="destructive"
+                variant={isExpired || isExpiringSoon || uploaded?.status === "rejected" ? "default" : "outline"}
                 className="w-full"
-                disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(uploaded.id)}
+                disabled={isUploading}
+                onClick={() => fileRef.current?.click()}
               >
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                {deleteMutation.isPending ? "Eliminazione…" : "Elimina e ricarica"}
+                {isMultiUpload ? (
+                  <><Plus className="h-3.5 w-3.5 mr-1" /> {isUploading ? "Caricamento…" : "Aggiungi certificazione"}</>
+                ) : (
+                  <><Upload className="h-3.5 w-3.5 mr-1" />
+                  {isUploading
+                    ? "Caricamento…"
+                    : uploaded?.status === "rejected"
+                    ? "Ricarica documento"
+                    : isExpired
+                    ? "Sostituisci documento scaduto"
+                    : isExpiringSoon
+                    ? "Sostituisci documento"
+                    : uploaded
+                    ? "Ricarica"
+                    : "Carica"}</>
+                )}
               </Button>
-            )}
-
-            {(!uploaded || uploaded.status !== "rejected" || isMultiUpload) && (
-              <>
-                <div className="grid grid-cols-2 gap-2">
-                  <DocumentDatePicker
-                    label="Data emissione"
-                    value={issueDate}
-                    onChange={setIssueDate}
-                  />
-                  <DocumentDatePicker
-                    label="Data scadenza"
-                    required={!!docType.requires_expiry}
-                    value={expiryDate}
-                    onChange={setExpiryDate}
-                  />
-                </div>
-                <div>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    className="hidden"
-                    accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
-                        if (file.size > maxBytes) {
-                          toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
-                          return;
-                        }
-                        handleUpload(file);
-                      }
-                    }}
-                  />
-                  <Button
-                    size="sm"
-                    variant={isExpired || isExpiringSoon ? "default" : "outline"}
-                    className="w-full"
-                    disabled={isUploading}
-                    onClick={() => fileRef.current?.click()}
-                  >
-                    {isMultiUpload ? (
-                      <><Plus className="h-3.5 w-3.5 mr-1" /> {isUploading ? "Caricamento…" : "Aggiungi certificazione"}</>
-                    ) : (
-                      <><Upload className="h-3.5 w-3.5 mr-1" />
-                      {isUploading
-                        ? "Caricamento…"
-                        : isExpired
-                        ? "Sostituisci documento scaduto"
-                        : isExpiringSoon
-                        ? "Sostituisci documento"
-                        : uploaded
-                        ? "Ricarica"
-                        : "Carica"}</>
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
+            </div>
           </>
         )}
 
