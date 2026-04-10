@@ -97,7 +97,7 @@ export const vendorService = {
     };
     const { data: updData, error: updErr } = await supabase
       .from("suppliers")
-      .update(updatePayload)
+      .update(updatePayload as any)
       .eq("id", params.supplierId)
       .select("id, status")
       .maybeSingle();
