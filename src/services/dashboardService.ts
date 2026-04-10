@@ -291,4 +291,18 @@ export const dashboardService = {
     if (error) throw error;
     return count ?? 0;
   },
+
+  /** Get the latest rejection reason from supplier_status_history */
+  async supplierRejectionReason(supplierId: string): Promise<{ reason: string | null; rejected_at: string | null }> {
+    const { data, error } = await supabase
+      .from("supplier_status_history")
+      .select("reason, created_at")
+      .eq("supplier_id", supplierId)
+      .eq("to_status", "rejected")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return { reason: data?.reason ?? null, rejected_at: data?.created_at ?? null };
+  },
 };
