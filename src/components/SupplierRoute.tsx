@@ -77,6 +77,15 @@ export function SupplierRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // ── rejected: allow dashboard + onboarding only ──
+  if (status === "rejected") {
+    const allowedPaths = ["/supplier/dashboard", "/supplier/onboarding", "/supplier/notifications"];
+    const isAllowed = allowedPaths.some((p) => location.pathname.startsWith(p));
+    if (!isAllowed) {
+      return <Navigate to="/supplier/dashboard" replace />;
+    }
+  }
+
   // ── enabled: onboarding complete, now documents + limited menu ──
   if (status === "enabled") {
     const allowedPaths = ["/supplier/onboarding", "/supplier/documents", "/supplier/notifications"];

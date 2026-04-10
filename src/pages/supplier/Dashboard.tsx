@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { dashboardService } from "@/services/dashboardService";
@@ -6,9 +7,18 @@ import { SUPPLIER_STATUS_CONFIG } from "@/lib/supplierStatusConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Building2, FileText, Briefcase, ShoppingCart, FileCheck,
-  ArrowRight, Eye,
+  Eye, AlertCircle, PenLine,
 } from "lucide-react";
 
 const REFETCH_MS = 5 * 60 * 1000;
@@ -88,7 +98,7 @@ export default function SupplierDashboard() {
   const { profile, isLoading: authLoading } = useAuth();
   const supplierId = profile?.supplier_id;
 
-  const { data: supplierInfo, isLoading: loadingStatus, isError: errorStatus } = useQuery({
+  const { data: supplierInfo, isLoading: loadingStatus } = useQuery({
     queryKey: ["dashboard", "supplier-status", supplierId],
     queryFn: () => dashboardService.supplierStatus(supplierId!),
     enabled: !!supplierId,
@@ -116,6 +126,26 @@ export default function SupplierDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  // Fetch rejection reason when supplier is rejected
+  const isRejected = supplierInfo?.status === "rejected";
+  const { data: rejectionData } = useQuery({
+    queryKey: ["dashboard", "supplier-rejection", supplierId],
+    queryFn: () => dashboardService.supplierRejectionReason(supplierId!),
+    enabled: !!supplierId && isRejected,
+  });
+
+  // Popup state — show once per session
+  const [showRejectionPopup, setShowRejectionPopup] = useState(false);
+  useEffect(() => {
+    if (isRejected && rejectionData?.reason) {
+      const key = `rejection_popup_seen_${supplierId}`;
+      if (!sessionStorage.getItem(key)) {
+        setShowRejectionPopup(true);
+        sessionStorage.setItem(key, "1");
+      }
+    }
+  }, [isRejected, rejectionData, supplierId]);
+
   // Show skeleton while auth or supplier data is still loading
   if (authLoading || !profile || !supplierId) {
     return (
@@ -134,6 +164,36 @@ export default function SupplierDashboard() {
 
   return (
     <div className="p-4 sm:p-6 space-y-8">
+      {/* Rejection Popup */}
+      <Dialog open={showRejectionPopup} onOpenChange={setShowRejectionPopup}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">Richiesta rifiutata</DialogTitle>
+            <DialogDescription className="text-center">
+              La tua richiesta di accreditamento è stata rifiutata dall'amministratore.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4">
+            <p className="text-sm font-medium text-destructive mb-1">Motivazione:</p>
+            <p className="text-sm text-foreground">{rejectionData?.reason || "Nessuna motivazione specificata."}</p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowRejectionPopup(false)}>
+              Chiudi
+            </Button>
+            <Button asChild>
+              <Link to="/supplier/onboarding" onClick={() => setShowRejectionPopup(false)}>
+                <PenLine className="h-4 w-4 mr-2" />
+                Modifica anagrafica
+              </Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Welcome */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold">
@@ -143,6 +203,38 @@ export default function SupplierDashboard() {
           Portale Fornitore — ITDM Group
         </p>
       </div>
+
+      {/* ── Rejection Banner ─── */}
+      {isRejected && (
+        <section className="space-y-4">
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <h3 className="font-semibold text-destructive">Richiesta rifiutata</h3>
+                  <p className="text-sm text-muted-foreground">
+                    La tua richiesta di accreditamento è stata rifiutata. Di seguito la motivazione fornita dall'amministratore.
+                  </p>
+                  <div className="bg-background/80 border rounded-md p-3 mt-2">
+                    <p className="text-sm">{rejectionData?.reason || "Nessuna motivazione specificata."}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button asChild>
+                  <Link to="/supplier/onboarding">
+                    <PenLine className="h-4 w-4 mr-2" />
+                    Richiedi modifica anagrafica
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* ── Stato accreditamento ─── */}
       <section className="space-y-4">
@@ -162,71 +254,75 @@ export default function SupplierDashboard() {
       </section>
 
       {/* ── KPIs ─── */}
-      <section className="space-y-4">
-        <SectionHeader icon="📊" title="Riepilogo" variant="green" />
-        {isLoading ? (
-          <SkeletonCards count={4} />
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <KpiCard
-              title="Documenti non approvati"
-              value={pendingDocs}
-              icon={FileText}
-              to="/supplier/documents"
-              subtitle={pendingDocs > 0 ? "Da completare" : "Tutto in ordine"}
-              cardClass="card-top-docs"
-            />
-            <KpiCard
-              title="Opportunità da visionare"
-              value={unseenInvites}
-              icon={Eye}
-              to="/supplier/opportunities"
-              subtitle={unseenInvites > 0 ? "Nuovi inviti ricevuti" : "Nessun invito in attesa"}
-              cardClass="card-top-opportunities"
-            />
-            <KpiCard
-              title="Offerte inviate questo mese"
-              value={bidsMonth}
-              icon={Briefcase}
-              to="/supplier/opportunities"
-              cardClass="card-top-procurement"
-            />
-            <KpiCard
-              title="Benestare"
-              value="→"
-              icon={FileCheck}
-              to="/supplier/billing-approvals"
-              subtitle="Visualizza benestare approvati"
-              cardClass="card-top-billing"
-            />
-          </div>
-        )}
-      </section>
+      {!isRejected && (
+        <section className="space-y-4">
+          <SectionHeader icon="📊" title="Riepilogo" variant="green" />
+          {isLoading ? (
+            <SkeletonCards count={4} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <KpiCard
+                title="Documenti non approvati"
+                value={pendingDocs}
+                icon={FileText}
+                to="/supplier/documents"
+                subtitle={pendingDocs > 0 ? "Da completare" : "Tutto in ordine"}
+                cardClass="card-top-docs"
+              />
+              <KpiCard
+                title="Opportunità da visionare"
+                value={unseenInvites}
+                icon={Eye}
+                to="/supplier/opportunities"
+                subtitle={unseenInvites > 0 ? "Nuovi inviti ricevuti" : "Nessun invito in attesa"}
+                cardClass="card-top-opportunities"
+              />
+              <KpiCard
+                title="Offerte inviate questo mese"
+                value={bidsMonth}
+                icon={Briefcase}
+                to="/supplier/opportunities"
+                cardClass="card-top-procurement"
+              />
+              <KpiCard
+                title="Benestare"
+                value="→"
+                icon={FileCheck}
+                to="/supplier/billing-approvals"
+                subtitle="Visualizza benestare approvati"
+                cardClass="card-top-billing"
+              />
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── App rapide ─── */}
-      <section className="space-y-4">
-        <SectionHeader icon="⚡" title="App Rapide" />
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-          {[
-            { title: "Profilo azienda", to: "/supplier/onboarding", icon: Building2 },
-            { title: "Documenti", to: "/supplier/documents", icon: FileText },
-            { title: "Opportunità", to: "/supplier/opportunities", icon: Briefcase },
-            { title: "Ordini", to: "/supplier/orders", icon: ShoppingCart },
-            { title: "Benestare", to: "/supplier/billing-approvals", icon: FileCheck },
-          ].map((link) => (
-            <Link key={link.to} to={link.to}>
-              <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3 card-top-quick">
-                <CardContent className="p-0 flex flex-col items-center gap-2.5">
-                  <div className="h-12 w-12 rounded-xl bg-primary/8 flex items-center justify-center">
-                    <link.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <span className="text-xs font-semibold leading-tight">{link.title}</span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {!isRejected && (
+        <section className="space-y-4">
+          <SectionHeader icon="⚡" title="App Rapide" />
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            {[
+              { title: "Profilo azienda", to: "/supplier/onboarding", icon: Building2 },
+              { title: "Documenti", to: "/supplier/documents", icon: FileText },
+              { title: "Opportunità", to: "/supplier/opportunities", icon: Briefcase },
+              { title: "Ordini", to: "/supplier/orders", icon: ShoppingCart },
+              { title: "Benestare", to: "/supplier/billing-approvals", icon: FileCheck },
+            ].map((link) => (
+              <Link key={link.to} to={link.to}>
+                <Card className="shadow-sm hover:shadow-md transition-shadow text-center py-5 px-3 card-top-quick">
+                  <CardContent className="p-0 flex flex-col items-center gap-2.5">
+                    <div className="h-12 w-12 rounded-xl bg-primary/8 flex items-center justify-center">
+                      <link.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="text-xs font-semibold leading-tight">{link.title}</span>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
