@@ -84,7 +84,7 @@ export const changeRequestService = {
     if (Object.keys(supplierUpdate).length > 0) {
       const { error: updErr } = await supabase
         .from("suppliers")
-        .update(supplierUpdate)
+        .update(supplierUpdate as any)
         .eq("id", supplierId);
       if (updErr) throw updErr;
     }

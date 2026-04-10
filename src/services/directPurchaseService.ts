@@ -139,7 +139,7 @@ export const directPurchaseService = {
 
     const { data, error } = await supabase
       .from("direct_purchases")
-      .update(updateData)
+      .update(updateData as any)
       .eq("id", id)
       .select()
       .single();

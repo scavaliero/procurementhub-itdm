@@ -124,7 +124,7 @@ export const opportunityService = {
   async update(id: string, updates: Partial<Opportunity>) {
     const { data, error } = await supabase
       .from("opportunities")
-      .update(updates as unknown as Record<string, unknown>)
+      .update(updates as any)
       .eq("id", id)
       .select()
       .single();
