@@ -509,7 +509,7 @@ export default function InternalVendorDetail() {
                 <Field label="PEC" value={supplier.pec} />
                 <Field label="Website" value={supplier.website} />
                 <Field label="Indirizzo Legale" value={fmtAddress(supplier.legal_address)} />
-                <Field label="P.IVA" value={supplier.vat_number_hash ? "•••••••••••" : null} />
+                <Field label="P.IVA" value={supplier.vat_number_hash ? atob(supplier.vat_number_hash) : null} />
                 <Field label="IBAN (mascherato)" value={maskIBAN(supplier.iban_masked)} />
                 <Field
                   label="Rating"
