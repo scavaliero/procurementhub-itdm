@@ -81,6 +81,17 @@ export const changeRequestService = {
     if (address) {
       supplierUpdate.legal_address = address;
     }
+
+    // Check if supplier is currently rejected — if so, move back to pending_review
+    const { data: currentSupplier } = await supabase
+      .from("suppliers")
+      .select("status")
+      .eq("id", supplierId)
+      .single();
+    if (currentSupplier?.status === "rejected") {
+      supplierUpdate.status = "pending_review";
+    }
+
     if (Object.keys(supplierUpdate).length > 0) {
       const { error: updErr } = await supabase
         .from("suppliers")
