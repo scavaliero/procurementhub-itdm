@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2, Lock, Plus,
+  Upload, FileText, CheckCircle2, AlertCircle, Clock, Trash2, Lock, Plus, Pencil,
 } from "lucide-react";
 import { DocumentDatePicker } from "./DocumentDatePicker";
 import type { DocumentType, UploadedDocument } from "@/types";
@@ -36,6 +36,7 @@ export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenant
   const [issueDate, setIssueDate] = useState<Date | undefined>();
   const [expiryDate, setExpiryDate] = useState<Date | undefined>();
   const [isUploading, setIsUploading] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   // Determine if this doc type supports multiple uploads (non-mandatory, like CERT_AZIENDALI)
   const isMultiUpload = !docType.is_mandatory && docType.code === "CERT_AZIENDALI";
@@ -199,63 +200,85 @@ export function DocumentCard({ docType, uploaded, allUploads, supplierId, tenant
 
         {!locked && (
           <>
-            <div className="grid grid-cols-2 gap-2">
-              <DocumentDatePicker
-                label="Data emissione"
-                value={issueDate}
-                onChange={setIssueDate}
-              />
-              <DocumentDatePicker
-                label="Data scadenza"
-                required={!!docType.requires_expiry}
-                value={expiryDate}
-                onChange={setExpiryDate}
-                minDate={new Date()}
-              />
-            </div>
-            <div>
-              <input
-                ref={fileRef}
-                type="file"
-                className="hidden"
-                accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
-                    if (file.size > maxBytes) {
-                      toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
-                      return;
-                    }
-                    handleUpload(file);
-                  }
-                }}
-              />
+            {/* Show "Modifica" button when document needs re-upload */}
+            {!isMultiUpload && uploaded && !showUploadForm && (uploaded.status === "rejected" || isExpiringSoon || isExpired) && (
               <Button
                 size="sm"
-                variant={isExpired || isExpiringSoon || uploaded?.status === "rejected" ? "default" : "outline"}
+                variant={uploaded.status === "rejected" ? "destructive" : "default"}
                 className="w-full"
-                disabled={isUploading}
-                onClick={() => fileRef.current?.click()}
+                onClick={() => setShowUploadForm(true)}
               >
-                {isMultiUpload ? (
-                  <><Plus className="h-3.5 w-3.5 mr-1" /> {isUploading ? "Caricamento…" : "Aggiungi certificazione"}</>
-                ) : (
-                  <><Upload className="h-3.5 w-3.5 mr-1" />
-                  {isUploading
-                    ? "Caricamento…"
-                    : uploaded?.status === "rejected"
-                    ? "Ricarica documento"
-                    : isExpired
-                    ? "Sostituisci documento scaduto"
-                    : isExpiringSoon
-                    ? "Sostituisci documento"
-                    : uploaded
-                    ? "Ricarica"
-                    : "Carica"}</>
-                )}
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                {uploaded.status === "rejected"
+                  ? "Modifica e ricarica"
+                  : isExpired
+                  ? "Sostituisci documento scaduto"
+                  : "Sostituisci documento in scadenza"}
               </Button>
-            </div>
+            )}
+
+            {/* Upload form: always visible if no document, or toggled via Modifica */}
+            {(!uploaded || showUploadForm || isMultiUpload || (uploaded.status !== "rejected" && !isExpiringSoon && !isExpired)) && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <DocumentDatePicker
+                    label="Data emissione"
+                    value={issueDate}
+                    onChange={setIssueDate}
+                  />
+                  <DocumentDatePicker
+                    label="Data scadenza"
+                    required={!!docType.requires_expiry}
+                    value={expiryDate}
+                    onChange={setExpiryDate}
+                    minDate={new Date()}
+                  />
+                </div>
+                <div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    className="hidden"
+                    accept={docType.allowed_formats?.map((f) => `.${f}`).join(",") || "*"}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const maxBytes = (docType.max_size_mb || 10) * 1024 * 1024;
+                        if (file.size > maxBytes) {
+                          toast.error(`File troppo grande. Max ${docType.max_size_mb || 10}MB`);
+                          return;
+                        }
+                        handleUpload(file);
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant={isExpired || isExpiringSoon || uploaded?.status === "rejected" ? "default" : "outline"}
+                    className="w-full"
+                    disabled={isUploading}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    {isMultiUpload ? (
+                      <><Plus className="h-3.5 w-3.5 mr-1" /> {isUploading ? "Caricamento…" : "Aggiungi certificazione"}</>
+                    ) : (
+                      <><Upload className="h-3.5 w-3.5 mr-1" />
+                      {isUploading
+                        ? "Caricamento…"
+                        : uploaded?.status === "rejected"
+                        ? "Ricarica documento"
+                        : isExpired
+                        ? "Carica nuovo documento"
+                        : isExpiringSoon
+                        ? "Carica nuovo documento"
+                        : uploaded
+                        ? "Ricarica"
+                        : "Carica"}</>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </>
         )}
 
